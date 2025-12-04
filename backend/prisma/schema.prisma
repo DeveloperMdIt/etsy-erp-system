@@ -1,0 +1,237 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum OrderStatus {
+  OPEN
+  IN_PROGRESS
+  SHIPPED
+  CANCELLED
+}
+
+enum ShippingProvider {
+  DHL_KLEINPAKET
+  DHL_PAKET
+  DEUTSCHE_POST_MAXIBRIEF
+  OTHER
+}
+
+// ============================================
+// User & Authentication
+// ============================================
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  tenantId     String   @default(uuid())
+  role         Role     @default(USER)
+  firstName    String?
+  lastName     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Settings
+  settings     UserSettings?
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+model UserSettings {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Etsy settings
+  etsyShopName String?
+
+  // DHL settings
+  dhlApiUsername String?
+  dhlApiPassword String?
+
+  // Email SMTP settings
+  smtpHost     String?
+  smtpPort     Int?
+  smtpUsername String?
+  smtpPassword String?
+  smtpFrom     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_settings")
+}
+
+// ============================================
+// Customers
+// ============================================
+
+model Customer {
+  id               String   @id @default(uuid())
+  tenantId         String
+  email            String
+  firstName        String
+  lastName         String
+  street           String
+  addressAddition  String?
+  postalCode       String
+  city             String
+  country          String   @default("DE")
+  phone            String?
+  isRepeatCustomer Boolean  @default(false)
+  orders           Order[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+  @@map("customers")
+}
+
+// ============================================
+// Products
+// ============================================
+
+model Product {
+  id          String      @id @default(uuid())
+  tenantId    String
+  sku         String
+  gtin        String?     // EAN
+  name        String
+  description String?
+  weight      Int         // in Gramm
+  price       Float
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([tenantId, sku])
+  @@index([tenantId])
+  @@index([sku])
+  @@index([gtin])
+  @@map("products")
+}
+
+// ============================================
+// Orders
+// ============================================
+
+model Order {
+  id               String        @id @default(uuid())
+  tenantId         String
+  orderNumber      String        @unique
+  etsyOrderNumber  String?       @unique
+  customerId       String
+  customer         Customer      @relation(fields: [customerId], references: [id])
+  status           OrderStatus   @default(OPEN)
+  items            OrderItem[]
+  shippingCost     Float
+  totalPrice       Float
+  shippingProvider ShippingProvider?
+  trackingNumber   String?
+  shippedAt        DateTime?
+  notes            String?
+  shippingLabels   ShippingLabel[]
+  documents        Document[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([etsyOrderNumber])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+// ============================================
+// Shipping
+// ============================================
+
+model ShippingLabel {
+  id               String           @id @default(uuid())
+  orderId          String
+  order            Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider         ShippingProvider
+  trackingNumber   String
+  labelUrl         String? // URL to PDF
+  labelPath        String? // Local file path
+  weight           Int // in Gramm
+  cost             Float
+  createdAt        DateTime         @default(now())
+
+  @@index([orderId])
+  @@index([trackingNumber])
+  @@map("shipping_labels")
+}
+
+// ============================================
+// Documents (Invoices, Delivery Notes, etc.)
+// ============================================
+
+enum DocumentType {
+  INVOICE
+  DELIVERY_NOTE
+  PICK_LIST
+}
+
+model Document {
+  id            String       @id @default(uuid())
+  tenantId      String
+  orderId       String?
+  order         Order?       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type          DocumentType
+  documentNumber String      @unique // e.g., Invoice number
+  filePath      String
+  createdAt     DateTime     @default(now())
+
+  @@index([tenantId])
+  @@index([orderId])
+  @@index([type])
+  @@map("documents")
+}
+
+// ============================================
+// CSV Import History
+// ============================================
+
+model ImportHistory {
+  id            String   @id @default(uuid())
+  tenantId      String
+  fileName      String
+  ordersImported Int
+  status        String   // SUCCESS, PARTIAL, FAILED
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId])
+  @@map("import_history")
+}
