@@ -41,10 +41,20 @@ export interface EtsyOrderCSV {
     'InPerson Discount': string;
     'InPerson Location': string;
     'VAT Paid by Buyer': string; // IOSS related
-    'SKU': string; // Often empty in order level CSV, but present in order-item level if available
+    'SKU': string;
     'Listing ID': string;
     'Listing Title': string;
+    'Item Name': string; // Alternative to Listing Title
     'Variation Details': string;
+    'Ship Address 1': string;
+    'Ship Address 2': string;
+    'Ship Address1': string; // Alternative from user CSV
+    'Ship Address2': string; // Alternative from user CSV
+    'Ship Name': string;
+    'Order Shipping': string; // Alternative to Shipping
+    'Zip': string; // Alternative to Ship Zipcode
+    'City': string; // Alternative to Ship City
+    'Country': string; // Alternative to Ship Country
     'Quantity': string;
     'Price': string;
     'Listing Variation ID': string;

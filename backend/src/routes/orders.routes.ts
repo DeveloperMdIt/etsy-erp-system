@@ -1,12 +1,12 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../utils/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-// All routes require authentication
-router.use(authenticateToken);
+// Authentication temporarily disabled for development
+// router.use(authenticateToken);
 
 // Validation schemas
 const orderItemSchema = z.object({
@@ -17,7 +17,8 @@ const orderItemSchema = z.object({
 
 const createOrderSchema = z.object({
     customerId: z.string(),
-    etsyOrderNumber: z.string().optional(),
+    externalOrderId: z.string().optional(),
+    platform: z.string().optional(),
     items: z.array(orderItemSchema).min(1),
     shippingCost: z.number().min(0),
     notes: z.string().optional()
@@ -27,13 +28,22 @@ const createOrderSchema = z.object({
  * GET /api/orders
  * Get all orders for the current tenant
  */
-router.get('/', async (req: AuthRequest, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
-        const { status, search } = req.query;
+        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
+        const { status, search, sortBy = 'createdAt', sortOrder = 'desc', customerId } = req.query;
 
         const where: any = {
-            tenantId: req.user!.tenantId
+            tenantId: tenantId
         };
+
+        // Filter by customerId
+        if (customerId && typeof customerId === 'string') {
+            console.log(`Filtering orders for customerId: ${customerId}`);
+            where.customerId = customerId;
+        } else {
+            console.log('No customerId filter provided or invalid type:', customerId);
+        }
 
         // Filter by status
         if (status && typeof status === 'string') {
@@ -43,13 +53,14 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         // Search in order number or customer name
         if (search && typeof search === 'string') {
             where.OR = [
-                { orderNumber: { contains: search, mode: 'insensitive' } },
-                { etsyOrderNumber: { contains: search, mode: 'insensitive' } },
+                { orderNumber: { contains: search } },
+                { externalOrderId: { contains: search } },
                 {
                     customer: {
                         OR: [
-                            { firstName: { contains: search, mode: 'insensitive' } },
-                            { lastName: { contains: search, mode: 'insensitive' } }
+                            { firstName: { contains: search } },
+                            { lastName: { contains: search } },
+                            { customerNumber: { contains: search } }
                         ]
                     }
                 }
@@ -66,10 +77,10 @@ router.get('/', async (req: AuthRequest, res: Response) => {
                     }
                 }
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { [sortBy as string]: sortOrder as any }
         });
 
-        res.json({ orders });
+        res.json(orders);
     } catch (error) {
         console.error('Get orders error:', error);
         res.status(500).json({ error: 'Failed to fetch orders' });
@@ -80,14 +91,15 @@ router.get('/', async (req: AuthRequest, res: Response) => {
  * GET /api/orders/:id
  * Get order details
  */
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
 
         const order = await prisma.order.findFirst({
             where: {
                 id,
-                tenantId: req.user!.tenantId
+                tenantId: tenantId
             },
             include: {
                 customer: true,
@@ -116,15 +128,16 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
  * POST /api/orders
  * Create a new order
  */
-router.post('/', async (req: AuthRequest, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
     try {
+        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
         const data = createOrderSchema.parse(req.body);
 
         // Verify customer belongs to tenant
         const customer = await prisma.customer.findFirst({
             where: {
                 id: data.customerId,
-                tenantId: req.user!.tenantId
+                tenantId: tenantId
             }
         });
 
@@ -141,10 +154,11 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         // Create order with items
         const order = await prisma.order.create({
             data: {
-                tenantId: req.user!.tenantId,
+                tenantId: tenantId,
                 orderNumber,
                 customerId: data.customerId,
-                etsyOrderNumber: data.etsyOrderNumber,
+                externalOrderId: data.externalOrderId,
+                platform: data.platform || 'MANUAL',
                 shippingCost: data.shippingCost,
                 totalPrice,
                 notes: data.notes,
@@ -176,16 +190,17 @@ router.post('/', async (req: AuthRequest, res: Response) => {
  * PATCH /api/orders/:id
  * Update order status or details
  */
-router.patch('/:id', async (req: AuthRequest, res: Response) => {
+router.patch('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
         const { status, trackingNumber, notes } = req.body;
 
         // Verify order belongs to tenant
         const existing = await prisma.order.findFirst({
             where: {
                 id,
-                tenantId: req.user!.tenantId
+                tenantId: tenantId
             }
         });
 

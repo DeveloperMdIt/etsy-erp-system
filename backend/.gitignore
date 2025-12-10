@@ -26,6 +26,7 @@ uploads/
 documents/
 labels/
 *.csv
+!test/**/*.csv
 
 # IDE
 .vscode/
