@@ -5,8 +5,8 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-// Authentication temporarily disabled for development
-// router.use(authenticateToken);
+// Apply authentication to all routes
+router.use(authenticateToken);
 
 // Validation schema
 const createCustomerSchema = z.object({
@@ -25,9 +25,13 @@ const createCustomerSchema = z.object({
  * GET /api/customers
  * Get all customers for the current tenant
  */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
     try {
-        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
         const { search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
         const where: any = {
@@ -65,10 +69,13 @@ router.get('/', async (req: Request, res: Response) => {
  * GET /api/customers/:id
  * Get customer details
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
         const customer = await prisma.customer.findFirst({
             where: {
@@ -104,9 +111,12 @@ router.get('/:id', async (req: Request, res: Response) => {
  * POST /api/customers
  * Create a new customer
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', async (req: AuthRequest, res: Response) => {
     try {
-        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
         const data = createCustomerSchema.parse(req.body);
 
         // Check if customer already exists for this tenant
@@ -121,10 +131,15 @@ router.post('/', async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Customer with this email already exists' });
         }
 
+
+        // Generate customer number
+        const customerNumber = `KD-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
         const customer = await prisma.customer.create({
             data: {
                 ...data,
-                tenantId: tenantId
+                tenantId: tenantId,
+                customerNumber
             }
         });
 
@@ -142,10 +157,13 @@ router.post('/', async (req: Request, res: Response) => {
  * PATCH /api/customers/:id
  * Update customer information
  */
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
         // Allow partial updates - all fields optional
         // Allow partial updates - all fields optional, allow nulls

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, inject } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { useNotifications } from '../composables/useNotifications'
 
-const notifications: any = inject('notifications')
+const { showSuccess, showError } = useNotifications()
 const loading = ref(true)
 const saving = ref(false)
 
@@ -15,7 +16,7 @@ const form = ref({
 const fetchProfile = async () => {
     try {
         loading.value = true
-        const response = await axios.get('/api/settings') // Re-using existing endpoint which returns user data
+        const response = await axios.get('/api/settings')
         const { user } = response.data
         
         form.value = {
@@ -25,7 +26,7 @@ const fetchProfile = async () => {
         }
     } catch (error: any) {
         console.error('Error fetching profile:', error)
-        notifications.value.show('error', 'Fehler', 'Fehler beim Laden des Profils')
+        showError('Fehler', 'Fehler beim Laden des Profils')
     } finally {
         loading.value = false
     }
@@ -34,33 +35,19 @@ const fetchProfile = async () => {
 const saveProfile = async () => {
     try {
         saving.value = true
-        // sending only user fields; backend ideally should handle partial updates or ignore missing fields
-        // Since the current backend handles a big "settings" object, we might need to send everything OR the backend is smart enough.
-        // Looking at backend controller might be needed, but assuming for now we can rely on what we have.
-        // Actually, to be safe, let's fetch, merge and save back if the backend expects a full object.
-        // OR better: The backend usually updates what is provided.
-        // Quick check logic: I will assume the backend accepts a partial update or I'll just send the fields I have.
-        // If the backend wipes fields not present, this is risky.
-        // SAFE APPROACH: Send only the fields we changed, assuming backend does `prisma.update({ data: req.body })`
-        // Wait, the previous logic in Settings.vue sent EVERYTHING.
-        // Current endpoint likely expects a specific structure.
-        // Let's rely on the fact that we can send these fields. If backend complains, I'll fix the backend.
-        
         await axios.put('/api/settings', {
             ...form.value
-            // We are NOT sending number formats, hope backend doesn't overwrite them with null.
         })
         
-        // Update local user data so header updates immediately
         const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
         const updatedUser = { ...currentUser, ...form.value }
         localStorage.setItem('user', JSON.stringify(updatedUser))
-        window.dispatchEvent(new Event('user-login')) // Trigger update
+        window.dispatchEvent(new Event('user-login'))
 
-        notifications.value.show('success', 'Erfolg', 'Profil erfolgreich gespeichert.')
+        showSuccess('Erfolg', 'Profil erfolgreich gespeichert.')
     } catch (error: any) {
         console.error('Error saving profile:', error)
-        notifications.value.show('error', 'Fehler', 'Fehler beim Speichern: ' + (error.response?.data?.error || error.message))
+        showError('Fehler', 'Fehler beim Speichern: ' + (error.response?.data?.error || error.message))
     } finally {
         saving.value = false
     }

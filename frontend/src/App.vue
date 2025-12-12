@@ -27,7 +27,10 @@ const updateCurrentUser = () => {
 // Watch for route changes to update auth state (fallback)
 watch(
   () => route.path,
-  updateCurrentUser
+  () => {
+    updateCurrentUser()
+    isMenuOpen.value = false
+  }
 )
 
 // Listen for custom login event
@@ -72,6 +75,9 @@ const logout = () => {
               <router-link to="/import" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                 Import
               </router-link>
+              <router-link to="/activity-log" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                Ereignisse
+              </router-link>
             </div>
           </div>
           
@@ -106,9 +112,10 @@ const logout = () => {
                       <p class="text-sm font-medium text-gray-900 truncate">{{ currentUser?.email }}</p>
                     </div>
 
-                    <router-link to="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Profil</router-link>
-                    <router-link to="/etsy-connect" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Etsy Zugang</router-link>
-                    <router-link to="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Dokumenten Einstellungen</router-link>
+                    <router-link to="/profile" @click="isMenuOpen = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Profil</router-link>
+                    <router-link to="/etsy-connect" @click="isMenuOpen = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Etsy Zugang</router-link>
+                    <router-link to="/settings" @click="isMenuOpen = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Dokumenten Einstellungen</router-link>
+                    <router-link to="/settings/shipping" @click="isMenuOpen = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Versandeinstellungen</router-link>
                     
                     <div class="border-t border-gray-100"></div>
                     

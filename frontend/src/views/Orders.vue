@@ -17,6 +17,8 @@ interface Order {
   id: string
   orderNumber: string
   etsyOrderNumber?: string
+  platform?: string
+  externalOrderId?: string
   customer: {
     firstName: string
     lastName: string
@@ -40,6 +42,15 @@ const orders = ref<Order[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const selectedOrder = ref<Order | null>(null)
+const showLabelModal = ref(false)
+const labelOrder = ref<Order | null>(null)
+const creatingLabel = ref(false)
+
+// Label creation form
+const labelForm = ref({
+  productCode: 'BRIEF_KOMPAKT',
+  weight: 50
+})
 
 // Filters & Sorting
 const searchQuery = ref('')
@@ -52,6 +63,13 @@ const statusMap: Record<string, string> = {
   'SHIPPED': 'Versendet',
   'CANCELLED': 'Storniert'
 }
+
+const deutschePostProducts = [
+  { code: 'BRIEF_KOMPAKT', name: 'Brief Kompakt', maxWeight: 50 },
+  { code: 'BRIEF_GROSS', name: 'Brief Groß', maxWeight: 500 },
+  { code: 'BRIEF_MAXI', name: 'Brief Maxi', maxWeight: 1000 },
+  { code: 'WARENPOST', name: 'Warenpost', maxWeight: 1000 }
+]
 
 let searchTimeout: any
 
@@ -90,6 +108,41 @@ const createLabel = async (orderId: string, type: 'DHL_PAKET' | 'DHL_KLEINPAKET'
     await fetchOrders()
   } catch (err: any) {
     alert('Fehler beim Label-Erstellen: ' + (err.response?.data?.message || err.message))
+  }
+}
+
+const openLabelModal = (order: Order) => {
+  labelOrder.value = order
+  showLabelModal.value = true
+  labelForm.value = {
+    productCode: 'BRIEF_KOMPAKT',
+    weight: 50
+  }
+}
+
+const closeLabelModal = () => {
+  showLabelModal.value = false
+  labelOrder.value = null
+}
+
+const createDeutschePostLabel = async () => {
+  if (!labelOrder.value) return
+
+  creatingLabel.value = true
+  try {
+    const response = await axios.post('/api/shipping/label/create', {
+      orderId: labelOrder.value.id,
+      productCode: labelForm.value.productCode,
+      weight: labelForm.value.weight
+    })
+
+    alert(`Label erstellt! Tracking: ${response.data.trackingNumber}`)
+    closeLabelModal()
+    await fetchOrders()
+  } catch (err: any) {
+    alert('Fehler beim Label-Erstellen: ' + (err.response?.data?.error || err.message))
+  } finally {
+    creatingLabel.value = false
   }
 }
 
@@ -223,9 +276,13 @@ onMounted(fetchOrders)
                       <div class="font-medium">{{ order.shippingProvider }}</div>
                       <div class="text-xs">{{ order.trackingNumber }}</div>
                     </div>
-                    <div v-else class="space-x-2" @click.stop>
-                      <button @click="createLabel(order.id, 'DHL_KLEINPAKET')" class="text-indigo-600 hover:text-indigo-900 text-xs font-medium">Kleinpaket</button>
-                      <button @click="createLabel(order.id, 'DHL_PAKET')" class="text-indigo-600 hover:text-indigo-900 text-xs font-medium">Paket</button>
+                    <div v-else @click.stop>
+                      <button 
+                        @click="openLabelModal(order)" 
+                        class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-medium"
+                      >
+                        📦 Label erstellen
+                      </button>
                     </div>
                   </td>
                   <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
@@ -351,6 +408,90 @@ onMounted(fetchOrders)
         <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
           <button @click="closeDetails" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
             Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Label Creation Modal -->
+    <div v-if="showLabelModal && labelOrder" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50" @click="closeLabelModal">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full" @click.stop>
+        <div class="px-6 py-4 border-b border-gray-200">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">Versandlabel erstellen</h2>
+              <p class="text-sm text-gray-500 mt-1">{{ labelOrder.orderNumber }}</p>
+            </div>
+            <button @click="closeLabelModal" class="text-gray-400 hover:text-gray-500">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 space-y-4">
+          <!-- Empfänger -->
+          <div class="bg-gray-50 rounded-lg p-3">
+            <p class="text-xs font-medium text-gray-500 mb-1">Empfänger:</p>
+            <p class="text-sm font-medium">{{ labelOrder.customer.firstName }} {{ labelOrder.customer.lastName }}</p>
+            <p class="text-xs text-gray-600">{{ labelOrder.customer.street }}</p>
+            <p class="text-xs text-gray-600">{{ labelOrder.customer.postalCode }} {{ labelOrder.customer.city }}</p>
+          </div>
+
+          <!-- Versandart -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Versandart
+            </label>
+            <select
+              v-model="labelForm.productCode"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option v-for="product in deutschePostProducts" :key="product.code" :value="product.code">
+                {{ product.name }} (max. {{ product.maxWeight }}g)
+              </option>
+            </select>
+          </div>
+
+          <!-- Gewicht -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Gewicht (g)
+            </label>
+            <input
+              v-model.number="labelForm.weight"
+              type="number"
+              min="1"
+              max="1000"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <!-- Info -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p class="text-xs text-blue-800">
+              ℹ️ Das Label wird automatisch gedruckt und die Tracking-Nummer wird gespeichert.
+              <span v-if="labelOrder.platform === 'ETSY'">
+                Die Tracking-Nummer wird automatisch an Etsy gesendet.
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3">
+          <button
+            @click="closeLabelModal"
+            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Abbrechen
+          </button>
+          <button
+            @click="createDeutschePostLabel"
+            :disabled="creatingLabel"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            {{ creatingLabel ? 'Erstelle...' : 'Label erstellen & drucken' }}
           </button>
         </div>
       </div>

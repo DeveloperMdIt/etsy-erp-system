@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 export interface AuthRequest extends Request {
     user?: {
         id: string;
+        userId: string;  // Alias for id
         email: string;
         tenantId: string;
         role: string;
@@ -31,8 +32,10 @@ export const authenticateToken = (
     try {
         const decoded = jwt.verify(token, jwtSecret) as any;
         console.log('Decoded Token:', decoded); // Debug log
+        const userId = decoded.userId || decoded.id;
         req.user = {
-            id: decoded.userId || decoded.id, // Handle both cases
+            id: userId,
+            userId: userId, // Alias
             email: decoded.email,
             tenantId: decoded.tenantId,
             role: decoded.role

@@ -18,6 +18,8 @@ import orderRoutes from './routes/orders.routes';
 import importRoutes from './routes/import.routes';
 import shippingRoutes from './routes/shipping.routes';
 import settingsRoutes from './routes/settings.routes';
+import logsRoutes from './routes/logs.routes';
+import debugRoutes from './routes/debug.routes';
 
 import cookieParser from 'cookie-parser';
 import etsyRoutes from './routes/etsy.routes';
@@ -26,6 +28,9 @@ import etsyRoutes from './routes/etsy.routes';
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+
+// Serve static files (logos, labels)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/setup', setupRoutes);
@@ -36,6 +41,8 @@ app.use('/api/import', importRoutes);
 app.use('/api/shipping', shippingRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/etsy', etsyRoutes);
+app.use('/api/logs', logsRoutes);
+app.use('/api/debug', debugRoutes);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

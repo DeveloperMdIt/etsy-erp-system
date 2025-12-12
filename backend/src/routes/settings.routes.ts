@@ -13,7 +13,7 @@ router.use(authenticateToken);
 // GET /api/settings - Get current settings
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const userId = req.user?.id;
+        const userId = req.user?.userId;
         if (!userId) {
             return res.status(401).json({ error: 'Not authenticated' });
         }
@@ -66,7 +66,7 @@ router.get('/', async (req: Request, res: Response) => {
 // PUT /api/settings - Update settings
 router.put('/', async (req: Request, res: Response) => {
     try {
-        const userId = req.user?.id;
+        const userId = req.user?.userId;
         if (!userId) {
             return res.status(401).json({ error: 'Not authenticated' });
         }
@@ -76,6 +76,35 @@ router.put('/', async (req: Request, res: Response) => {
             firstName,
             lastName,
             shopName,
+
+            // DHL Paket
+            dhlGkpUsername,
+            dhlGkpPassword,
+            dhlEnabled,
+            printerDHL,
+
+            // Deutsche Post
+            deutschePostUsername,
+            deutschePostPassword,
+            deutschePostClientId,
+            deutschePostClientSecret,
+            deutschePostEnabled,
+            printerDeutschePost,
+
+            // Shared Shipping
+            etsySyncEnabled,
+            labelLogoPath,
+            labelCompanyName,
+            labelStreet,
+            labelPostalCode,
+            labelCity,
+            labelCountry,
+            labelPhone,
+            labelSizePreset,
+            labelCustomWidth,
+            labelCustomHeight,
+            defaultPrinter,
+            autoPrintEnabled,
 
             // Number Formats
             orderNumberFormat,
@@ -110,6 +139,33 @@ router.put('/', async (req: Request, res: Response) => {
                 where: { userId },
                 create: {
                     userId,
+                    // DHL Paket
+                    dhlGkpUsername,
+                    dhlGkpPassword,
+                    dhlEnabled,
+                    printerDHL,
+                    // Deutsche Post
+                    deutschePostUsername,
+                    deutschePostPassword,
+                    deutschePostClientId,
+                    deutschePostClientSecret,
+                    deutschePostEnabled,
+                    printerDeutschePost,
+                    // Shared
+                    etsySyncEnabled,
+                    labelLogoPath,
+                    labelCompanyName,
+                    labelStreet,
+                    labelPostalCode,
+                    labelCity,
+                    labelCountry,
+                    labelPhone,
+                    labelSizePreset,
+                    labelCustomWidth,
+                    labelCustomHeight,
+                    defaultPrinter,
+                    autoPrintEnabled,
+                    // Number Formats
                     orderNumberFormat,
                     invoiceNumberFormat,
                     deliveryNoteFormat,
@@ -123,13 +179,39 @@ router.put('/', async (req: Request, res: Response) => {
                     customerNumberStart
                 },
                 update: {
+                    // DHL Paket
+                    dhlGkpUsername,
+                    dhlGkpPassword,
+                    dhlEnabled,
+                    printerDHL,
+                    // Deutsche Post
+                    deutschePostUsername,
+                    deutschePostPassword,
+                    deutschePostClientId,
+                    deutschePostClientSecret,
+                    deutschePostEnabled,
+                    printerDeutschePost,
+                    // Shared
+                    etsySyncEnabled,
+                    labelLogoPath,
+                    labelCompanyName,
+                    labelStreet,
+                    labelPostalCode,
+                    labelCity,
+                    labelCountry,
+                    labelPhone,
+                    labelSizePreset,
+                    labelCustomWidth,
+                    labelCustomHeight,
+                    defaultPrinter,
+                    autoPrintEnabled,
+                    // Number Formats
                     orderNumberFormat,
                     invoiceNumberFormat,
                     deliveryNoteFormat,
                     supplierOrderFormat,
                     customerNumberFormat,
                     skuPrefix,
-                    // Only update start if provided/changed
                     orderNumberStart,
                     invoiceNumberStart,
                     deliveryNoteStart,

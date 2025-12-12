@@ -270,10 +270,10 @@ export class ProductCatalogImportService {
         const price = this.parseGermanFloat(priceRaw);
 
         // Parse comma-separated fields
-        const skus = (skuRaw?.trim() || '').split(',').map(s => s.trim()).filter(s => s);
+        const skus = (skuRaw?.trim() || '').split(',').map((s: string) => s.trim()).filter((s: string) => s);
 
         const stockRaw = quantityRaw?.trim() || '0';
-        const stocks = stockRaw.split(',').map(s => parseInt(s.trim()) || 0);
+        const stocks = stockRaw.split(',').map((s: string) => parseInt(s.trim()) || 0);
 
         const imageUrl = imageRaw?.trim() || '';
         const tags = tagsRaw?.trim() || '';
@@ -281,11 +281,11 @@ export class ProductCatalogImportService {
 
         const varType1 = row['VARIATIONSTYP 1']?.trim() || '';
         const varName1 = row['VARIATIONSNAME 1']?.trim() || '';
-        const varValues1 = (varVal1Raw?.trim() || '').split(',').map(s => s.trim());
+        const varValues1 = (varVal1Raw?.trim() || '').split(',').map((s: string) => s.trim());
 
         const varType2 = row['VARIATIONSTYP 2']?.trim() || '';
         const varName2 = row['VARIATIONSNAME 2']?.trim() || '';
-        const varValues2 = (varVal2Raw?.trim() || '').split(',').map(s => s.trim());
+        const varValues2 = (varVal2Raw?.trim() || '').split(',').map((s: string) => s.trim());
 
         // Determine existing product first
         let product = await prisma.product.findFirst({
@@ -320,12 +320,13 @@ export class ProductCatalogImportService {
             }
         }
 
+
         const productData = {
             name,
             description,
             price, // Base price
             imageUrl: imageUrl || undefined,
-            stockQuantity: stocks.reduce((a, b) => a + b, 0), // Sum of stocks
+            stockQuantity: stocks.reduce((a: number, b: number) => a + b, 0), // Sum of stocks
             tags,
             materials,
             variationType1: varType1,

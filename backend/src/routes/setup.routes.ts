@@ -36,7 +36,7 @@ router.get('/settings', async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'Not authenticated' });
         }
 
-        const settings = await prisma.user_settings.findUnique({
+        const settings = await prisma.userSettings.findUnique({
             where: { userId },
         });
 
@@ -93,7 +93,7 @@ router.post('/complete', async (req: Request, res: Response) => {
         } = req.body;
 
         // Update or create settings
-        const settings = await prisma.user_settings.upsert({
+        const settings = await prisma.userSettings.upsert({
             where: { userId },
             create: {
                 userId,

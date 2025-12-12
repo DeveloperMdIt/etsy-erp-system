@@ -5,10 +5,158 @@ import { EtsyOrderCSV, ImportResult } from '../types/etsy-types';
 import SKUManagementService from './sku-management.service';
 import NumberRangeService from './number-range.service';
 import ImportStatusService from './import-status.service';
+import { ActivityLogService, LogType, LogAction } from './activity-log.service';
 
 const prisma = new PrismaClient();
 
 export class EtsyImportService {
+
+    async importOrdersFromApi(orders: any[], tenantId: string, userId: string): Promise<ImportResult> {
+        let ordersCreated = 0;
+        let ordersUpdated = 0;
+        const errors: string[] = [];
+
+        try {
+            ImportStatusService.start(orders.length, 'Processing API Orders...');
+            console.log(`[Import] Processing ${orders.length} orders from API...`);
+
+            // Process each receipt
+            for (const receipt of orders) {
+                try {
+                    await this.processApiOrder(tenantId, userId, receipt);
+                    ordersCreated++;
+                    ImportStatusService.increment();
+                } catch (err: any) {
+                    console.error(`Failed to import receipt ${receipt.receipt_id}`, err);
+                    errors.push(`Receipt ${receipt.receipt_id}: ${err.message}`);
+                }
+            }
+
+            ImportStatusService.complete(`API Import finished. Processed ${ordersCreated}.`);
+
+            // Log Success
+            await ActivityLogService.log(
+                errors.length === 0 ? LogType.SUCCESS : LogType.WARNING,
+                LogAction.IMPORT_ORDERS,
+                `Auto-Import Finished: ${ordersCreated} processed.`,
+                userId,
+                tenantId,
+                { source: 'API', count: ordersCreated, errors }
+            );
+
+            return { success: true, ordersCreated, ordersUpdated, errors, fileName: 'API' };
+
+        } catch (error: any) {
+            console.error('API Import Failed:', error);
+            ImportStatusService.error(error.message);
+            throw error;
+        }
+    }
+
+    private async processApiOrder(tenantId: string, userId: string, receipt: any) {
+        // 1. Find/Create Customer
+        const email = receipt.buyer_email || `${receipt.buyer_user_id}@etsy.placeholder.com`;
+
+        let customer = await prisma.customer.findFirst({
+            where: { tenantId, email }
+        });
+
+        if (!customer) {
+            const customerNumber = await NumberRangeService.generateNumber('CUSTOMER', userId);
+            customer = await prisma.customer.create({
+                data: {
+                    tenantId,
+                    customerNumber,
+                    email,
+                    firstName: receipt.name || 'Unknown',
+                    lastName: '',
+                    street: receipt.first_line || 'Unknown',
+                    city: receipt.city || 'Unknown',
+                    postalCode: receipt.zip || '00000',
+                    country: receipt.country_iso || 'DE'
+                }
+            });
+        }
+
+        // 2. Check/Create Order
+        const externalOrderId = receipt.receipt_id.toString();
+        let order = await prisma.order.findFirst({
+            where: { tenantId, externalOrderId },
+            include: { items: true }
+        });
+
+        // Transactions
+        const transactions = receipt.transactions || [];
+
+        // Status Mapping
+        let newStatus = receipt.was_shipped ? OrderStatus.SHIPPED : OrderStatus.OPEN;
+        if (receipt.status && receipt.status.toLowerCase() === 'canceled') {
+            newStatus = OrderStatus.CANCELLED;
+        }
+
+        if (order) {
+            // Update status if changed
+            if (order.status !== newStatus && order.status !== OrderStatus.SHIPPED && order.status !== OrderStatus.CANCELLED) {
+                if (newStatus === OrderStatus.SHIPPED && order.status !== OrderStatus.SHIPPED) {
+                    console.log(`[Import] Updating Order ${externalOrderId} status: ${order.status} -> ${newStatus}`);
+                    await prisma.order.update({
+                        where: { id: order.id },
+                        data: { status: newStatus }
+                    });
+                }
+            }
+            return;
+        }
+
+        const internalOrderNumber = await NumberRangeService.generateNumber('ORDER', userId);
+
+        const createdOrder = await prisma.order.create({
+            data: {
+                tenantId,
+                orderNumber: internalOrderNumber,
+                externalOrderId,
+                platform: 'ETSY',
+                customerId: customer.id,
+                status: newStatus,
+                totalPrice: (receipt.total_price?.amount / receipt.total_price?.divisor) || 0,
+                shippingCost: (receipt.total_shipping_cost?.amount / receipt.total_shipping_cost?.divisor) || 0,
+                createdAt: new Date(receipt.created_timestamp * 1000)
+            }
+        });
+
+        if (!createdOrder) {
+            throw new Error('Order creation failed');
+        }
+
+        // 3. Create Items
+        for (const tx of transactions) {
+            const price = (tx.price?.amount / tx.price?.divisor) || 0;
+            const sku = tx.sku || await SKUManagementService.generateSKU(userId);
+
+            let product = await prisma.product.findUnique({ where: { userId_sku: { userId, sku } } });
+            if (!product) {
+                product = await prisma.product.create({
+                    data: {
+                        userId,
+                        tenantId,
+                        sku,
+                        name: tx.title,
+                        price,
+                        weight: 0
+                    }
+                });
+            }
+
+            await prisma.orderItem.create({
+                data: {
+                    orderId: createdOrder.id,
+                    productId: product.id,
+                    quantity: tx.quantity,
+                    price
+                }
+            });
+        }
+    }
 
     /**
      * Parse and import Etsy orders from a CSV file
@@ -23,11 +171,9 @@ export class EtsyImportService {
             const separator = await this.detectSeparator(filePath);
             console.log(`Detected CSV separator: '${separator}'`);
 
-            // Reset status
             ImportStatusService.reset();
             ImportStatusService.start(0, 'Analyzing CSV file...');
 
-            // First pass: Count lines for progress
             let totalRows = 0;
             const countStream = fs.createReadStream(filePath)
                 .pipe(csv({ separator }))
@@ -61,7 +207,6 @@ export class EtsyImportService {
                     try {
                         console.log(`CSV Parsed. Total rows: ${results.length}. Starting processing...`);
 
-                        // Check for valid user
                         let user = await prisma.user.findFirst({ where: { tenantId } });
                         if (!user) {
                             console.warn(`No user found for tenantId ${tenantId}. Trying fallback to first available user.`);
@@ -74,7 +219,6 @@ export class EtsyImportService {
 
                         const userId = user.id;
 
-                        // Group by Order ID first
                         const ordersMap = new Map<string, EtsyOrderCSV[]>();
 
                         for (const row of results) {
@@ -87,34 +231,16 @@ export class EtsyImportService {
                         console.log(`Found ${ordersMap.size} unique orders.`);
                         ImportStatusService.start(ordersMap.size, 'Creating orders in database...');
 
-                        // Sort orders by Date (Oldest first) to ensure correct number assignment
                         const sortedOrders = Array.from(ordersMap.entries()).sort((a, b) => {
                             const dateStrA = a[1][0]['Sale Date'];
                             const dateStrB = b[1][0]['Sale Date'];
-
-                            // Log dates for debugging
-                            if (Math.random() < 0.05) console.log(`Debug Sort: ${dateStrA} vs ${dateStrB}`);
-
                             const dateA = new Date(dateStrA).getTime();
                             const dateB = new Date(dateStrB).getTime();
-
-                            // Handle invalid dates (treat as 0/oldest or Date.now/newest?)
-                            // If invalid, fallback to 0
                             const validA = isNaN(dateA) ? 0 : dateA;
                             const validB = isNaN(dateB) ? 0 : dateB;
-
-                            return validA - validB; // Ascending (Oldest first)
+                            return validA - validB;
                         });
 
-                        // Debug: Log the first and last order dates after sorting
-                        if (sortedOrders.length > 0) {
-                            console.log('--- SORT DEBUG ---');
-                            console.log('First Order (Oldest?):', sortedOrders[0][0], sortedOrders[0][1][0]['Sale Date']);
-                            console.log('Last Order (Newest?):', sortedOrders[sortedOrders.length - 1][0], sortedOrders[sortedOrders.length - 1][1][0]['Sale Date']);
-                            console.log('------------------');
-                        }
-
-                        let processedOrders = 0;
                         for (const [orderId, rows] of sortedOrders) {
                             try {
                                 ImportStatusService.increment(`Processing Order ${orderId}...`);
@@ -124,10 +250,8 @@ export class EtsyImportService {
                                 console.error(`Error processing order ${orderId}:`, err);
                                 errors.push(`Order ${orderId}: ${err.message}`);
                             }
-                            processedOrders++;
                         }
 
-                        // Record import history
                         await prisma.importHistory.create({
                             data: {
                                 tenantId,
@@ -139,6 +263,20 @@ export class EtsyImportService {
                         });
 
                         ImportStatusService.complete(`Import finished. Processed ${ordersCreated} orders.`);
+
+                        await ActivityLogService.log(
+                            errors.length === 0 ? LogType.SUCCESS : LogType.WARNING,
+                            LogAction.IMPORT_ORDERS,
+                            `Etsy Import Finished: ${ordersCreated} created, ${ordersUpdated} updated.`,
+                            userId,
+                            tenantId,
+                            {
+                                ordersCreated,
+                                ordersUpdated,
+                                errors,
+                                fileName: filePath.split('/').pop()
+                            }
+                        );
 
                         resolve({
                             success: true,
@@ -158,9 +296,18 @@ export class EtsyImportService {
         } catch (error: any) {
             console.error("Import failed:", error);
             ImportStatusService.error(error.message);
+
+            await ActivityLogService.log(
+                LogType.ERROR,
+                LogAction.IMPORT_ORDERS,
+                `Etsy Import Failed: ${error.message}`,
+                undefined,
+                tenantId,
+                { fileName: filePath.split('/').pop(), error: error.message }
+            );
+
             throw error;
         } finally {
-            // Cleanup file
             try {
                 if (fs.existsSync(filePath)) {
                     fs.unlinkSync(filePath);
@@ -174,19 +321,16 @@ export class EtsyImportService {
     private async processOrder(tenantId: string, userId: string, etsyOrderId: string, rows: EtsyOrderCSV[]) {
         const firstRow = rows[0];
 
-        // 1. Determine order status
         const etsyStatus = firstRow['Status'] || '';
         const dateShipped = firstRow['Date Shipped'] || '';
         const orderStatus = this.mapEtsyStatus(etsyStatus, dateShipped);
         const shippedAt = dateShipped && dateShipped.trim() !== '' ? new Date(dateShipped) : null;
 
-        // Safe Name Parsing
         const fullName = firstRow['Full Name'] || firstRow['Ship Name'] || '';
         const nameParts = fullName.split(' ');
         const derivedFirstName = nameParts[0] || 'Unknown';
         const derivedLastName = nameParts.slice(1).join(' ') || 'Unknown';
 
-        // Find or Create Customer
         const email = firstRow['Buyer User ID'] ? `${firstRow['Buyer User ID']}@etsy.placeholder.com` : `unknown-${etsyOrderId}@etsy.placeholder.com`;
 
         let customer = await prisma.customer.findFirst({
@@ -229,8 +373,6 @@ export class EtsyImportService {
             }
         }
 
-        // Check if Order exists
-        // First try by external ID (preferred)
         let existingOrder = await prisma.order.findFirst({
             where: {
                 tenantId,
@@ -239,7 +381,6 @@ export class EtsyImportService {
             include: { items: true }
         });
 
-        // Fallback: Check by old orderNumber format (ETSY-...) for legacy compatibility
         if (!existingOrder) {
             existingOrder = await prisma.order.findUnique({
                 where: { orderNumber: `ETSY-${etsyOrderId}` },
@@ -264,7 +405,6 @@ export class EtsyImportService {
             }
         }
 
-        // Create Order
         let totalPrice = this.parseGermanFloat(firstRow['Order Total'] || firstRow['Adjusted Order Total']);
         const shippingCost = this.parseGermanFloat(firstRow['Order Shipping'] || firstRow['Shipping']);
 
@@ -273,13 +413,12 @@ export class EtsyImportService {
             totalPrice = itemsTotal + shippingCost;
         }
 
-        // Generate Internal Order Number
         const internalOrderNumber = await NumberRangeService.generateNumber('ORDER', userId);
 
         const order = await prisma.order.create({
             data: {
                 tenantId,
-                orderNumber: internalOrderNumber, // Internal Number (e.g. BO-2025-001)
+                orderNumber: internalOrderNumber,
                 externalOrderId: etsyOrderId,
                 platform: 'ETSY',
                 customerId: customer.id,
@@ -292,7 +431,6 @@ export class EtsyImportService {
             }
         });
 
-        // Create Order Items
         for (const row of rows) {
             let sku = row['SKU']?.trim() || '';
 
@@ -305,7 +443,6 @@ export class EtsyImportService {
             }
 
             let product: any = null;
-            // Try Maps/Variations if implemented, for now simple search
             const variant = await prisma.product_variations.findFirst({
                 where: { sku: sku, product: { tenantId } },
                 include: { product: true }
@@ -354,14 +491,12 @@ export class EtsyImportService {
 
     private mapEtsyStatus(status: string, dateShipped: string): OrderStatus {
         if (dateShipped && dateShipped.trim() !== '') return OrderStatus.SHIPPED;
-        return OrderStatus.OPEN; // Default
+        return OrderStatus.OPEN;
     }
 
     private parseGermanFloat(value: string | undefined): number {
         if (!value) return 0;
-        // Remove currency symbols and spaces
         let cleaned = value.replace(/[€$\s]/g, '');
-        // Replace comma with dot if present
         cleaned = cleaned.replace(',', '.');
         const parsed = parseFloat(cleaned);
         return isNaN(parsed) ? 0 : parsed;
@@ -369,7 +504,7 @@ export class EtsyImportService {
 
     private async detectSeparator(filePath: string): Promise<string> {
         return new Promise((resolve) => {
-            const stream = fs.createReadStream(filePath, { start: 0, end: 1000 }); // Read first 1000 bytes
+            const stream = fs.createReadStream(filePath, { start: 0, end: 1000 });
             let data = '';
             stream.on('data', (chunk) => data += chunk.toString());
             stream.on('end', () => {

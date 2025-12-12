@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { authenticateToken } from '../middleware/auth';
+import { ActivityLogService, LogType, LogAction } from '../services/activity-log.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -82,41 +84,39 @@ router.post('/login', async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Check password
-        // Check password
-        console.log(`Login attempt for ${email}`);
-        console.log('--- DEBUG PASS ---');
-        console.log('Type:', typeof password);
-        console.log('Length:', password?.length);
-        console.log('Value (JSON):', JSON.stringify(password));
-        console.log('Stored Hash:', user.passwordHash.substring(0, 15) + '...');
-
         const isValid = await bcrypt.compare(password, user.passwordHash);
-        console.log(`Password valid: ${isValid}`);
 
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         // Generate JWT with more info
-        // Generate JWT with more info
         const token = jwt.sign({
             userId: user.id,
             email: user.email,
-            tenantId: user.tenantId, // Add tenantId to token
-            // role: user.role, // Need to select role first
+            tenantId: user.tenantId,
         }, JWT_SECRET, { expiresIn: '7d' });
 
-        const userResponse = {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            shopName: user.shopName,
-            createdAt: user.createdAt,
-        };
+        // Log successful login
+        await ActivityLogService.log(
+            LogType.SUCCESS,
+            LogAction.LOGIN,
+            `User ${user.email} logged in`,
+            user.id,
+            user.tenantId
+        );
 
-        res.json({ user: userResponse, token });
+        res.json({
+            token, user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                shopName: user.shopName,
+                role: user.role,
+                tenantId: user.tenantId
+            }
+        });
     } catch (error: any) {
         console.error('Login error:', error);
         res.status(500).json({ error: 'Login failed' });

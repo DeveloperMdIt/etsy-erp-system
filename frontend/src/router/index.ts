@@ -10,6 +10,7 @@ import Setup from '../views/Setup.vue'
 import Settings from '../views/Settings.vue'
 import Profile from '../views/Profile.vue'
 import EtsyConnect from '../views/EtsyConnect.vue'
+import ShippingSettings from '../views/ShippingSettings.vue'
 
 const routes = [
     // Auth routes (public)
@@ -26,8 +27,19 @@ const routes = [
     { path: '/products', component: Products },
     { path: '/customers', component: Customers },
     { path: '/settings', component: Settings },
+    { path: '/settings/shipping', component: ShippingSettings },
     { path: '/profile', component: Profile },
     { path: '/etsy-connect', component: EtsyConnect },
+    {
+        path: '/activity-log',
+        name: 'activity-log',
+        component: () => import('../views/ActivityLog.vue'),
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/:pathMatch(.*)*',
+        redirect: '/login'
+    }
 ]
 
 const router = createRouter({

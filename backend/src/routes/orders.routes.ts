@@ -5,8 +5,8 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-// Authentication temporarily disabled for development
-// router.use(authenticateToken);
+// Apply authentication to all routes
+router.use(authenticateToken);
 
 // Validation schemas
 const orderItemSchema = z.object({
@@ -28,9 +28,13 @@ const createOrderSchema = z.object({
  * GET /api/orders
  * Get all orders for the current tenant
  */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
     try {
-        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
         const { status, search, sortBy = 'createdAt', sortOrder = 'desc', customerId } = req.query;
 
         const where: any = {
@@ -91,10 +95,13 @@ router.get('/', async (req: Request, res: Response) => {
  * GET /api/orders/:id
  * Get order details
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
         const order = await prisma.order.findFirst({
             where: {
@@ -128,9 +135,13 @@ router.get('/:id', async (req: Request, res: Response) => {
  * POST /api/orders
  * Create a new order
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', async (req: AuthRequest, res: Response) => {
     try {
-        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
         const data = createOrderSchema.parse(req.body);
 
         // Verify customer belongs to tenant
@@ -187,14 +198,17 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 /**
- * PATCH /api/orders/:id
- * Update order status or details
+ * PATCH /api/orders/:id/status
+ * Update order status
  */
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id/status', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
-        const { status, trackingNumber, notes } = req.body;
+        const { status } = req.body;
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
         // Verify order belongs to tenant
         const existing = await prisma.order.findFirst({
@@ -210,11 +224,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
 
         const order = await prisma.order.update({
             where: { id },
-            data: {
-                ...(status && { status }),
-                ...(trackingNumber && { trackingNumber }),
-                ...(notes !== undefined && { notes })
-            },
+            data: { status },
             include: {
                 customer: true,
                 items: {
@@ -227,8 +237,8 @@ router.patch('/:id', async (req: Request, res: Response) => {
 
         res.json({ order });
     } catch (error) {
-        console.error('Update order error:', error);
-        res.status(500).json({ error: 'Failed to update order' });
+        console.error('Update order status error:', error);
+        res.status(500).json({ error: 'Failed to update order status' });
     }
 });
 

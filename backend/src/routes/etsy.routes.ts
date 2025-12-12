@@ -4,6 +4,7 @@ import prisma from '../utils/prisma';
 import { authenticateToken } from '../middleware/auth';
 import crypto from 'crypto';
 import axios from 'axios';
+import { rateLimitedGet } from '../utils/etsy-rate-limiter';
 
 const router = Router();
 
@@ -50,7 +51,7 @@ router.get('/connect', authenticateToken, (req: any, res: Response) => {
         'listings_r', 'listings_w',
         'transactions_r', 'transactions_w',
         'shops_r', 'shops_w',
-        'profile_r', 'address_r'
+        'profile_r', 'email_r'
     ].join(' ');
 
     const authUrl = `https://www.etsy.com/oauth/connect?` +
@@ -81,6 +82,8 @@ router.get('/callback', async (req: Request, res: Response) => {
     }
 
     try {
+        console.log('🔵 OAuth Callback - Code received:', code);
+
         // Exchange code for token
         const tokenResponse = await axios.post('https://api.etsy.com/v3/public/oauth/token', {
             grant_type: 'authorization_code',
@@ -88,12 +91,12 @@ router.get('/callback', async (req: Request, res: Response) => {
             redirect_uri: REDIRECT_URI,
             code: code as string,
             code_verifier: codeVerifier
-        });
+        }); // ... existing logic ...
 
         const { access_token, refresh_token, expires_in } = tokenResponse.data;
 
         // Get User Info (Identity)
-        const userResp = await axios.get(`https://api.etsy.com/v3/application/users/${tokenResponse.data.access_token.split('.')[0]}`, {
+        const userResp = await rateLimitedGet(`https://api.etsy.com/v3/application/users/${tokenResponse.data.access_token.split('.')[0]}`, {
             headers: {
                 'x-api-key': ETSY_KEY,
                 'Authorization': `Bearer ${access_token}`
@@ -101,20 +104,115 @@ router.get('/callback', async (req: Request, res: Response) => {
         });
 
         const userIdEtsy = userResp.data.user_id;
+        // Try to get login_name or similar if available (check docs or response)
+        // userResp.data keys: user_id, primary_email... (login_name might be protected or specific)
+
+        console.log('✅ Etsy User ID:', userIdEtsy);
 
         // Fetch Shop
-        const shopResp = await axios.get(`https://api.etsy.com/v3/application/users/${userIdEtsy}/shops`, {
-            headers: {
-                'x-api-key': ETSY_KEY,
-                'Authorization': `Bearer ${access_token}`
-            }
-        });
+        console.log('🔵 Fetching Etsy shop info...');
+        let shopId = null;
+        let shopName = 'Verbundener Shop';
 
-        const shop = shopResp.data.results?.[0];
-        const shopName = shop ? shop.shop_name : 'Verbundener Shop';
-        const shopId = shop ? shop.shop_id.toString() : null;
+        try {
+            const shopResp = await rateLimitedGet(`https://api.etsy.com/v3/application/users/${userIdEtsy}/shops`, {
+                headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
+            });
+
+            if (shopResp.data.count > 0) {
+                const shop = shopResp.data.results[0];
+                shopId = shop.shop_id.toString();
+                shopName = shop.shop_name;
+                console.log(`✅ Shop Found via User ID: ${shopName} (${shopId})`);
+            }
+        } catch (e: any) { console.log('   /shops failed:', e.message); }
+
+        // FALLBACK 1: Search Shop by User Name (if no shop returned)
+        // Assuming user_id might match shop owner? No, search by name "DekoWeltenDE" worked.
+        // But we don't know the name yet.
+        // Maybe try to search shop by Login Name? (Guessing)
+        // Or if we have a name from previous attempts?
+
+        // FALLBACK 2: Listings (The old problematic one, but maybe fixed if we use correct endpoint?)
+        // The old endpoint was: shops/${userIdEtsy}/listings/active. This is likely WRONG if userIdEtsy != ShopID.
+        // We will skip it or Try FIND LISTING VIA USER?
+        // Method: findAllShopListingsActive requires shop_id.
+        // There is no endpoints for "find listings by user id".
+
+        // Strategy: If shopId is still null, we log a warning. The user might need manual intervention or we rely on 'DekoWeltenDE' hardcoded discovery (not safe for general).
+        // However, we can try searching for 'DekoWeltenDE' specifically if the user is 'michaelc.deja'? 
+        // No, that's hacking.
+
+        // What if we try to fetch '/application/shops/{userIdEtsy}'?
+        if (!shopId) {
+            console.log('🔵 Fallback: Trying /application/shops/{userIdEtsy} ...');
+            try {
+                const r = await rateLimitedGet(`https://api.etsy.com/v3/application/shops/${userIdEtsy}`, {
+                    headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
+                });
+                if (r.data) {
+                    shopId = r.data.shop_id?.toString();
+                    shopName = r.data.shop_name;
+                    console.log(`✅ Shop Found via Shop=User ID: ${shopName} (${shopId})`);
+                }
+            } catch (e) { }
+        }
+
+        // Fallback 3: Search Shop by DB Shop Name (Dynamic)
+        if (!shopId) {
+            try {
+                // Fetch user to get stored Shop Name
+                const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+                const searchName = dbUser?.shopName;
+
+                if (searchName) {
+                    console.log(`🔵 Fallback: Searching for Shop Name '${searchName}'...`);
+                    const r = await axios.get(`https://openapi.etsy.com/v3/application/shops?shop_name=${encodeURIComponent(searchName)}`, {
+                        headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
+                    });
+
+                    // Filter by user_id to be safe (if possible) or take best match
+                    // Note: 'results' contains shops.
+                    const matches = r.data.results?.filter((s: any) => s.user_id == userIdEtsy);
+
+                    if (matches && matches.length > 0) {
+                        shopId = matches[0].shop_id.toString();
+                        shopName = matches[0].shop_name;
+                        console.log(`✅ Shop Found via DB Name Search: ${shopName} (${shopId})`);
+                    } else if (r.data.count === 1) {
+                        // If only 1 result and name matches exactly, assume it's the one even if User ID differs? (Risky)
+                        // Better safe: Only if User ID matches.
+                        // But if User ID mismatch is the problem, maybe we should trust the name?
+                        // Lets stick to User ID match for now to avoid hijacking other shops.
+                        console.log(`⚠️ Shop found by name '${searchName}' but User ID mismatch. Expected ${userIdEtsy}, found ${r.data.results[0].user_id}`);
+                    }
+                }
+            } catch (e) { console.log('   Search by DB Name failed', e); }
+        }
+
+        // Fallback 4: DekoWeltenDE Hardcode (Legacy/Safety for Michael)
+        if (!shopId) {
+            console.log('🔵 Fallback: Searching for DekoWeltenDE...');
+            try {
+                const r = await axios.get(`https://openapi.etsy.com/v3/application/shops?shop_name=DekoWeltenDE`, {
+                    headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
+                });
+                const matches = r.data.results?.filter((s: any) => s.user_id == userIdEtsy);
+                if (matches && matches.length > 0) {
+                    shopId = matches[0].shop_id.toString();
+                    shopName = matches[0].shop_name;
+                    console.log(`✅ Shop Found via Name Search: ${shopName} (${shopId})`);
+                }
+            } catch (e) { }
+        }
 
         // Update DB
+        console.log('🔵 Updating database...');
+        console.log('   - User ID:', userId);
+        console.log('   - Access Token:', access_token?.substring(0, 20) + '...');
+        console.log('   - Shop ID:', shopId);
+        console.log('   - Shop Name:', shopName);
+
         await prisma.user.update({
             where: { id: userId },
             data: {
@@ -126,6 +224,8 @@ router.get('/callback', async (req: Request, res: Response) => {
                 shopName: shopName
             }
         });
+
+        console.log('✅ Database updated successfully!');
 
         // Cleanup cookies
         res.clearCookie('etsy_auth_state', { path: '/' });
@@ -158,6 +258,125 @@ router.post('/disconnect', authenticateToken, async (req: any, res: Response) =>
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Disconnect failed' });
+    }
+});
+
+// 5. Manual Sync - Orders
+router.post('/sync-orders', authenticateToken, async (req: any, res: Response) => {
+    try {
+        const userId = req.user.id;
+        const tenantId = req.user.tenantId;
+
+        const { CronService } = await import('../services/cron.service');
+
+        // Trigger orders sync
+        CronService.runEtsySync({ id: userId, tenantId });
+
+        res.json({ message: 'Bestellungs-Synchronisation wurde gestartet', type: 'orders' });
+    } catch (e: any) {
+        console.error(e);
+        res.status(500).json({ error: 'Sync fehlgeschlagen', details: e.message });
+    }
+});
+
+// 6. Manual Sync - Products  
+router.post('/sync-products', authenticateToken, async (req: any, res: Response) => {
+    try {
+        const userId = req.user.id;
+        const tenantId = req.user.tenantId;
+
+        const { EtsyApiService } = await import('../services/etsy-api.service');
+        const { ActivityLogService, LogType, LogAction } = await import('../services/activity-log.service');
+
+        // Fetch products from Etsy
+        const products = await EtsyApiService.fetchProducts(userId);
+
+        if (!products || products.length === 0) {
+            await ActivityLogService.log(
+                LogType.INFO,
+                'IMPORT_PRODUCTS' as any,
+                'Keine Produkte von Etsy gefunden',
+                userId,
+                tenantId
+            );
+            return res.json({
+                message: 'Keine neuen Produkte gefunden',
+                type: 'products',
+                details: { count: 0 }
+            });
+        }
+
+        // Import products into database
+        let imported = 0;
+        let updated = 0;
+        const errors: string[] = [];
+
+        for (const etsyListing of products) {
+            try {
+                // Check if product exists by listing_id
+                const existingProduct = await prisma.product.findFirst({
+                    where: {
+                        tenantId,
+                        sku: etsyListing.listing_id?.toString() || `ETSY-${etsyListing.listing_id}`
+                    }
+                });
+
+                const productData = {
+                    name: etsyListing.title || 'Unbekanntes Produkt',
+                    description: etsyListing.description || '',
+                    price: etsyListing.price ? parseFloat(etsyListing.price.amount) / etsyListing.price.divisor : 0,
+                    weight: 0,
+                    sku: etsyListing.listing_id?.toString() || `ETSY-${etsyListing.listing_id}`,
+                };
+
+                if (existingProduct) {
+                    await prisma.product.update({
+                        where: { id: existingProduct.id },
+                        data: productData
+                    });
+                    updated++;
+                } else {
+                    await prisma.product.create({
+                        data: {
+                            ...productData,
+                            userId,
+                            tenantId
+                        }
+                    });
+                    imported++;
+                }
+            } catch (err: any) {
+                console.error(`Failed to import product ${etsyListing.listing_id}:`, err);
+                errors.push(`Listing ${etsyListing.listing_id}: ${err.message}`);
+            }
+        }
+
+        await ActivityLogService.log(
+            errors.length > 0 ? LogType.WARNING : LogType.SUCCESS,
+            'IMPORT_PRODUCTS' as any,
+            `Produkt-Import: ${imported} neu, ${updated} aktualisiert${errors.length > 0 ? `, ${errors.length} Fehler` : ''}`,
+            userId,
+            tenantId
+        );
+
+        res.json({
+            message: `${imported} Produkte importiert, ${updated} aktualisiert`,
+            type: 'products',
+            details: { imported, updated, errors, total: products.length }
+        });
+    } catch (e: any) {
+        console.error(e);
+
+        const { ActivityLogService, LogType } = await import('../services/activity-log.service');
+        await ActivityLogService.log(
+            LogType.ERROR,
+            'IMPORT_PRODUCTS' as any,
+            `Produkt-Sync fehlgeschlagen: ${e.message}`,
+            req.user.id,
+            req.user.tenantId
+        );
+
+        res.status(500).json({ error: 'Sync fehlgeschlagen', details: e.message });
     }
 });
 

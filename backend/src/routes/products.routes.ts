@@ -1,20 +1,12 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
 import { ProductsController } from '../controllers/products.controller';
 
 const router = Router();
+const prisma = new PrismaClient();
 
-// GET /api/products
-router.get('/', async (req, res) => {
-    // For now we keep the list logic inline or move it to Controller later if needed.
-    // The user requirement focused on Create/Update/Get(Details).
-    // Let's defer List to controller for consistency? 
-    // Actually, the new Controller managed Create/Update/Detail. 
-    // Existing List logic is fine, but let's see. 
-    // To minimize risk, I will replace the Create/Update/GetDetail routes.
-
-    // ... EXISTING LIST LOGIC START ...
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+// GET /api/products - List all products with filtering
+router.get('/', async (req: Request, res: Response) => {
     try {
         // Use tenantId from authenticated token
         const tenantId = req.user?.tenantId;
@@ -52,49 +44,28 @@ router.get('/', async (req, res) => {
         console.error('Get products error:', error);
         res.status(500).json({ error: 'Failed to fetch products' });
     }
-    // ... EXISTING LIST LOGIC END ...
 });
 
-// GET /api/products/:id
+// GET /api/products/:id - Get product details
 router.get('/:id', ProductsController.getProduct);
 
-// POST /api/products
+// POST /api/products - Create new product
 router.post('/', ProductsController.createProduct);
 
-// PATCH /api/products/:id
-// Standard in this app seems to be PATCH for updates.
+// PATCH /api/products/:id - Update product
 router.patch('/:id', ProductsController.updateProduct);
 
-/**
- * DELETE /api/products/:id
- * Deactivate a product (soft delete)
- */
-router.delete('/:id', async (req, res) => {
-    // Keep existing delete logic inline for now as it wasn't requested to change?
-    // Or move it? Let's keep it inline to minimize diff noise unless necessary.
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
-
+// DELETE /api/products/:id - Delete product
+router.delete('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { force } = req.query;
-        const tenantId = (req.headers['x-tenant-id'] as string) || 'default-tenant';
+        const { permanent } = req.query;
 
-        console.log(`Delete request for product ${id}, force=${force}, type=${typeof force}`);
-
-        // Verify product belongs to tenant
-        const existing = await prisma.product.findFirst({
-            where: {
-                id,
-                tenantId: tenantId
-            }
-        });
-
-        if (!existing) {
-            return res.status(404).json({ error: 'Product not found' });
+        if (!id) {
+            return res.status(400).json({ error: 'Product ID is required' });
         }
 
-        if (String(force) === 'true') {
+        if (permanent === 'true') {
             console.log('Executing hard delete...');
             // Hard delete
             await prisma.product.delete({
