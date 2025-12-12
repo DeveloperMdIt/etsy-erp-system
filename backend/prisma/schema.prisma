@@ -28,10 +28,29 @@ model User {
   updatedAt DateTime      @updatedAt
   settings  UserSettings?
   products  Product[]
+  labelProfiles LabelProfile[]
 
   @@index([tenantId])
   @@map("users")
 }
+
+model LabelProfile {
+  id          String   @id @default(uuid())
+  name        String   // e.g. "DHL", "Deutsche Post"
+  printerName String
+  format      String   // e.g. "A6", "4x6"
+  layoutJson  String? // JSON string for custom layout
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("label_profiles")
+}
+
 
 model UserSettings {
   id     String @id @default(uuid())
@@ -57,6 +76,15 @@ model UserSettings {
   deutschePostClientSecret  String? // API Client Secret
   deutschePostWalletBalance Float?  @default(0) // Cached wallet balance
   deutschePostEnabled       Boolean @default(false) // Enable/Disable integration
+
+  // Printer Settings
+  printerInvoice        String?
+  formatInvoice         String? @default("A4")
+  printerDeliveryNote   String?
+  formatDeliveryNote    String? @default("A4")
+  printerLabel          String?
+  formatLabel           String? @default("A6")
+
 
   // Label Layout Settings
   labelLogoPath    String? // Path to uploaded logo
@@ -154,6 +182,7 @@ model Product {
   userId            String
   user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   tenantId          String
+  etsyListingId     String?              // Etsy Listing ID for linking
   sku               String
   gtin              String?
   type              String               @default("SIMPLE")
@@ -186,6 +215,7 @@ model Product {
   @@index([userId])
   @@index([tenantId])
   @@index([sku])
+  @@index([etsyListingId])
   @@index([gtin])
   @@index([isActive])
   @@map("products")
@@ -194,17 +224,18 @@ model Product {
 model Order {
   id               String            @id @default(uuid())
   tenantId         String
-  orderNumber      String            @unique // Internal: "BO-2025-0001"
-  externalOrderId  String? // External: Etsy/Amazon Order ID
-  platform         String? // "ETSY", "AMAZON", "MANUAL", etc.
+  orderNumber      String            // Removed @unique, added composite below
+  externalOrderId  String?
+  platform         String? 
   customerId       String
   status           OrderStatus       @default(OPEN)
   shippingCost     Float
   totalPrice       Float
-  shippingProvider ShippingProvider?
+  shippingProvider String?
   trackingNumber   String?
   shippedAt        DateTime?
   notes            String?
+  isSyncedToEtsy   Boolean           @default(true) // True = Clean, False = Pending Push
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   documents        Document[]
@@ -215,6 +246,8 @@ model Order {
   @@index([tenantId])
   @@index([status])
   @@index([externalOrderId])
+  @@index([isSyncedToEtsy])
+  @@unique([tenantId, orderNumber]) // Unique per tenant
   @@map("orders")
 }
 
@@ -255,7 +288,7 @@ model Document {
   tenantId       String
   orderId        String?
   type           DocumentType
-  documentNumber String       @unique
+  documentNumber String       // Removed @unique
   filePath       String
   createdAt      DateTime     @default(now())
   order          Order?       @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -263,6 +296,7 @@ model Document {
   @@index([tenantId])
   @@index([orderId])
   @@index([type])
+  @@unique([tenantId, documentNumber]) // Unique per tenant
   @@map("documents")
 }
 

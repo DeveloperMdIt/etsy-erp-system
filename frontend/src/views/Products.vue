@@ -56,7 +56,9 @@ const fetchProducts = async () => {
     products.value = response.data
   } catch (err: any) {
     error.value = err.message
-    notifications.value?.show('error', 'Fehler', 'Produkte konnten nicht geladen werden')
+    if (notifications && notifications.show) {
+        notifications.show('error', 'Fehler', 'Produkte konnten nicht geladen werden')
+    }
   } finally {
     loading.value = false
   }
@@ -73,7 +75,7 @@ const openEditModalNew = async (product: Product) => {
     editingProduct.value = res.data
     showProductForm.value = true
   } catch (err: any) {
-    notifications.value?.show('error', 'Fehler', 'Produkt konnte nicht geladen werden')
+    if (notifications && notifications.show) notifications.show('error', 'Fehler', 'Produkt konnte nicht geladen werden')
   }
 }
 
@@ -85,18 +87,18 @@ const handleProductSave = async (productData: any) => {
     if (editingProduct.value?.id) {
       // Update
       await axios.put(`/api/products/${editingProduct.value.id}`, productData)
-      notifications.value?.show('success', 'Erfolgreich', 'Produkt wurde aktualisiert')
+      if (notifications && notifications.show) notifications.show('success', 'Erfolgreich', 'Produkt wurde aktualisiert')
     } else {
       // Create
       await axios.post('/api/products', { ...productData, tenantId })
-      notifications.value?.show('success', 'Erfolgreich', 'Produkt wurde erstellt')
+      if (notifications && notifications.show) notifications.show('success', 'Erfolgreich', 'Produkt wurde erstellt')
     }
     
     showProductForm.value = false
     editingProduct.value = null
     await fetchProducts()
   } catch (err: any) {
-    notifications.value?.show('error', 'Fehler', err.response?.data?.error || 'Speichern fehlgeschlagen')
+    if (notifications && notifications.show) notifications.show('error', 'Fehler', err.response?.data?.error || 'Speichern fehlgeschlagen')
   } finally {
     saving.value = false
   }
@@ -128,13 +130,13 @@ const deleteProduct = async (productId: string) => {
   try {
     const url = isHardDelete ? `/api/products/${productId}?force=true` : `/api/products/${productId}`
     await axios.delete(url)
-    notifications.value?.show('success', 'Erfolgreich', isHardDelete ? 'Produkt wurde endgültig gelöscht' : 'Produkt wurde deaktiviert')
+    if (notifications && notifications.show) notifications.show('success', 'Erfolgreich', isHardDelete ? 'Produkt wurde endgültig gelöscht' : 'Produkt wurde deaktiviert')
     await fetchProducts()
     if (selectedProduct.value?.id === productId) {
       selectedProduct.value = null
     }
   } catch (err: any) {
-    notifications.value?.show('error', 'Fehler', err.response?.data?.message || 'Produkt konnte nicht gelöscht werden')
+    if (notifications && notifications.show) notifications.show('error', 'Fehler', err.response?.data?.message || 'Produkt konnte nicht gelöscht werden')
   }
 }
 
@@ -165,12 +167,12 @@ const saveProduct = async () => {
     }
 
     await axios.patch(`/api/products/${editingProduct.value.id}`, payload)
-    notifications.value?.show('success', 'Erfolgreich', 'Produkt wurde aktualisiert')
+    if (notifications && notifications.show) notifications.show('success', 'Erfolgreich', 'Produkt wurde aktualisiert')
     editingProduct.value = null
     await fetchProducts()
   } catch (err: any) {
     console.error(err)
-    notifications.value?.show('error', 'Fehler', err.response?.data?.error || 'Produkt konnte nicht gespeichert werden')
+    if (notifications && notifications.show) notifications.show('error', 'Fehler', err.response?.data?.error || 'Produkt konnte nicht gespeichert werden')
   } finally {
     saving.value = false
   }
@@ -181,10 +183,10 @@ const toggleProductStatus = async (product: Product) => {
     await axios.patch(`/api/products/${product.id}`, {
       isActive: !product.isActive
     })
-    notifications.value?.show('success', 'Erfolgreich', `Produkt ist jetzt ${!product.isActive ? 'aktiv' : 'inaktiv'}`)
+    if (notifications && notifications.show) notifications.show('success', 'Erfolgreich', `Produkt ist jetzt ${!product.isActive ? 'aktiv' : 'inaktiv'}`)
     await fetchProducts()
   } catch (err: any) {
-    notifications.value?.show('error', 'Fehler', 'Status konnte nicht geändert werden')
+    if (notifications && notifications.show) notifications.show('error', 'Fehler', 'Status konnte nicht geändert werden')
   }
 }
 
@@ -268,67 +270,69 @@ onMounted(fetchProducts)
 
 <template>
   <div class="px-4 sm:px-6 lg:px-8">
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-xl font-semibold text-gray-900">Produkte</h1>
-        <p class="mt-2 text-sm text-gray-700">Produktkatalog mit allen Details aus Etsy.</p>
+    <div class="sticky top-16 z-30 bg-gray-100 pb-4 pt-4 -mt-4">
+      <div class="sm:flex sm:items-center">
+        <div class="sm:flex-auto">
+          <h1 class="text-xl font-semibold text-gray-900">Produkte</h1>
+          <p class="mt-2 text-sm text-gray-700">Produktkatalog mit allen Details aus Etsy.</p>
+        </div>
+        <div class="mt-4 sm:mt-0 sm:ml-16 flex gap-3">
+          <button @click="openCreateModal" type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Neues Produkt
+          </button>
+          <button @click="fetchProducts" type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+            Aktualisieren
+          </button>
+        </div>
       </div>
-      <div class="mt-4 sm:mt-0 sm:ml-16 flex gap-3">
-        <button @click="openCreateModal" type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-          <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Neues Produkt
-        </button>
-        <button @click="fetchProducts" type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-          Aktualisieren
-        </button>
-      </div>
-    </div>
 
-    <!-- Search and Controls -->
-    <div class="mt-4 flex flex-col sm:flex-row gap-4">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Suche nach SKU oder Titel..."
-        class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2 border"
-      />
+      <!-- Search and Controls -->
+      <div class="mt-4 flex flex-col sm:flex-row gap-4">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Suche nach SKU oder Titel..."
+          class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2 border"
+        />
 
-      <select
-        v-model="filterStatus"
-        @change="fetchProducts"
-        class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2 border bg-white"
-      >
-        <option value="all">Alle anzeigen</option>
-        <option value="active">Nur Aktive</option>
-        <option value="inactive">Nur Inaktive</option>
-      </select>
-      
-      <div class="flex gap-2">
-        <button
-          @click="toggleViewMode"
-          class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        <select
+          v-model="filterStatus"
+          @change="fetchProducts"
+          class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2 border bg-white"
         >
-          <svg v-if="viewMode === 'grid'" class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          <svg v-else class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-          </svg>
-          {{ viewMode === 'grid' ? 'Liste' : 'Kacheln' }}
-        </button>
+          <option value="all">Alle anzeigen</option>
+          <option value="active">Nur Aktive</option>
+          <option value="inactive">Nur Inaktive</option>
+        </select>
+        
+        <div class="flex gap-2">
+          <button
+            @click="toggleViewMode"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg v-if="viewMode === 'grid'" class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <svg v-else class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            {{ viewMode === 'grid' ? 'Liste' : 'Kacheln' }}
+          </button>
 
-        <button
-          @click="toggleSortOrder"
-          class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path v-if="sortOrder === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
-          </svg>
-          SKU {{ sortOrder === 'asc' ? '↑' : '↓' }}
-        </button>
+          <button
+            @click="toggleSortOrder"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path v-if="sortOrder === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+            </svg>
+            SKU {{ sortOrder === 'asc' ? '↑' : '↓' }}
+          </button>
+        </div>
       </div>
     </div>
 

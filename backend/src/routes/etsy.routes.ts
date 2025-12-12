@@ -15,7 +15,7 @@ const REDIRECT_URI = 'http://localhost:3001/api/etsy/callback';
 const FRONTEND_URL = 'http://localhost:5174/etsy-connect';
 
 // 1. Status Check
-router.get('/status', authenticateToken, async (req: any, res: Response) => {
+router.get('/status', authenticateToken as any, async (req: any, res: Response) => {
     try {
         const userId = req.user.id; // Correct property
 
@@ -36,7 +36,7 @@ router.get('/status', authenticateToken, async (req: any, res: Response) => {
 });
 
 // 2. Init OAuth
-router.get('/connect', authenticateToken, (req: any, res: Response) => {
+router.get('/connect', authenticateToken as any, (req: any, res: Response) => {
     // Generate State & Challenge
     const state = crypto.randomBytes(16).toString('hex');
     const codeVerifier = crypto.randomBytes(32).toString('base64url');
@@ -51,7 +51,9 @@ router.get('/connect', authenticateToken, (req: any, res: Response) => {
         'listings_r', 'listings_w',
         'transactions_r', 'transactions_w',
         'shops_r', 'shops_w',
-        'profile_r', 'email_r'
+        'address_r', 'billing_r',
+        'profile_r', 'email_r',
+        'favorites_r'
     ].join(' ');
 
     const authUrl = `https://www.etsy.com/oauth/connect?` +
@@ -94,6 +96,7 @@ router.get('/callback', async (req: Request, res: Response) => {
         }); // ... existing logic ...
 
         const { access_token, refresh_token, expires_in } = tokenResponse.data;
+        console.log('🔵 Token Response Data:', JSON.stringify(tokenResponse.data, null, 2));
 
         // Get User Info (Identity)
         const userResp = await rateLimitedGet(`https://api.etsy.com/v3/application/users/${tokenResponse.data.access_token.split('.')[0]}`, {
@@ -242,7 +245,7 @@ router.get('/callback', async (req: Request, res: Response) => {
 });
 
 // 4. Disconnect
-router.post('/disconnect', authenticateToken, async (req: any, res: Response) => {
+router.post('/disconnect', authenticateToken as any, async (req: any, res: Response) => {
     try {
         await prisma.user.update({
             where: { id: req.user.id },
@@ -262,15 +265,23 @@ router.post('/disconnect', authenticateToken, async (req: any, res: Response) =>
 });
 
 // 5. Manual Sync - Orders
-router.post('/sync-orders', authenticateToken, async (req: any, res: Response) => {
+router.post('/sync-orders', authenticateToken as any, async (req: any, res: Response) => {
     try {
         const userId = req.user.id;
         const tenantId = req.user.tenantId;
 
         const { CronService } = await import('../services/cron.service');
+        const { default: ImportStatusService } = await import('../services/import-status.service');
 
-        // Trigger orders sync
-        CronService.runEtsySync({ id: userId, tenantId });
+        // Reset status before starting
+        ImportStatusService.reset(tenantId);
+        ImportStatusService.start(tenantId, 0, 'Initialisiere Synchronisation...');
+
+        // Run in background so we can return response immediately and let frontend poll
+        CronService.runEtsySync({ id: userId, tenantId }).catch(err => {
+            console.error("Background Sync Failed:", err);
+            ImportStatusService.error(tenantId, err.message);
+        });
 
         res.json({ message: 'Bestellungs-Synchronisation wurde gestartet', type: 'orders' });
     } catch (e: any) {
@@ -280,103 +291,35 @@ router.post('/sync-orders', authenticateToken, async (req: any, res: Response) =
 });
 
 // 6. Manual Sync - Products  
-router.post('/sync-products', authenticateToken, async (req: any, res: Response) => {
+router.post('/sync-products', authenticateToken as any, async (req: any, res: Response) => {
     try {
         const userId = req.user.id;
         const tenantId = req.user.tenantId;
 
-        const { EtsyApiService } = await import('../services/etsy-api.service');
+        const { CronService } = await import('../services/cron.service');
         const { ActivityLogService, LogType, LogAction } = await import('../services/activity-log.service');
 
-        // Fetch products from Etsy
-        const products = await EtsyApiService.fetchProducts(userId);
-
-        if (!products || products.length === 0) {
-            await ActivityLogService.log(
-                LogType.INFO,
-                'IMPORT_PRODUCTS' as any,
-                'Keine Produkte von Etsy gefunden',
-                userId,
-                tenantId
-            );
-            return res.json({
-                message: 'Keine neuen Produkte gefunden',
-                type: 'products',
-                details: { count: 0 }
-            });
-        }
-
-        // Import products into database
-        let imported = 0;
-        let updated = 0;
-        const errors: string[] = [];
-
-        for (const etsyListing of products) {
-            try {
-                // Check if product exists by listing_id
-                const existingProduct = await prisma.product.findFirst({
-                    where: {
-                        tenantId,
-                        sku: etsyListing.listing_id?.toString() || `ETSY-${etsyListing.listing_id}`
-                    }
-                });
-
-                const productData = {
-                    name: etsyListing.title || 'Unbekanntes Produkt',
-                    description: etsyListing.description || '',
-                    price: etsyListing.price ? parseFloat(etsyListing.price.amount) / etsyListing.price.divisor : 0,
-                    weight: 0,
-                    sku: etsyListing.listing_id?.toString() || `ETSY-${etsyListing.listing_id}`,
-                };
-
-                if (existingProduct) {
-                    await prisma.product.update({
-                        where: { id: existingProduct.id },
-                        data: productData
-                    });
-                    updated++;
-                } else {
-                    await prisma.product.create({
-                        data: {
-                            ...productData,
-                            userId,
-                            tenantId
-                        }
-                    });
-                    imported++;
-                }
-            } catch (err: any) {
-                console.error(`Failed to import product ${etsyListing.listing_id}:`, err);
-                errors.push(`Listing ${etsyListing.listing_id}: ${err.message}`);
-            }
-        }
-
+        // Log Start
         await ActivityLogService.log(
-            errors.length > 0 ? LogType.WARNING : LogType.SUCCESS,
+            LogType.INFO,
             'IMPORT_PRODUCTS' as any,
-            `Produkt-Import: ${imported} neu, ${updated} aktualisiert${errors.length > 0 ? `, ${errors.length} Fehler` : ''}`,
+            'Produkt-Import im Hintergrund gestartet...',
             userId,
             tenantId
         );
 
+        // Run in background (Fire & Forget)
+        CronService.runProductSync({ id: userId, tenantId }).catch(e => console.error(e));
+
         res.json({
-            message: `${imported} Produkte importiert, ${updated} aktualisiert`,
+            message: 'Produkt-Import wurde im Hintergrund gestartet.',
             type: 'products',
-            details: { imported, updated, errors, total: products.length }
+            details: { count: 0, background: true }
         });
+
     } catch (e: any) {
         console.error(e);
-
-        const { ActivityLogService, LogType } = await import('../services/activity-log.service');
-        await ActivityLogService.log(
-            LogType.ERROR,
-            'IMPORT_PRODUCTS' as any,
-            `Produkt-Sync fehlgeschlagen: ${e.message}`,
-            req.user.id,
-            req.user.tenantId
-        );
-
-        res.status(500).json({ error: 'Sync fehlgeschlagen', details: e.message });
+        res.status(500).json({ error: 'Sync Start fehlgeschlagen', details: e.message });
     }
 });
 

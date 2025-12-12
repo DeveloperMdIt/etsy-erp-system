@@ -299,11 +299,19 @@ router.post('/label/create', authenticateToken, async (req: AuthRequest, res: Re
         // Sync to Etsy if enabled
         if (settings.etsySyncEnabled && order.platform === 'ETSY' && order.externalOrderId) {
             try {
-                await etsyTrackingService.syncTrackingToEtsy(
-                    userId,
-                    order.externalOrderId,
-                    labelResponse.trackingNumber
-                );
+                // Determine tenantId from request
+                const tenantId = req.user?.tenantId;
+                if (tenantId) {
+                    await etsyTrackingService.syncTrackingToEtsy(
+                        tenantId,
+                        userId,
+                        order.externalOrderId,
+                        labelResponse.trackingNumber,
+                        'Deutsche Post'
+                    );
+                } else {
+                    console.warn('Etsy sync skipped: No tenantId found in request.');
+                }
             } catch (error) {
                 console.error('Etsy sync failed (non-critical):', error);
             }

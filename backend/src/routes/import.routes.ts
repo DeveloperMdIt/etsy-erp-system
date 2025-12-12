@@ -22,8 +22,12 @@ if (!fs.existsSync('uploads')) {
 }
 
 // GET /api/import/status
-router.get('/status', (req, res) => {
-    res.json(ImportStatusService.get());
+router.get('/status', (req: any, res) => {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    res.json(ImportStatusService.get(tenantId));
 });
 
 // POST /api/import/etsy-orders

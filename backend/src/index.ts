@@ -20,6 +20,7 @@ import shippingRoutes from './routes/shipping.routes';
 import settingsRoutes from './routes/settings.routes';
 import logsRoutes from './routes/logs.routes';
 import debugRoutes from './routes/debug.routes';
+import labelRoutes from './routes/label.routes';
 
 import cookieParser from 'cookie-parser';
 import etsyRoutes from './routes/etsy.routes';
@@ -43,6 +44,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/etsy', etsyRoutes);
 app.use('/api/logs', logsRoutes);
 app.use('/api/debug', debugRoutes);
+app.use('/api/labels', labelRoutes);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

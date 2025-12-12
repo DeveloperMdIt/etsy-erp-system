@@ -2,11 +2,14 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../utils/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { OrderStatus } from '@prisma/client';
+import { EtsyTrackingService } from '../services/etsy-tracking.service';
 
 const router = Router();
+const etsyTrackingService = new EtsyTrackingService();
 
 // Apply authentication to all routes
-router.use(authenticateToken);
+router.use(authenticateToken as any);
 
 // Validation schemas
 const orderItemSchema = z.object({
@@ -239,6 +242,78 @@ router.patch('/:id/status', async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Update order status error:', error);
         res.status(500).json({ error: 'Failed to update order status' });
+    }
+});
+
+/**
+ * PUT /api/orders/:id/tracking
+ * Update tracking information manually
+ */
+router.put('/:id/tracking', async (req: any, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { trackingNumber, carrier, notifyEtsy } = req.body;
+        const tenantId = req.user?.tenantId;
+        const userId = req.user?.id; // Needed for Etsy sync config check
+
+        if (!tenantId || !userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        if (!trackingNumber) {
+            return res.status(400).json({ error: 'Tracking number is required' });
+        }
+
+        const order = await prisma.order.findFirst({
+            where: { id, tenantId }
+        });
+
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const updatedOrder = await prisma.order.update({
+            where: { id },
+            data: {
+                trackingNumber,
+                status: OrderStatus.SHIPPED, // Assume shipped if tracking allowed
+                shippedAt: new Date(),
+                isSyncedToEtsy: false // Default to false (pending sync)
+            }
+        });
+
+        // Sync to Etsy if requested
+        if (notifyEtsy && order.platform === 'ETSY' && order.externalOrderId) {
+            try {
+                // Determine carrier code/name for Etsy
+                const carrierName = carrier || 'DHL';
+
+                console.log(`[Manual Tracking (Route)] Calling syncTrackingToEtsy... Tenant: ${tenantId}, User: ${userId}, ExtID: ${order.externalOrderId}`);
+                await etsyTrackingService.syncTrackingToEtsy(
+                    tenantId,
+                    userId,
+                    order.externalOrderId, // Valid Etsy Receipt ID
+                    trackingNumber,
+                    carrierName
+                );
+                console.log(`[Manual Tracking (Route)] Synced ${trackingNumber} (${carrierName}) to Etsy for Order ${order.externalOrderId}`);
+
+                // If successful, mark as synced
+                await prisma.order.update({
+                    where: { id },
+                    data: { isSyncedToEtsy: true }
+                });
+
+            } catch (syncErr: any) {
+                console.error(`[Manual Tracking (Route)] Failed to sync to Etsy:`, syncErr);
+                // Remains isSyncedToEtsy: false, will be picked up by Sync Button / Cron
+            }
+        }
+
+        res.json({ order: updatedOrder });
+    } catch (error) {
+        console.error('Update tracking error:', error);
+        res.status(500).json({ error: 'Failed to update tracking' });
     }
 });
 

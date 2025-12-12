@@ -1,15 +1,20 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { ProductsController } from '../controllers/products.controller';
 
 const router = Router();
 const prisma = new PrismaClient();
 
+// Apply auth middleware to all routes
+router.use(authenticateToken as any);
+
 // GET /api/products - List all products with filtering
 router.get('/', async (req: Request, res: Response) => {
     try {
+        const user = (req as AuthRequest).user;
         // Use tenantId from authenticated token
-        const tenantId = req.user?.tenantId;
+        const tenantId = user?.tenantId;
         if (!tenantId) {
             return res.status(400).json({ error: 'Tenant ID missing in token' });
         }

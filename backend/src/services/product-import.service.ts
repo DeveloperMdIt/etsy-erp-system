@@ -99,7 +99,7 @@ export class ProductCatalogImportService {
 
         // Phase 1: Scan for Max SKU in CSV
         console.log('Starting Phase 1: Scanning CSV for existing SKUs...');
-        ImportStatusService.start(0, 'Scanning CSV for SKUs...');
+        ImportStatusService.start(tenantId, 0, 'Scanning CSV for SKUs...');
 
         const csvMaxSku = await this.scanForMaxSku(filePath);
         console.log(`Phase 1 Complete. Found Max SKU in CSV: ${csvMaxSku}`);
@@ -142,17 +142,17 @@ export class ProductCatalogImportService {
                 .pipe(csv())
                 .on('data', (data) => results.push(data))
                 .on('error', (error) => {
-                    ImportStatusService.error(error.message);
+                    ImportStatusService.error(tenantId, error.message);
                     reject(error);
                 })
                 .on('end', async () => {
                     try {
-                        ImportStatusService.start(results.length, 'Importing products...');
+                        ImportStatusService.start(tenantId, results.length, 'Importing products...');
                         let currentProgress = 0;
 
                         for (const row of results) {
                             try {
-                                ImportStatusService.increment(`Importing ${row['TITEL']?.substring(0, 30)}...`);
+                                ImportStatusService.increment(tenantId, `Importing ${row['TITEL']?.substring(0, 30)}...`);
                                 // DEBUG LOG
                                 console.log(`Processing Row: ${row['TITEL']} | SKU: ${row['BESTANDSEINHEIT']}`);
 
@@ -175,7 +175,7 @@ export class ProductCatalogImportService {
                             currentProgress++;
                         }
 
-                        ImportStatusService.complete(`Imported ${productsCreated} new, updated ${productsUpdated} products.`);
+                        ImportStatusService.complete(tenantId, `Imported ${productsCreated} new, updated ${productsUpdated} products.`);
 
                         resolve({
                             success: true,

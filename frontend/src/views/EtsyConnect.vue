@@ -213,81 +213,80 @@ const triggerSync = async (type: 'orders' | 'products') => {
     showSyncModal.value = true;
     syncStatus.value = 'loading';
     syncModalTitle.value = type === 'orders' ? 'Bestellungen werden synchronisiert' : 'Produkte werden synchronisiert';
-    syncModalMessage.value = 'Bitte warten Sie, während die Daten von Etsy abgerufen werden... Das kann einen Moment dauern.';
-    syncDetails.value = 'Starte Synchronisation...';
-    
-    const startTime = new Date();
+    syncModalMessage.value = 'Initialisiere Synchronisation...';
+    syncDetails.value = '';
     
     try {
         const endpoint = type === 'orders' ? '/api/etsy/sync-orders' : '/api/etsy/sync-products';
         await axios.post(endpoint);
         
-        // Start Polling for Result
+        let pollCount = 0;
+        
+        // Start Polling /api/import/status
         const pollInterval = setInterval(async () => {
              if (!showSyncModal.value) {
                  clearInterval(pollInterval);
                  return;
              }
+             
+             pollCount++;
 
              try {
-                 const logsRes = await axios.get('/api/logs?limit=10');
-                 const logs = logsRes.data.logs || [];
+                 const statusRes = await axios.get('/api/import/status');
+                 const status = statusRes.data;
                  
-                 // Look for relevant logs after start time
-                 const recentLogs = logs.filter((l: any) => new Date(l.createdAt) >= startTime);
+                 // Update UI with current status
+                 if (status.message) {
+                     syncModalMessage.value = status.message;
+                 }
                  
-                 // Check for Completion Signals
-                 const successLog = recentLogs.find((l: any) => 
-                    (type === 'orders' && (l.action === 'IMPORT_ORDERS' || l.action === 'SYNC_ORDERS_SUCCESS')) ||
-                    (type === 'products' && (l.action === 'IMPORT_PRODUCTS' || l.action === 'SYNC_PRODUCTS_SUCCESS'))
-                 );
-                 
-                 const errorLog = recentLogs.find((l: any) => 
-                    l.action === 'SYNC_ORDERS_FAILED' || l.action === 'SYNC_PRODUCTS_FAILED' || l.type === 'ERROR'
-                 );
-
-                 // Update progress with latest relevant log if not finished
-                 if (!successLog && !errorLog && recentLogs.length > 0) {
-                     // Since logs are likely sorted desc by default (check API), the first one is newest
-                     const latestLog = recentLogs[0];
-                     if (latestLog && latestLog.details) {
-                         syncModalMessage.value = latestLog.details;
-                     }
+                 // Show progress bar or text? For now just text details
+                 if (status.state === 'PROCESSING') {
+                     syncDetails.value = `Fortschritt: ${status.progress}% (${status.current}/${status.total})`;
                  }
 
-                 if (successLog) {
+                 if (status.state === 'COMPLETED') {
                      clearInterval(pollInterval);
                      syncStatus.value = 'success';
                      syncModalTitle.value = 'Synchronisation erfolgreich';
-                     syncModalMessage.value = successLog.details;
-                     syncDetails.value = JSON.stringify(successLog.metadata || {}, null, 2);
+                     syncModalMessage.value = status.message || 'Vorgang abgeschlossen.';
+                     syncDetails.value = '';
                      isSyncing.value = false;
-                 } else if (errorLog) {
+                     
+                     // Refresh page or data after short delay
+                 } else if (status.state === 'ERROR') {
                      clearInterval(pollInterval);
                      syncStatus.value = 'error';
                      syncModalTitle.value = 'Synchronisation fehlgeschlagen';
-                     syncModalMessage.value = errorLog.details;
-                     syncDetails.value = JSON.stringify(errorLog.metadata || {}, null, 2);
+                     syncModalMessage.value = status.message || status.error || 'Ein unbekannter Fehler ist aufgetreten.';
+                     syncDetails.value = status.error || '';
                      isSyncing.value = false;
-                 } else {
-                     // Update info if any intermediate logs (optional)
-                     // syncDetails.value = 'Warte auf Ergebnis...';
+                 } else if (status.state === 'IDLE' && pollCount > 5) {
+                     // If it goes back to IDLE quickly or was never started?
+                     // Usually IDLE means not running. If we just started it, it should be PROCESSING.
+                     // But maybe it finished very fast?
+                     // Or maybe backend didn't set it?
+                     // Lets give it a few polls before assuming finished if IDLE.
+                     // Actually, if we just triggered it, it might take a ms to switch to PROCESSING.
+                     // If it stays IDLE for 5 seconds, maybe it failed to start?
                  }
+                 
              } catch (e) {
                  console.error('Polling error', e);
              }
-        }, 2000);
+        }, 1000);
 
-        // Timeout after 60s
+        // Timeout after 120s
         setTimeout(() => {
             if (isSyncing.value) {
                 clearInterval(pollInterval);
                 isSyncing.value = false;
-                syncStatus.value = 'success'; // Assume success or just timeout
-                syncModalTitle.value = 'Synchronisation läuft im Hintergrund';
-                syncModalMessage.value = 'Die Synchronisation dauert länger als erwartet. Bitte prüfen Sie später das Ereignis-Protokoll.';
+                // Don't show success if we timed out
+                syncStatus.value = 'error'; 
+                syncModalTitle.value = 'Zeitüberschreitung';
+                syncModalMessage.value = 'Die Synchronisation antwortet nicht mehr. Bitte prüfen Sie das Ereignis-Protokoll.';
             }
-        }, 60000);
+        }, 120000);
 
     } catch (e: any) {
         console.error('Sync trigger failed', e);

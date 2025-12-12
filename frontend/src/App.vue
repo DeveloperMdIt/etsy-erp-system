@@ -52,7 +52,7 @@ const logout = () => {
 <template>
   <div class="min-h-screen bg-gray-100 font-sans text-gray-900">
     <!-- Navigation - Only show when authenticated -->
-    <nav v-if="isAuthenticated && !isPublicRoute" class="bg-white shadow-sm">
+    <nav v-if="isAuthenticated && !isPublicRoute" class="bg-white shadow-sm sticky top-0 z-40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex">

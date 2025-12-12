@@ -94,6 +94,13 @@ export class CronService {
                         await ActivityLogService.log(LogType.INFO, LogAction.SYNC_ORDERS_SUCCESS, 'Keine neuen Bestellungen gefunden.', user.id, user.tenantId);
                     }
 
+                    // 3. Push Local Updates (Tracking, Status) to Etsy
+                    try {
+                        await etsyImportService.pushUpdatesToEtsy(user.tenantId, user.id);
+                    } catch (pushErr: any) {
+                        console.error(`[Cron] Failed to push updates for user ${user.id}:`, pushErr);
+                    }
+
                     // 2. Sync Products (Optional)
                     try {
                         const products = await EtsyApiService.fetchProducts(user.id);
@@ -111,6 +118,32 @@ export class CronService {
             console.error('[Cron] Global Sync Error:', error);
         } finally {
             isImportRunning = false;
+        }
+    }
+
+    static async runProductSync(user: { id: string, tenantId: string }) {
+        console.log(`[Cron] Starting Product Sync for User ${user.id}...`);
+        try {
+            const { EtsyImportService } = await import('./etsy-import.service');
+            const service = new EtsyImportService();
+            const result = await service.importProductsFromApi(user.id, user.tenantId);
+
+            await ActivityLogService.log(
+                result.errors.length > 0 ? LogType.WARNING : LogType.SUCCESS,
+                LogAction.IMPORT_PRODUCTS,
+                `Produkt-Import Hintergund: ${result.imported} neu, ${result.updated} aktualisiert.`,
+                user.id,
+                user.tenantId
+            );
+        } catch (error: any) {
+            console.error('[Cron] Product Sync Failed:', error);
+            await ActivityLogService.log(
+                LogType.ERROR,
+                LogAction.IMPORT_PRODUCTS,
+                `Produkt-Import fehlgeschlagen: ${error.message}`,
+                user.id,
+                user.tenantId
+            );
         }
     }
 }

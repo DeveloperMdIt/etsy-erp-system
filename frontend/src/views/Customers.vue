@@ -7,12 +7,16 @@ interface Customer {
   customerNumber?: string
   firstName: string
   lastName: string
-// ...
+  email: string
+  street: string
+  addressAddition?: string
+  postalCode: string
+  city: string
   country: string
   _count?: {
     orders: number
   }
-  orders?: Order[]
+  orders?: any[]
   createdAt: string
 }
 
@@ -142,55 +146,71 @@ const translateStatus = (status: string) => {
   }
   return map[status] || status
 }
+
+// Order Detail Modal Logic
+const selectedOrder = ref<any>(null)
+const showOrderModal = ref(false)
+
+const openOrderDetails = (order: any) => {
+    selectedOrder.value = order
+    showOrderModal.value = true
+}
+
+const closeOrderDetails = () => {
+    selectedOrder.value = null
+    showOrderModal.value = false
+}
 </script>
 
 <template>
   <div class="px-4 sm:px-6 lg:px-8">
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-xl font-semibold text-gray-900">Kunden</h1>
-        <p class="mt-2 text-sm text-gray-700">Kundenverwaltung mit Bestellhistorie.</p>
+    <div class="sticky top-16 z-30 bg-gray-100 pb-4 pt-4 -mt-4">
+      <div class="sm:flex sm:items-center">
+        <div class="sm:flex-auto">
+          <h1 class="text-xl font-semibold text-gray-900">Kunden</h1>
+          <p class="mt-2 text-sm text-gray-700">Kundenverwaltung mit Bestellhistorie.</p>
+        </div>
+        <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+          <button @click="fetchCustomers" type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
+            Aktualisieren
+          </button>
+        </div>
       </div>
-      <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-        <button @click="fetchCustomers" type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
-          Aktualisieren
-        </button>
-      </div>
-    </div>
 
-    <!-- Search and Controls -->
-    <div class="mt-4 flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 rounded-lg">
-      <input
-        v-model="searchQuery"
-        @input="handleSearch"
-        type="text"
-        placeholder="Suche nach Nr., Name, E-Mail..."
-        class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2 border"
-      />
-      
-      <div class="flex gap-2">
-         <select v-model="sortBy" @change="fetchCustomers" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
-          <option value="createdAt">Datum</option>
-          <option value="customerNumber">Kundennr.</option>
-          <option value="lastName">Nachname</option>
-        </select>
+      <!-- Search and Controls -->
+      <div class="mt-4 flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <input
+          v-model="searchQuery"
+          @input="handleSearch"
+          type="text"
+          placeholder="Suche nach Nr., Name, E-Mail..."
+          class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2 border"
+        />
+        
+        <div class="flex gap-2">
+           <select v-model="sortBy" @change="fetchCustomers" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
+            <option value="createdAt">Datum</option>
+            <option value="customerNumber">Kundennr.</option>
+            <option value="lastName">Nachname</option>
+          </select>
 
-        <button @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; fetchCustomers()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
-          {{ sortOrder === 'asc' ? '↑' : '↓' }}
-        </button>
+          <button @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; fetchCustomers()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+            {{ sortOrder === 'asc' ? '↑' : '↓' }}
+          </button>
 
-        <button
-          @click="toggleViewMode"
-          class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          <svg v-if="viewMode === 'grid'" class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          <svg v-else class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-          </svg>
-          {{ viewMode === 'grid' ? 'Liste' : 'Kacheln' }}
-        </button>
+          <button
+            @click="toggleViewMode"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg v-if="viewMode === 'grid'" class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <svg v-else class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            {{ viewMode === 'grid' ? 'Liste' : 'Kacheln' }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -330,113 +350,79 @@ const translateStatus = (status: string) => {
 
           <template v-else-if="selectedCustomer">
             <!-- View Mode -->
-            <div class="space-y-3">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Name</p>
-                <p class="text-lg text-gray-900">{{ selectedCustomer.firstName }} {{ selectedCustomer.lastName }}</p>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-gray-500">E-Mail</p>
-                <p class="text-lg text-gray-900">{{ selectedCustomer.email }}</p>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-gray-500">Adresse</p>
-                <p class="text-lg text-gray-900">
-                  {{ selectedCustomer.street }}<br>
-                  <span v-if="selectedCustomer.addressAddition">{{ selectedCustomer.addressAddition }}<br></span>
-                  {{ selectedCustomer.postalCode }} {{ selectedCustomer.city }}<br>
-                  {{ selectedCustomer.country }}
-                </p>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-gray-500">Bestellungen</p>
-                <button 
-                  @click="toggleOrders"
-                  class="text-lg text-indigo-600 hover:text-indigo-800 font-medium hover:underline cursor-pointer"
-                >
-                  {{ selectedCustomer.orders?.length || selectedCustomer._count?.orders || 0 }} Bestellung(en)
-                </button>
-              </div>
-
-              <!-- Orders List (Expandable) -->
-              <div v-if="showOrders && selectedCustomer.orders && selectedCustomer.orders.length > 0" class="border-t border-gray-200 pt-3">
-                <h4 class="text-sm font-semibold text-gray-900 mb-3">Bestellungen</h4>
-                <div class="space-y-3">
-                  <div 
-                    v-for="order in selectedCustomer.orders" 
-                    :key="order.id"
-                    class="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                  >
-                    <!-- Order Header -->
-                    <div class="flex justify-between items-start mb-3">
-                      <div>
-                        <p class="text-sm font-semibold text-gray-900">Bestellung #{{ order.orderNumber }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ formatDate(order.createdAt) }}</p>
-                      </div>
-                      <div class="text-right">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
-                          :class="{
-                            'bg-yellow-100 text-yellow-800': order.status === 'pending',
-                            'bg-green-100 text-green-800': order.status === 'paid',
-                            'bg-blue-100 text-blue-800': order.status === 'shipped',
-                            'bg-gray-100 text-gray-800': order.status === 'delivered',
-                            'bg-red-100 text-red-800': order.status === 'cancelled'
-                          }"
-                        >
-                          {{ translateStatus(order.status) }}
-                        </span>
-                      </div>
-                    </div>
-
-                    <!-- Order Items -->
-                    <div v-if="order.items && order.items.length > 0" class="space-y-2 mb-3">
-                      <div 
-                        v-for="item in order.items" 
-                        :key="item.id"
-                        class="flex items-center gap-3 bg-white p-2 rounded border border-gray-100"
-                      >
-                        <!-- Product Image -->
-                        <div class="flex-shrink-0 h-12 w-12 bg-gray-100 rounded flex items-center justify-center">
-                          <img 
-                            v-if="item.product.imageUrl" 
-                            :src="item.product.imageUrl" 
-                            :alt="item.product.name" 
-                            class="h-12 w-12 object-cover rounded"
-                          />
-                          <svg v-else class="h-6 w-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                          </svg>
-                        </div>
-
-                        <!-- Product Info -->
-                        <div class="flex-1 min-w-0">
-                          <p class="text-xs font-medium text-gray-900 truncate">{{ item.product.name }}</p>
-                          <p class="text-xs text-gray-500">SKU: {{ item.product.sku }}</p>
-                        </div>
-
-                        <!-- Quantity & Price -->
-                        <div class="text-right">
-                          <p class="text-xs text-gray-500">{{ item.quantity }}x {{ formatPrice(item.price) }}</p>
-                          <p class="text-sm font-semibold text-gray-900">{{ formatPrice(item.quantity * item.price) }}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Order Total -->
-                    <div class="border-t border-gray-200 pt-2 flex justify-between items-center">
-                      <span class="text-sm font-medium text-gray-700">Gesamt</span>
-                      <span class="text-lg font-bold text-gray-900">{{ formatPrice(order.totalPrice) }}</span>
+            <div class="space-y-6">
+              <!-- Grid Layout for Basic Info -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p class="text-sm font-medium text-gray-500">Name</p>
+                    <p class="text-lg text-gray-900">{{ selectedCustomer.firstName }} {{ selectedCustomer.lastName }}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-500">E-Mail</p>
+                    <p class="text-lg text-gray-900 break-all">{{ selectedCustomer.email }}</p>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <p class="text-sm font-medium text-gray-500">Adresse</p>
+                    <div class="bg-gray-50 p-3 rounded text-gray-900 mt-1">
+                      {{ selectedCustomer.street }}<br>
+                      <span v-if="selectedCustomer.addressAddition">{{ selectedCustomer.addressAddition }}<br></span>
+                      {{ selectedCustomer.postalCode }} {{ selectedCustomer.city }}<br>
+                      {{ selectedCustomer.country }}
                     </div>
                   </div>
-                </div>
               </div>
 
-              <div v-if="showOrders && (!selectedCustomer.orders || selectedCustomer.orders.length === 0)" class="border-t border-gray-200 pt-3">
-                <p class="text-sm text-gray-500 italic">Keine Bestellungen vorhanden</p>
-              </div>
+              <!-- Orders Section -->
               <div>
-                <p class="text-sm font-medium text-gray-500">Angelegt am</p>
-                <p class="text-lg text-gray-900">{{ formatDate(selectedCustomer.createdAt) }}</p>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-medium text-gray-900">Bestellungen</h3>
+                    <button 
+                        @click="toggleOrders"
+                        class="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                        {{ showOrders ? 'Verbergen' : 'Anzeigen' }} ({{ selectedCustomer.orders?.length || selectedCustomer._count?.orders || 0 }})
+                    </button>
+                </div>
+
+                <!-- Orders Table -->
+                <div v-if="showOrders" class="border rounded-md overflow-hidden">
+                    <div v-if="selectedCustomer.orders && selectedCustomer.orders.length > 0" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nr.</th>
+                                    <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                    <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betrag</th>
+                                    <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aktion</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr v-for="order in selectedCustomer.orders" :key="order.id" class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ order.orderNumber }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{{ formatDate(order.createdAt) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ formatPrice(order.totalPrice) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                        :class="{
+                                            'bg-yellow-100 text-yellow-800': order.status === 'OPEN' || order.status === 'pending',
+                                            'bg-green-100 text-green-800': order.status === 'SHIPPED' || order.status === 'shipped',
+                                            'bg-red-100 text-red-800': order.status === 'CANCELLED' || order.status === 'cancelled'
+                                        }">
+                                        {{ translateStatus(order.status) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
+                                        <button @click="openOrderDetails(order)" class="text-indigo-600 hover:text-indigo-900">Details</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div v-else class="p-4 text-center text-sm text-gray-500">
+                        Keine Bestellungen geladen oder vorhanden.
+                    </div>
+                </div>
               </div>
             </div>
           </template>
@@ -461,6 +447,69 @@ const translateStatus = (status: string) => {
           </template>
         </div>
       </div>
+    </div>
+    <!-- Order Detail Modal (Nested) -->
+    <div v-if="showOrderModal && selectedOrder" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-[60]" @click="closeOrderDetails">
+        <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" @click.stop>
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">Bestellung {{ selectedOrder.orderNumber }}</h3>
+                <button @click="closeOrderDetails" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="px-6 py-4 space-y-6">
+                <!-- Status & Tracking -->
+                <div class="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
+                    <div>
+                        <span class="text-sm text-gray-500">Status</span>
+                        <div class="font-medium mt-1">{{ translateStatus(selectedOrder.status) }}</div>
+                    </div>
+                     <div>
+                        <span class="text-sm text-gray-500">Datum</span>
+                        <div class="font-medium mt-1">{{ formatDate(selectedOrder.createdAt) }}</div>
+                    </div>
+                     <div v-if="selectedOrder.trackingNumber">
+                        <span class="text-sm text-gray-500">Tracking</span>
+                        <div class="font-medium mt-1">{{ selectedOrder.trackingNumber }}</div>
+                    </div>
+                </div>
+
+                <!-- Items -->
+                <div>
+                     <h4 class="text-lg font-medium text-gray-900 mb-2">Artikel</h4>
+                     <table class="min-w-full divide-y divide-gray-200 border">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Artikel</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Menge</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Preis</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Gesamt</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                             <tr v-for="item in selectedOrder.items" :key="item.id">
+                                 <td class="px-4 py-3 text-sm text-gray-900">
+                                     <div class="font-medium">{{ item.product.name }}</div>
+                                     <div class="text-xs text-gray-500">{{ item.product.sku }}</div>
+                                 </td>
+                                 <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ item.quantity }}x</td>
+                                 <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatPrice(item.price) }}</td>
+                                 <td class="px-4 py-3 text-sm font-medium text-gray-900 text-right">{{ formatPrice(item.price * item.quantity) }}</td>
+                             </tr>
+                        </tbody>
+                        <tfoot class="bg-gray-50">
+                            <tr>
+                                <td colspan="3" class="px-4 py-3 text-sm font-bold text-gray-900 text-right">Gesamtsumme</td>
+                                <td class="px-4 py-3 text-sm font-bold text-gray-900 text-right">{{ formatPrice(selectedOrder.totalPrice) }}</td>
+                            </tr>
+                        </tfoot>
+                     </table>
+                </div>
+            </div>
+             <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+                <button @click="closeOrderDetails" class="px-4 py-2 bg-white border border-gray-300 rounded shadow-sm text-sm text-gray-700 hover:bg-gray-50">Schließen</button>
+             </div>
+        </div>
     </div>
   </div>
 </template>

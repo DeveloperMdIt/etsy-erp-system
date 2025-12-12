@@ -8,7 +8,10 @@ export class NumberRangeService {
     /**
      * Generate next number based on format and increment counter
      */
-    async generateNumber(type: NumberRangeType, userId: string): Promise<string> {
+    /**
+     * Generate next number based on format and increment counter
+     */
+    async generateNumber(type: NumberRangeType, userId: string, date: Date = new Date()): Promise<string> {
         return await prisma.$transaction(async (tx) => {
             const settings = await tx.userSettings.findUnique({
                 where: { userId },
@@ -55,7 +58,7 @@ export class NumberRangeService {
 
             // Generate the number using the CURRENT value (before increment)
             // Valid pattern: Use 1, then increment to 2 for next time.
-            const number = this.parseFormat(format, current);
+            const number = this.parseFormat(format, current, date);
             console.log(`Generated ${type} number: ${number} (Counter: ${current})`);
 
             // Increment the counter atomically
@@ -80,8 +83,8 @@ export class NumberRangeService {
      * - {DD} = Day (2 digits)
      * - {####} = Counter (number of # = digits, zero-padded)
      */
-    parseFormat(format: string, counter: number): string {
-        const now = new Date();
+    parseFormat(format: string, counter: number, date: Date = new Date()): string {
+        const now = date;
 
         let result = format;
 

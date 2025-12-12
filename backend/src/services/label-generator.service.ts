@@ -6,11 +6,7 @@ import QRCode from 'qrcode';
 /**
  * Label Generator Service
  * 
- * Generates shipping labels in various sizes with:
- * - Company logo
- * - Sender address
- * - Recipient address
- * - Deutsche Post Internetmarke (QR code + tracking)
+ * Generates shipping labels based on a dynamic JSON layout or presets.
  */
 
 interface LabelSize {
@@ -27,6 +23,29 @@ const LABEL_SIZES: Record<string, LabelSize> = {
 
 // Convert mm to points (1mm = 2.83465 points)
 const mmToPoints = (mm: number) => mm * 2.83465;
+
+export interface LabelElement {
+    id: string;
+    type: 'text' | 'image' | 'barcode' | 'qrcode' | 'address_sender' | 'address_recipient';
+    x: number; // in mm
+    y: number; // in mm
+    width?: number; // in mm
+    height?: number; // in mm
+    content?: string; // For static text or variable placeholders like {name}
+    fontSize?: number;
+    fontFamily?: string;
+    fontWeight?: 'bold' | 'normal';
+    align?: 'left' | 'center' | 'right';
+    // Address formatting
+    addressFormat?: 'multiline' | 'singleline';
+    addressSeparator?: string;
+}
+
+export interface LabelLayout {
+    width: number; // mm
+    height: number; // mm
+    elements: LabelElement[];
+}
 
 interface LabelData {
     // Sender
@@ -49,10 +68,9 @@ interface LabelData {
     // Logo
     logoPath?: string;
 
-    // Label size
-    sizePreset?: string;
-    customWidth?: number;
-    customHeight?: number;
+    // Label size / Layout
+    sizePreset?: string; // If using default hardcoded layouts
+    layout?: LabelLayout; // If using custom dynamic layout
 }
 
 export class LabelGeneratorService {
@@ -63,96 +81,41 @@ export class LabelGeneratorService {
         return new Promise((resolve, reject) => {
             try {
                 // Determine label size
-                let size: LabelSize;
-                if (data.sizePreset && LABEL_SIZES[data.sizePreset]) {
-                    size = LABEL_SIZES[data.sizePreset];
-                } else if (data.customWidth && data.customHeight) {
-                    size = { width: data.customWidth, height: data.customHeight };
+                let widthPoints: number;
+                let heightPoints: number;
+
+                if (data.layout) {
+                    widthPoints = mmToPoints(data.layout.width);
+                    heightPoints = mmToPoints(data.layout.height);
+                } else if (data.sizePreset && LABEL_SIZES[data.sizePreset]) {
+                    const size = LABEL_SIZES[data.sizePreset];
+                    widthPoints = mmToPoints(size.width);
+                    heightPoints = mmToPoints(size.height);
                 } else {
-                    size = LABEL_SIZES.A5; // Default
+                    // Default A6
+                    const size = LABEL_SIZES.A6;
+                    widthPoints = mmToPoints(size.width);
+                    heightPoints = mmToPoints(size.height);
                 }
 
                 const doc = new PDFDocument({
-                    size: [mmToPoints(size.width), mmToPoints(size.height)],
-                    margins: { top: 20, bottom: 20, left: 20, right: 20 }
+                    size: [widthPoints, heightPoints],
+                    margins: { top: 0, bottom: 0, left: 0, right: 0 } // No auto margins, we use absolute positioning
                 });
 
                 const stream = fs.createWriteStream(outputPath);
                 doc.pipe(stream);
 
-                // Layout calculations
-                const pageWidth = mmToPoints(size.width);
-                const pageHeight = mmToPoints(size.height);
-                const margin = 20;
-
-                let yPosition = margin;
-
-                // 1. Logo (if provided)
-                if (data.logoPath && fs.existsSync(data.logoPath)) {
-                    try {
-                        const logoHeight = 60;
-                        doc.image(data.logoPath, margin, yPosition, {
-                            fit: [pageWidth - 2 * margin, logoHeight],
-                            align: 'center'
-                        });
-                        yPosition += logoHeight + 20;
-                    } catch (error) {
-                        console.warn('Failed to load logo:', error);
-                    }
+                // --- Rendering Logic ---
+                if (data.layout) {
+                    // Dynamic Rendering based on Layout
+                    this.renderDynamicLayout(doc, data.layout, data);
+                } else {
+                    // Legacy Hardcoded Rendering (Fallback)
+                    this.renderLegacyLayout(doc, widthPoints, heightPoints, data);
                 }
 
-                // 2. Sender (small, top-left)
-                doc.fontSize(8);
-                doc.text(`Absender: ${data.senderName}`, margin, yPosition);
-                yPosition += 12;
-                doc.text(`${data.senderStreet}, ${data.senderPostalCode} ${data.senderCity}`, margin, yPosition);
-                yPosition += 30;
-
-                // 3. Recipient (large, center)
-                doc.fontSize(14);
-                doc.font('Helvetica-Bold');
-                doc.text(data.recipientName, margin, yPosition);
-                yPosition += 20;
-
-                doc.fontSize(12);
-                doc.font('Helvetica');
-                doc.text(data.recipientStreet, margin, yPosition);
-                yPosition += 18;
-
-                doc.fontSize(14);
-                doc.font('Helvetica-Bold');
-                doc.text(`${data.recipientPostalCode} ${data.recipientCity}`, margin, yPosition);
-                yPosition += 25;
-
-                if (data.recipientCountry && data.recipientCountry !== 'Deutschland') {
-                    doc.fontSize(12);
-                    doc.text(data.recipientCountry.toUpperCase(), margin, yPosition);
-                    yPosition += 20;
-                }
-
-                // 4. Tracking Number + QR Code
-                yPosition = pageHeight - margin - 100; // Position at bottom
-
-                // Generate QR code for tracking
-                QRCode.toDataURL(data.trackingNumber, { width: 80 }, (err, url) => {
-                    if (!err && url) {
-                        const qrSize = 80;
-                        doc.image(url, pageWidth - margin - qrSize, yPosition, {
-                            width: qrSize,
-                            height: qrSize
-                        });
-                    }
-
-                    // Tracking number text
-                    doc.fontSize(10);
-                    doc.font('Helvetica');
-                    doc.text('Sendungsnummer:', margin, yPosition + 30);
-                    doc.fontSize(12);
-                    doc.font('Helvetica-Bold');
-                    doc.text(data.trackingNumber, margin, yPosition + 45);
-
-                    doc.end();
-                });
+                doc.end();
 
                 stream.on('finish', () => {
                     console.log('✅ Label PDF generated:', outputPath);
@@ -172,36 +135,147 @@ export class LabelGeneratorService {
     }
 
     /**
-     * Merge label PDF with Deutsche Post Internetmarke PDF
+     * Render dynamic layout elements
      */
-    async mergePDFs(labelPath: string, internetmarkePath: string, outputPath: string): Promise<string> {
-        // TODO: Implement PDF merging using pdf-lib or similar
-        // For now, just return the label path
-        return labelPath;
+    private async renderDynamicLayout(doc: PDFKit.PDFDocument, layout: LabelLayout, data: LabelData) {
+        for (const element of layout.elements) {
+            const x = mmToPoints(element.x);
+            const y = mmToPoints(element.y);
+            const w = element.width ? mmToPoints(element.width) : undefined;
+            const h = element.height ? mmToPoints(element.height) : undefined;
+
+            try {
+                switch (element.type) {
+                    case 'text':
+                    case 'address_sender':
+                    case 'address_recipient':
+                        this.renderTextElement(doc, element, x, y, w, data);
+                        break;
+                    case 'image': // Logo
+                        if (data.logoPath && fs.existsSync(data.logoPath) && w && h) {
+                            doc.image(data.logoPath, x, y, { fit: [w, h], align: 'center' });
+                        }
+                        break;
+                    case 'barcode':
+                        // TODO: Implement barcode generation if needed, usually passed as image or drawn
+                        break;
+                    case 'qrcode':
+                        // Use tracking number for QR
+                        if (data.trackingNumber && w && h) {
+                            const url = await QRCode.toDataURL(data.trackingNumber);
+                            doc.image(url, x, y, { width: w, height: h });
+                        }
+                        break;
+                }
+            } catch (err) {
+                console.warn(`Failed to render element ${element.id}:`, err);
+            }
+        }
     }
 
-    /**
-     * Get label size in points
-     */
-    getLabelSize(preset?: string, customWidth?: number, customHeight?: number): { width: number; height: number } {
-        if (preset && LABEL_SIZES[preset]) {
-            const size = LABEL_SIZES[preset];
-            return {
-                width: mmToPoints(size.width),
-                height: mmToPoints(size.height)
-            };
-        } else if (customWidth && customHeight) {
-            return {
-                width: mmToPoints(customWidth),
-                height: mmToPoints(customHeight)
-            };
+    private renderTextElement(doc: PDFKit.PDFDocument, element: LabelElement, x: number, y: number, w: number | undefined, data: LabelData) {
+        let text = element.content || '';
+
+        // Variable Substitution
+        text = text.replace('{senderName}', data.senderName)
+            .replace('{senderStreet}', data.senderStreet)
+            .replace('{senderCity}', `${data.senderPostalCode} ${data.senderCity}`)
+            .replace('{recipientName}', data.recipientName)
+            .replace('{recipientStreet}', data.recipientStreet)
+            .replace('{recipientCity}', `${data.recipientPostalCode} ${data.recipientCity}`)
+            .replace('{recipientCountry}', data.recipientCountry || '')
+            .replace('{trackingNumber}', data.trackingNumber);
+
+        // Handle special address types if content is empty but type is specific
+        if (!element.content) {
+            if (element.type === 'address_sender') {
+                // Check if singleline format is requested
+                if (element.addressFormat === 'singleline') {
+                    const separator = element.addressSeparator || ', ';
+                    text = `${data.senderName}${separator}${data.senderStreet}${separator}${data.senderPostalCode} ${data.senderCity}`;
+                } else {
+                    text = `${data.senderName}\n${data.senderStreet}\n${data.senderPostalCode} ${data.senderCity}`;
+                }
+            } else if (element.type === 'address_recipient') {
+                // Check if singleline format is requested
+                if (element.addressFormat === 'singleline') {
+                    const separator = element.addressSeparator || ', ';
+                    text = `${data.recipientName}${separator}${data.recipientStreet}${separator}${data.recipientPostalCode} ${data.recipientCity}${data.recipientCountry ? separator + data.recipientCountry.toUpperCase() : ''}`;
+                } else {
+                    text = `${data.recipientName}\n${data.recipientStreet}\n${data.recipientPostalCode} ${data.recipientCity}\n${data.recipientCountry?.toUpperCase() || ''}`;
+                }
+            }
         }
 
-        // Default to A5
-        return {
-            width: mmToPoints(LABEL_SIZES.A5.width),
-            height: mmToPoints(LABEL_SIZES.A5.height)
-        };
+        // Font Settings
+        if (element.fontFamily) doc.font(element.fontFamily); // Standard PDF fonts: Helvetica, Courier, Times
+        else doc.font('Helvetica');
+
+        if (element.fontWeight === 'bold') doc.font('Helvetica-Bold');
+
+        doc.fontSize(element.fontSize || 12);
+
+        doc.text(text, x, y, {
+            width: w,
+            align: element.align || 'left'
+        });
+    }
+
+
+    /**
+     * Legacy Hardcoded Layout (A6 default style)
+     */
+    private renderLegacyLayout(doc: PDFKit.PDFDocument, pageWidth: number, pageHeight: number, data: LabelData) {
+        const margin = 20;
+        let yPosition = margin;
+
+        // 1. Logo (if provided)
+        if (data.logoPath && fs.existsSync(data.logoPath)) {
+            try {
+                const logoHeight = 60;
+                doc.image(data.logoPath, margin, yPosition, {
+                    fit: [pageWidth - 2 * margin, logoHeight],
+                    align: 'center'
+                });
+                yPosition += logoHeight + 20;
+            } catch (error) {
+                console.warn('Failed to load logo:', error);
+            }
+        }
+
+        // 2. Sender (small, top-left)
+        doc.fontSize(8);
+        doc.text(`Absender: ${data.senderName}`, margin, yPosition);
+        yPosition += 12;
+        doc.text(`${data.senderStreet}, ${data.senderPostalCode} ${data.senderCity}`, margin, yPosition);
+        yPosition += 30;
+
+        // 3. Recipient (large, center)
+        doc.fontSize(14);
+        doc.font('Helvetica-Bold');
+        doc.text(data.recipientName, margin, yPosition);
+        yPosition += 20;
+
+        doc.fontSize(12);
+        doc.font('Helvetica');
+        doc.text(data.recipientStreet, margin, yPosition);
+        yPosition += 18;
+
+        doc.fontSize(14);
+        doc.font('Helvetica-Bold');
+        doc.text(`${data.recipientPostalCode} ${data.recipientCity}`, margin, yPosition);
+        yPosition += 25;
+
+        if (data.recipientCountry && data.recipientCountry !== 'Deutschland') {
+            doc.fontSize(12);
+            doc.text(data.recipientCountry.toUpperCase(), margin, yPosition);
+            yPosition += 20;
+        }
+
+        // 4. Tracking Number (Simple Text for now in legacy)
+        doc.fontSize(10);
+        doc.font('Helvetica');
+        doc.text('Sendungsnummer: ' + data.trackingNumber, margin, pageHeight - margin - 20);
     }
 }
 

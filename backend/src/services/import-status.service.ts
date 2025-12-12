@@ -10,65 +10,70 @@ interface ImportStatus {
 }
 
 class ImportStatusService {
-    private status: ImportStatus = {
-        state: 'IDLE',
-        progress: 0,
-        total: 0,
-        current: 0,
-        message: ''
-    };
+    private statuses: Map<string, ImportStatus> = new Map();
 
-    update(update: Partial<ImportStatus>) {
-        this.status = { ...this.status, ...update };
-    }
-
-    start(total: number, message: string = 'Starting import...') {
-        this.status = {
-            state: 'PROCESSING',
-            progress: 0,
-            total,
-            current: 0,
-            message
-        };
-    }
-
-    increment(message?: string) {
-        if (this.status.state !== 'PROCESSING') return;
-
-        this.status.current++;
-        this.status.progress = this.status.total > 0
-            ? Math.round((this.status.current / this.status.total) * 100)
-            : 0;
-
-        if (message) {
-            this.status.message = message;
-        }
-    }
-
-    complete(message: string = 'Import completed successfully') {
-        this.status.state = 'COMPLETED';
-        this.status.progress = 100;
-        this.status.message = message;
-    }
-
-    error(error: string) {
-        this.status.state = 'ERROR';
-        this.status.error = error;
-        this.status.message = `Error: ${error}`;
-    }
-
-    get() {
-        return this.status;
-    }
-
-    reset() {
-        this.status = {
+    private getInitialStatus(): ImportStatus {
+        return {
             state: 'IDLE',
             progress: 0,
             total: 0,
             current: 0,
             message: ''
         };
+    }
+
+    update(tenantId: string, update: Partial<ImportStatus>) {
+        const current = this.statuses.get(tenantId) || this.getInitialStatus();
+        this.statuses.set(tenantId, { ...current, ...update });
+    }
+
+    start(tenantId: string, total: number, message: string = 'Starting import...') {
+        this.statuses.set(tenantId, {
+            state: 'PROCESSING',
+            progress: 0,
+            total,
+            current: 0,
+            message
+        });
+    }
+
+    increment(tenantId: string, message?: string) {
+        const status = this.statuses.get(tenantId);
+        if (!status || status.state !== 'PROCESSING') return;
+
+        status.current++;
+        status.progress = status.total > 0
+            ? Math.round((status.current / status.total) * 100)
+            : 0;
+
+        if (message) {
+            status.message = message;
+        }
+        this.statuses.set(tenantId, status);
+    }
+
+    complete(tenantId: string, message: string = 'Import completed successfully') {
+        const status = this.statuses.get(tenantId) || this.getInitialStatus();
+        status.state = 'COMPLETED';
+        status.progress = 100;
+        status.message = message;
+        this.statuses.set(tenantId, status);
+    }
+
+    error(tenantId: string, error: string) {
+        const status = this.statuses.get(tenantId) || this.getInitialStatus();
+        status.state = 'ERROR';
+        status.error = error;
+        status.message = `Error: ${error}`;
+        this.statuses.set(tenantId, status);
+    }
+
+    get(tenantId: string): ImportStatus {
+        return this.statuses.get(tenantId) || this.getInitialStatus();
+    }
+
+    reset(tenantId: string) {
+        this.statuses.set(tenantId, this.getInitialStatus());
     }
 }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import ManualTrackingModal from '../components/ManualTrackingModal.vue'
 
 interface OrderItem {
   id: string
@@ -45,6 +46,49 @@ const selectedOrder = ref<Order | null>(null)
 const showLabelModal = ref(false)
 const labelOrder = ref<Order | null>(null)
 const creatingLabel = ref(false)
+const showManualTrackingModal = ref(false)
+const manualTrackingOrder = ref<Order | null>(null)
+
+// Sync State
+const isSyncing = ref(false)
+const syncStatus = ref<any>(null)
+let pollInterval: any = null
+
+const startSync = async () => {
+  if (isSyncing.value) return
+  isSyncing.value = true
+  syncStatus.value = { message: 'Starte Synchronisierung...', progress: 0, state: 'PROCESSING' }
+  
+  try {
+    await axios.post('/api/etsy/sync-orders')
+    
+    // Start polling
+    pollInterval = setInterval(async () => {
+      try {
+        const res = await axios.get('/api/import/status')
+        syncStatus.value = res.data
+        
+        if (res.data.state === 'COMPLETED') {
+           clearInterval(pollInterval)
+           isSyncing.value = false
+           await fetchOrders()
+           // Optional: Auto-hide status after 3s
+           setTimeout(() => syncStatus.value = null, 5000)
+        } else if (res.data.state === 'ERROR') {
+           clearInterval(pollInterval)
+           isSyncing.value = false
+           alert('Fehler bei Synchronisierung: ' + res.data.message)
+        }
+      } catch (e) { 
+        console.error('Poll error', e) 
+      }
+    }, 1000)
+    
+  } catch (err: any) {
+    isSyncing.value = false
+    alert('Fehler beim Starten: ' + err.message)
+  }
+}
 
 // Label creation form
 const labelForm = ref({
@@ -125,6 +169,20 @@ const closeLabelModal = () => {
   labelOrder.value = null
 }
 
+const openManualTracking = (order: Order) => {
+  manualTrackingOrder.value = order
+  showManualTrackingModal.value = true
+}
+
+const onManualTrackingSaved = async () => {
+    await fetchOrders()
+    // Refresh selected order if open
+    if (selectedOrder.value) {
+        const updated = orders.value.find(o => o.id === selectedOrder.value?.id)
+        if (updated) selectedOrder.value = updated
+    }
+}
+
 const createDeutschePostLabel = async () => {
   if (!labelOrder.value) return
 
@@ -166,51 +224,97 @@ const formatPrice = (price: number) => {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price)
 }
 
+const getTrackingUrl = (provider: string | undefined, tracking: string) => {
+  if (!provider || !tracking) return '#'
+  // Simple heuristic for DHL/Deutsche Post
+  if (provider.toLowerCase().includes('dhl') || provider.toLowerCase().includes('deutsche post')) {
+    return `https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?piececode=${tracking}`
+  }
+  // Fallback for others or google search
+  return `https://www.google.com/search?q=${provider} tracking ${tracking}`
+}
+
 onMounted(fetchOrders)
 </script>
 
 <template>
   <div class="px-4 sm:px-6 lg:px-8">
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-xl font-semibold text-gray-900">Bestellungen</h1>
-        <p class="mt-2 text-sm text-gray-700">Übersicht aller Bestellungen aus Etsy.</p>
+    <div class="sticky top-16 z-30 bg-gray-100 pb-4 pt-4 -mt-4">
+      <div class="sm:flex sm:items-center">
+        <div class="sm:flex-auto">
+          <h1 class="text-xl font-semibold text-gray-900">Bestellungen</h1>
+          <p class="mt-2 text-sm text-gray-700">Übersicht aller Bestellungen aus Etsy.</p>
+        </div>
+        <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-3">
+          <button 
+            @click="startSync" 
+            :disabled="isSyncing"
+            type="button" 
+            class="inline-flex items-center justify-center rounded-md border border-transparent bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:w-auto disabled:bg-orange-400 disabled:cursor-not-allowed"
+          >
+            <span v-if="isSyncing" class="mr-2">
+              <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
+            {{ isSyncing ? 'Synchronisiere...' : 'Mit Etsy synchronisieren' }}
+          </button>
+          <button @click="fetchOrders" type="button" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
+            Aktualisieren
+          </button>
+        </div>
       </div>
-      <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-        <button @click="fetchOrders" type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
-          Aktualisieren
-        </button>
+      
+      <!-- Sync Progress Banner -->
+      <div v-if="isSyncing && syncStatus" class="mt-4 rounded-md bg-blue-50 p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3 flex-1 md:flex md:justify-between">
+            <p class="text-sm text-blue-700">
+               <span class="font-bold">Synchronisierung läuft:</span> {{ syncStatus.message || 'Verarbeite Daten...' }} 
+               <span v-if="syncStatus.total > 0">({{ syncStatus.current }}/{{ syncStatus.total }})</span>
+            </p>
+            <div v-if="syncStatus.total > 0" class="mt-2 md:mt-0 md:ml-6 w-full md:w-48 bg-blue-200 rounded-full h-2.5 self-center">
+              <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: syncStatus.progress + '%' }"></div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Filters Toolbar -->
-    <div class="mt-4 flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 rounded-lg">
-      <div class="flex-1">
-        <input 
-          v-model="searchQuery" 
-          @input="handleSearch"
-          type="text" 
-          placeholder="Suche nach Best.-Nr. oder Kunden..." 
-          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
-        >
-      </div>
-      <div class="flex gap-4">
-        <select v-model="statusFilter" @change="fetchOrders" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
-          <option value="">Alle Status</option>
-          <option value="OPEN">Offen</option>
-          <option value="SHIPPED">Versendet</option>
-          <option value="CANCELLED">Storniert</option>
-        </select>
-        
-        <select v-model="sortBy" @change="fetchOrders" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
-          <option value="createdAt">Datum</option>
-          <option value="orderNumber">Bestellnummer</option>
-          <option value="totalPrice">Betrag</option>
-        </select>
+      <!-- Filters Toolbar -->
+      <div class="mt-4 flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div class="flex-1">
+          <input 
+            v-model="searchQuery" 
+            @input="handleSearch"
+            type="text" 
+            placeholder="Suche nach Best.-Nr. oder Kunden..." 
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+          >
+        </div>
+        <div class="flex gap-4">
+          <select v-model="statusFilter" @change="fetchOrders" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
+            <option value="">Alle Status</option>
+            <option value="OPEN">Offen</option>
+            <option value="SHIPPED">Versendet</option>
+            <option value="CANCELLED">Storniert</option>
+          </select>
+          
+          <select v-model="sortBy" @change="fetchOrders" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
+            <option value="createdAt">Datum</option>
+            <option value="orderNumber">Bestellnummer</option>
+            <option value="totalPrice">Betrag</option>
+          </select>
 
-        <button @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; fetchOrders()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
-          {{ sortOrder === 'asc' ? '↑' : '↓' }}
-        </button>
+          <button @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; fetchOrders()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+            {{ sortOrder === 'asc' ? '↑' : '↓' }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -388,9 +492,21 @@ onMounted(fetchOrders)
                   <p class="text-sm font-medium text-gray-500">Status</p>
                   <p class="text-sm text-gray-900">{{ statusMap[selectedOrder.status] || selectedOrder.status }}</p>
                 </div>
-                <div v-if="selectedOrder.trackingNumber">
+                <div>
                   <p class="text-sm font-medium text-gray-500">Sendungsnummer</p>
-                  <p class="text-sm text-gray-900 font-mono">{{ selectedOrder.trackingNumber }}</p>
+                  <div v-if="selectedOrder.trackingNumber" class="flex items-center gap-2">
+                      <a :href="getTrackingUrl(selectedOrder.shippingProvider, selectedOrder.trackingNumber)" target="_blank" class="text-sm text-blue-600 hover:underline font-mono">
+                          {{ selectedOrder.trackingNumber }}
+                      </a>
+                      <button @click="openManualTracking(selectedOrder)" class="text-xs text-gray-500 hover:text-gray-700 underline">
+                          Bearbeiten
+                      </button>
+                  </div>
+                  <div v-else>
+                      <button @click="openManualTracking(selectedOrder)" class="text-sm text-blue-600 hover:underline">
+                          + Hinzufügen
+                      </button>
+                  </div>
                 </div>
                 <div v-if="selectedOrder.shippingProvider">
                   <p class="text-sm font-medium text-gray-500">Versanddienstleister</p>
@@ -496,5 +612,11 @@ onMounted(fetchOrders)
         </div>
       </div>
     </div>
+    <ManualTrackingModal 
+      :show="showManualTrackingModal" 
+      :order="manualTrackingOrder" 
+      @close="showManualTrackingModal = false" 
+      @saved="onManualTrackingSaved" 
+    />
   </div>
 </template>

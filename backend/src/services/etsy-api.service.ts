@@ -42,7 +42,41 @@ export class EtsyApiService {
                 }
             }
         );
+        if (response.data) {
+            console.log('🔍 FULL HEADER DUMP:', JSON.stringify(response.headers, null, 2));
+        }
         return response.data.results;
+    }
+
+    /**
+     * Fetch Single Listing Details (Images, Description, etc.)
+     */
+    static async fetchListingDetails(userId: string, listingId: string) {
+        let user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || !user.etsyAccessToken || !user.etsyShopId) {
+            throw new Error('User not connected');
+        }
+
+        try {
+            // Include images in the response
+            const response = await rateLimitedGet(
+                `https://openapi.etsy.com/v3/application/listings/${listingId}?includes=images`,
+                {
+                    headers: {
+                        'x-api-key': ETSY_KEY,
+                        'Authorization': `Bearer ${user.etsyAccessToken}`
+                    }
+                }
+            );
+            if (response.data) {
+                // DEBUG: Log Headers to verify scopes
+                console.log('🔍 Etsy API Headers (Scopes):', response.headers['x-oauth-scopes'] || 'N/A');
+            }
+            return response.data;
+        } catch (error: any) {
+            console.error(`Error fetching listing ${listingId}`, error.response?.data || error.message);
+            return null;
+        }
     }
 
     static async fetchProducts(userId: string) {
