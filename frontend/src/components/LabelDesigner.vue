@@ -152,9 +152,13 @@ const generatePreview = async () => {
     }
 
     try {
+        const token = localStorage.getItem('token')
         const response = await fetch('/api/labels/preview', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({
                 layout: layout.value,
                 testData
