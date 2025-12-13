@@ -21,20 +21,71 @@ const routes = [
     { path: '/setup', component: Setup },
 
     // Protected routes
-    { path: '/', component: Dashboard },
-    { path: '/import', component: ImportOrders },
-    { path: '/orders', component: Orders },
-    { path: '/products', component: Products },
-    { path: '/customers', component: Customers },
-    { path: '/settings', component: Settings },
-    { path: '/settings/shipping', component: ShippingSettings },
-    { path: '/profile', component: Profile },
-    { path: '/etsy-connect', component: EtsyConnect },
+    { path: '/', component: Dashboard, meta: { title: 'Dashboard' } },
+    { path: '/import', component: ImportOrders, meta: { title: 'Import' } },
+    { path: '/orders', component: Orders, meta: { title: 'Bestellungen' } },
+    { path: '/products', component: Products, meta: { title: 'Produkte' } },
+    { path: '/customers', component: Customers, meta: { title: 'Kunden' } },
     {
-        path: '/activity-log',
-        name: 'activity-log',
+        path: '/settings',
+        component: () => import('../views/SettingsOverview.vue'),
+        meta: { title: 'Einstellungen' }
+    },
+    {
+        path: '/settings/config',
+        component: Settings,
+        meta: { title: 'Konfiguration', parent: '/settings' }
+    },
+    {
+        path: '/settings/shipping',
+        component: ShippingSettings,
+        meta: { title: 'Versandwege', parent: '/settings' }
+    },
+    // Nested Settings Pages (Billbee Style)
+    {
+        path: '/settings/profile',
+        component: Profile,
+        meta: { title: 'Profil', parent: '/settings' }
+    },
+    {
+        path: '/settings/import',
+        component: ImportOrders,
+        meta: { title: 'Datenimport', parent: '/settings' }
+    },
+    {
+        path: '/settings/channels',
+        component: EtsyConnect,
+        meta: { title: 'Kanäle', parent: '/settings' }
+    },
+    {
+        path: '/settings/activity-log',
         component: () => import('../views/ActivityLog.vue'),
-        meta: { requiresAuth: true }
+        meta: { title: 'Ereignisse', requiresAuth: true, parent: '/settings' }
+    },
+    {
+        path: '/settings/automation',
+        component: () => import('../views/AutomationRules.vue'),
+        meta: { title: 'Automatisierung', requiresAuth: true, parent: '/settings' }
+    },
+    {
+        path: '/settings/automation/:id',
+        component: () => import('../views/AutomationRuleEditor.vue'),
+        meta: { title: 'Regel bearbeiten', requiresAuth: true, parent: '/settings' }
+    },
+    {
+        path: '/settings/templates/documents',
+        component: () => import('../views/DocumentTemplates.vue'),
+        meta: { title: 'Dokumentvorlagen', parent: '/settings' }
+    },
+    {
+        path: '/settings/templates/emails',
+        component: () => import('../views/EmailTemplates.vue'),
+        meta: { title: 'E-Mail Vorlagen', parent: '/settings' }
+    },
+    {
+        path: '/settings/templates/edit/:type',
+        component: () => import('../views/TemplateEditor.vue'),
+        meta: { title: 'Vorlage bearbeiten', parent: '/settings' }
     },
     {
         path: '/:pathMatch(.*)*',

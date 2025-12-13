@@ -6,7 +6,16 @@
         <h1 class="text-xl font-semibold text-gray-900">Aktivitätenprotokoll</h1>
         <p class="mt-2 text-sm text-gray-700">Eine Liste aller Ereignisse, Synchronisierungen und Systemmeldungen.</p>
       </div>
-      <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-3 flex items-center">
+        <!-- Filter Type -->
+        <select v-model="selectedType" @change="fetchLogs" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+            <option value="">Alle Typen</option>
+            <option value="SUCCESS">Erfolg</option>
+            <option value="ERROR">Fehler</option>
+            <option value="WARNING">Warnung</option>
+            <option value="INFO">Info</option>
+        </select>
+
         <button type="button" @click="fetchLogs" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Aktualisieren</button>
       </div>
     </div>
@@ -25,7 +34,12 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 bg-white">
-                <tr v-for="log in logs" :key="log.id">
+                <tr 
+                    v-for="log in logs" 
+                    :key="log.id" 
+                    class="hover:bg-gray-50 cursor-pointer transition-colors"
+                    @click="openDetails(log)"
+                >
                   <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">{{ formatDate(log.createdAt) }}</td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm">
                     <span :class="getTypeClass(log.type)" class="inline-flex rounded-full px-2 text-xs font-semibold leading-5">
@@ -33,7 +47,7 @@
                     </span>
                   </td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ log.action }}</td>
-                  <td class="px-3 py-4 text-sm text-gray-500 max-w-md truncate" :title="log.details">{{ log.details }}</td>
+                  <td class="px-3 py-4 text-sm text-gray-500 max-w-md truncate" :title="log.details">{{ getShortDetails(log.details) }}</td>
                 </tr>
                 <tr v-if="logs.length === 0">
                     <td colspan="4" class="text-center py-4 text-gray-500">Keine Protokolleinträge gefunden.</td>
@@ -44,6 +58,42 @@
         </div>
       </div>
     </div>
+
+    <!-- Details Modal -->
+    <div v-if="selectedLog" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-y-auto" @click="closeDetails">
+      <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full flex flex-col max-h-[90vh]" @click.stop>
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-lg">
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">Protokoll Details</h3>
+            <p class="text-sm text-gray-500">{{ formatDate(selectedLog.createdAt) }} - {{ selectedLog.action }}</p>
+          </div>
+           <span :class="getTypeClass(selectedLog.type)" class="inline-flex rounded-full px-3 py-1 text-xs font-bold">
+              {{ selectedLog.type }}
+           </span>
+        </div>
+        
+        <div class="p-6 overflow-y-auto font-mono text-xs bg-slate-50">
+            <div class="mb-4">
+                <span class="block font-semibold text-gray-700 mb-1">Raw Details:</span>
+                <pre class="bg-white p-3 border rounded overflow-x-auto whitespace-pre-wrap break-words">{{ formatDetails(selectedLog.details) }}</pre>
+            </div>
+            <div>
+                <span class="block font-semibold text-gray-700 mb-1">Full Object:</span>
+                <pre class="bg-white p-3 border rounded overflow-x-auto">{{ JSON.stringify(selectedLog, null, 2) }}</pre>
+            </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-200 bg-white flex justify-end rounded-b-lg">
+          <button 
+            @click="closeDetails"
+            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 font-medium text-sm border border-gray-300"
+          >
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -60,12 +110,15 @@ interface ActivityLog {
 }
 
 const logs = ref<ActivityLog[]>([]);
+const selectedType = ref('');
+const selectedLog = ref<ActivityLog | null>(null);
 
 const getTypeClass = (type: string) => {
     switch (type) {
         case 'SUCCESS': return 'bg-green-100 text-green-800';
         case 'ERROR': return 'bg-red-100 text-red-800';
         case 'WARNING': return 'bg-yellow-100 text-yellow-800';
+        case 'INFO': return 'bg-blue-100 text-blue-800';
         default: return 'bg-gray-100 text-gray-800';
     }
 };
@@ -76,26 +129,39 @@ const formatDate = (dateStr: string) => {
 
 const fetchLogs = async () => {
     try {
-        // Need to add API endpoint for getting logs.
-        // Assuming GET /api/activity-logs exists or we add it to auth/me?
-        // Or create new routes file. I will add to etsy.routes.ts for now or create generic route.
-        // Implementation Plan said "Helper...".
-        // I will add a simple route in index.ts or new file.
-        // For now, let's assume /api/logs
-        const updatedLogs = await axios.get('/api/logs'); // Need to implement this backend route!
-        logs.value = updatedLogs.data;
+        const params: any = {};
+        if (selectedType.value) params.type = selectedType.value;
+        
+        const response = await axios.get('/api/logs', { params });
+        logs.value = response.data;
     } catch (e) {
         console.error('Failed to fetch logs', e);
-        // Mock data for UI dev if backend fails
-        /*
-        logs.value = [
-            { id: '1', createdAt: new Date().toISOString(), type: 'SUCCESS', action: 'LOGIN', details: 'User logged in' },
-            { id: '2', createdAt: new Date().toISOString(), type: 'INFO', action: 'ETSY_SYNC', details: 'Started auto sync' },
-            { id: '3', createdAt: new Date().toISOString(), type: 'ERROR', action: 'IMPORT_ORDERS', details: 'API Error 500' }
-        ];
-        */
     }
 };
+
+const openDetails = (log: ActivityLog) => {
+    selectedLog.value = log;
+}
+
+const closeDetails = () => {
+    selectedLog.value = null;
+}
+
+const getShortDetails = (details: string) => {
+    if (!details) return '-';
+    // If it's a JSON string, try to parse just the message/title?
+    // For now, just truncate
+    return details.length > 80 ? details.substring(0, 80) + '...' : details;
+}
+
+const formatDetails = (details: string) => {
+    try {
+        const parsed = JSON.parse(details);
+        return JSON.stringify(parsed, null, 2);
+    } catch (e) {
+        return details;
+    }
+}
 
 onMounted(() => {
     fetchLogs();

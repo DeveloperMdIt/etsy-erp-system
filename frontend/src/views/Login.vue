@@ -54,8 +54,15 @@ const login = async () => {
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
     <div class="max-w-md w-full">
       <!-- Logo/Header -->
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-gray-900 mb-2">🛍️ Etsy ERP</h1>
+      <div class="text-center mb-8 flex flex-col items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" class="h-20 w-auto mb-2">
+          <g transform="translate(0,12)">
+            <polygon points="40,0 80,22 80,66 40,88 0,66 0,22" fill="none" stroke="#2563EB" stroke-width="6" stroke-linejoin="round"/>
+            <line x1="40" y1="0" x2="40" y2="88" stroke="#2563EB" stroke-width="6" stroke-linecap="round"/>
+          </g>
+          <text x="120" y="78" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="600" fill="#2563EB">Invent</text>
+          <text x="295" y="78" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="600" fill="#22C55E">ivy</text>
+        </svg>
         <p class="text-gray-600">Shop-Verwaltungssystem</p>
       </div>
 
@@ -116,7 +123,7 @@ const login = async () => {
           <button
             type="submit"
             :disabled="loading"
-            class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="w-full btn-primary py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span v-if="loading" class="flex items-center justify-center">
               <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">

@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticateToken } from '../middleware/auth';
 import { ActivityLogService, LogType, LogAction } from '../services/activity-log.service';
+import { EmailService } from '../services/email.service';
+import crypto from 'crypto';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -54,6 +56,25 @@ router.post('/register', async (req: Request, res: Response) => {
 
             return newUser;
         });
+
+        // Send Welcome Email
+        try {
+            await EmailService.sendMail(
+                email,
+                'Willkommen bei Inventivy!',
+                `
+                <h1>Willkommen, ${firstName || 'Benutzer'}!</h1>
+                <p>Vielen Dank für deine Registrierung bei Inventivy.</p>
+                <p>Dein Shop "${shopName || ''}" wurde erfolgreich angelegt.</p>
+                <p>Du kannst dich jetzt einloggen und loslegen.</p>
+                <br>
+                <p>Viele Grüße,<br>Dein Inventivy Team</p>
+                `
+            );
+        } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+            // Don't fail registration if email fails
+        }
 
         // Generate JWT
         const token = jwt.sign({
@@ -166,6 +187,114 @@ router.get('/me', async (req: Request, res: Response) => {
 router.post('/logout', (req: Request, res: Response) => {
     // With JWT, logout is handled client-side by removing the token
     res.json({ message: 'Logged out successfully' });
+});
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) {
+            // Put extra delay to prevent timing attacks? 
+            // Return success even if user not found to prevent enumeration
+            return res.json({ message: 'If the email exists, a reset link has been sent.' });
+        }
+
+        // Generate token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenHash = await bcrypt.hash(resetToken, SALT_ROUNDS); // Option: hash it in DB
+
+        // Actually, for simplicity in this stack, let's store the plain token or a fast hash? 
+        // Standard practice: Store Hash in DB, send Plain to User.
+        // We defined 'resetPasswordToken' in schema. Let's store the hashed version only if we want to be very secure.
+        // But for this project size, let's store it directly or hash it. 
+        // Let's store the plain token for now to ensure matching works easily without bcrypt issues on comparison if we aren't careful.
+        // BETTER: Store the token as is (it's random enough) OR hash it. 
+        // Let's use the schema: resetPasswordToken
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                resetPasswordToken: resetToken,
+                resetPasswordExpires: new Date(Date.now() + 3600000) // 1 hour
+            }
+        });
+
+        const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}&email=${email}`;
+
+        await EmailService.sendMail(
+            email,
+            'Passwort zurücksetzen',
+            `
+            <h1>Passwort zurücksetzen</h1>
+            <p>Du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt.</p>
+            <p>Klicke auf den folgenden Link, um dein Passwort zurückzusetzen:</p>
+            <a href="${resetLink}">${resetLink}</a>
+            <p>Dieser Link ist 1 Stunde gültig.</p>
+            <p>Falls du das nicht warst, ignoriere diese Email einfach.</p>
+            `
+        );
+
+        res.json({ message: 'If the email exists, a reset link has been sent.' });
+
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ error: 'Failed to process request' });
+    }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req: Request, res: Response) => {
+    try {
+        const { email, token, newPassword } = req.body;
+
+        if (!email || !token || !newPassword) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user ||
+            !user.resetPasswordToken ||
+            user.resetPasswordToken !== token ||
+            !user.resetPasswordExpires ||
+            user.resetPasswordExpires < new Date()
+        ) {
+            return res.status(400).json({ error: 'Invalid or expired token' });
+        }
+
+        // Hash new password
+        const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                passwordHash,
+                resetPasswordToken: null,
+                resetPasswordExpires: null
+            }
+        });
+
+        await EmailService.sendMail(
+            email,
+            'Passwort erfolgreich geändert',
+            `
+            <h1>Passwort geändert</h1>
+            <p>Dein Passwort wurde erfolgreich geändert.</p>
+            <p>Du kannst dich jetzt mit dem neuen Passwort anmelden.</p>
+            `
+        );
+
+        res.json({ message: 'Password reset successful' });
+
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ error: 'Failed to reset password' });
+    }
 });
 
 export default router;

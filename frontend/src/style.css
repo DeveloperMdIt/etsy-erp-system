@@ -1,3 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    .btn-primary {
+        @apply bg-inventivy-blue text-white hover:bg-sidebar-hover px-4 py-2 rounded-md transition-colors font-medium;
+    }
+
+    .btn-success {
+        @apply bg-action-green text-white hover:bg-green-700 px-4 py-2 rounded-md transition-colors font-medium;
+    }
+
+    .btn-secondary {
+        @apply border border-slate-300 text-slate-700 hover:bg-soft-slate px-4 py-2 rounded-md transition-colors font-medium bg-white;
+    }
+
+    .table-header {
+        @apply bg-slate-50 text-text-dark font-semibold border-b border-slate-300;
+    }
+
+    .table-row {
+        @apply hover:bg-indigo-50 border-b border-slate-200 transition-colors;
+    }
+
+    /* Active row override if needed */
+    .table-row-active {
+        @apply bg-indigo-100;
+    }
+}

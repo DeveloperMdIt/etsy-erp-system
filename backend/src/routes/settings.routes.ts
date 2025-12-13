@@ -30,6 +30,10 @@ router.get('/', async (req: Request, res: Response) => {
             }
         });
 
+        if (!user) {
+            return res.status(401).json({ error: 'User not found - please login again' });
+        }
+
         let settings = await prisma.userSettings.findUnique({
             where: { userId },
         });
@@ -91,6 +95,11 @@ router.put('/', async (req: Request, res: Response) => {
             dhlGkpUsername,
             dhlGkpPassword,
             dhlEnabled,
+            dhlEkp,
+            dhlProcedure,
+            dhlParticipation,
+            dhlBillingNrPaket,
+            dhlBillingNrKleinpaket,
 
             // Deutsche Post
             deutschePostUsername,
@@ -99,81 +108,50 @@ router.put('/', async (req: Request, res: Response) => {
             deutschePostClientSecret,
             deutschePostEnabled,
 
-            // Printers (Global)
-            printerInvoice,
-            formatInvoice,
-            printerDeliveryNote,
-            formatDeliveryNote,
-            printerLabel,
-            formatLabel,
-            defaultPrinter,
-            autoPrintEnabled,
-
-            // Printers (Specific - Legacy)
-            printerDeutschePost,
-            printerDHL,
-
-            // Shared Shipping
-            etsySyncEnabled,
-            labelLogoPath,
-            labelCompanyName,
-            labelStreet,
-            labelPostalCode,
-            labelCity,
-            labelCountry,
-            labelPhone,
-            labelSizePreset,
-            labelCustomWidth,
-            labelCustomHeight,
-
-            // Number Formats
-            orderNumberFormat,
-            invoiceNumberFormat,
-            deliveryNoteFormat,
-            supplierOrderFormat,
-            customerNumberFormat,
-            skuPrefix
+            // ... (rest)
         } = req.body;
 
         await prisma.$transaction(async (tx) => {
             // 1. Update User Profile & Label Profiles
-            const userUpdateData: any = {
-                firstName,
-                lastName,
-                shopName
-            };
-
-            if (Array.isArray(labelProfiles)) {
-                // Replace all profiles for simplicity
-                userUpdateData.labelProfiles = {
-                    deleteMany: {},
-                    create: labelProfiles.map((p: any) => ({
-                        name: p.name,
-                        printerName: p.printerName,
-                        format: p.format,
-                        layoutJson: p.layoutJson
-                    }))
-                };
-            }
-
             await tx.user.update({
                 where: { id: userId },
-                data: userUpdateData
+                data: {
+                    firstName,
+                    lastName,
+                    shopName,
+                    // Handle Label Profiles: Delete all and re-create (simplest strategy for now)
+                    labelProfiles: {
+                        deleteMany: {},
+                        create: labelProfiles?.map((p: any) => ({
+                            name: p.name,
+                            printerName: p.printerName,
+                            format: p.format,
+                            layoutJson: p.layoutJson
+                        })) || []
+                    }
+                }
             });
 
             // 2. Update Settings
+            // Check if any Deutsche Post fields are undefined, set defaults if needed or handle nullable
             await tx.userSettings.upsert({
                 where: { userId },
                 create: {
                     userId,
                     dhlGkpUsername,
                     dhlGkpPassword,
-                    dhlEnabled,
+                    dhlEnabled: dhlEnabled || false,
+                    dhlEkp,
+                    dhlProcedure,
+                    dhlParticipation,
+                    dhlBillingNrPaket,
+                    dhlBillingNrKleinpaket,
+
                     deutschePostUsername,
                     deutschePostPassword,
                     deutschePostClientId,
                     deutschePostClientSecret,
-                    deutschePostEnabled,
+                    deutschePostEnabled: deutschePostEnabled || false,
 
                     printerInvoice,
                     formatInvoice,
@@ -182,12 +160,12 @@ router.put('/', async (req: Request, res: Response) => {
                     printerLabel,
                     formatLabel,
                     defaultPrinter,
-                    autoPrintEnabled,
+                    autoPrintEnabled: autoPrintEnabled !== undefined ? autoPrintEnabled : true,
 
                     printerDeutschePost,
                     printerDHL,
 
-                    etsySyncEnabled,
+                    etsySyncEnabled: etsySyncEnabled !== undefined ? etsySyncEnabled : true,
                     labelLogoPath,
                     labelCompanyName,
                     labelStreet,
@@ -196,8 +174,8 @@ router.put('/', async (req: Request, res: Response) => {
                     labelCountry,
                     labelPhone,
                     labelSizePreset,
-                    labelCustomWidth,
-                    labelCustomHeight,
+                    labelCustomWidth: labelCustomWidth ? parseInt(String(labelCustomWidth)) : null,
+                    labelCustomHeight: labelCustomHeight ? parseInt(String(labelCustomHeight)) : null,
 
                     orderNumberFormat,
                     invoiceNumberFormat,
@@ -206,17 +184,23 @@ router.put('/', async (req: Request, res: Response) => {
                     customerNumberFormat,
                     skuPrefix,
 
-                    orderNumberCurrent: req.body.orderNumberCurrent,
-                    invoiceNumberCurrent: req.body.invoiceNumberCurrent,
-                    deliveryNoteCurrent: req.body.deliveryNoteCurrent,
-                    supplierOrderCurrent: req.body.supplierOrderCurrent,
-                    customerNumberCurrent: req.body.customerNumberCurrent,
-                    nextProductId: req.body.nextProductId
+                    orderNumberCurrent: req.body.orderNumberCurrent ? parseInt(String(req.body.orderNumberCurrent)) : 1,
+                    invoiceNumberCurrent: req.body.invoiceNumberCurrent ? parseInt(String(req.body.invoiceNumberCurrent)) : 1,
+                    deliveryNoteCurrent: req.body.deliveryNoteCurrent ? parseInt(String(req.body.deliveryNoteCurrent)) : 1,
+                    supplierOrderCurrent: req.body.supplierOrderCurrent ? parseInt(String(req.body.supplierOrderCurrent)) : 1,
+                    customerNumberCurrent: req.body.customerNumberCurrent ? parseInt(String(req.body.customerNumberCurrent)) : 1,
+                    nextProductId: req.body.nextProductId ? parseInt(String(req.body.nextProductId)) : 1
                 },
                 update: {
                     dhlGkpUsername,
                     dhlGkpPassword,
                     dhlEnabled,
+                    dhlEkp,
+                    dhlProcedure,
+                    dhlParticipation,
+                    dhlBillingNrPaket,
+                    dhlBillingNrKleinpaket,
+
                     deutschePostUsername,
                     deutschePostPassword,
                     deutschePostClientId,
@@ -244,8 +228,8 @@ router.put('/', async (req: Request, res: Response) => {
                     labelCountry,
                     labelPhone,
                     labelSizePreset,
-                    labelCustomWidth,
-                    labelCustomHeight,
+                    labelCustomWidth: labelCustomWidth ? parseInt(String(labelCustomWidth)) : null,
+                    labelCustomHeight: labelCustomHeight ? parseInt(String(labelCustomHeight)) : null,
 
                     orderNumberFormat,
                     invoiceNumberFormat,
@@ -254,12 +238,12 @@ router.put('/', async (req: Request, res: Response) => {
                     customerNumberFormat,
                     skuPrefix,
 
-                    orderNumberCurrent: req.body.orderNumberCurrent,
-                    invoiceNumberCurrent: req.body.invoiceNumberCurrent,
-                    deliveryNoteCurrent: req.body.deliveryNoteCurrent,
-                    supplierOrderCurrent: req.body.supplierOrderCurrent,
-                    customerNumberCurrent: req.body.customerNumberCurrent,
-                    nextProductId: req.body.nextProductId
+                    orderNumberCurrent: req.body.orderNumberCurrent ? parseInt(String(req.body.orderNumberCurrent)) : undefined,
+                    invoiceNumberCurrent: req.body.invoiceNumberCurrent ? parseInt(String(req.body.invoiceNumberCurrent)) : undefined,
+                    deliveryNoteCurrent: req.body.deliveryNoteCurrent ? parseInt(String(req.body.deliveryNoteCurrent)) : undefined,
+                    supplierOrderCurrent: req.body.supplierOrderCurrent ? parseInt(String(req.body.supplierOrderCurrent)) : undefined,
+                    customerNumberCurrent: req.body.customerNumberCurrent ? parseInt(String(req.body.customerNumberCurrent)) : undefined,
+                    nextProductId: req.body.nextProductId ? parseInt(String(req.body.nextProductId)) : undefined
                 }
             });
         });

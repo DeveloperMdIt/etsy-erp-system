@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import axios from 'axios'
 import ManualTrackingModal from '../components/ManualTrackingModal.vue'
 
@@ -90,119 +90,204 @@ const startSync = async () => {
   }
 }
 
-// Label creation form
-const labelForm = ref({
-  productCode: 'BRIEF_KOMPAKT',
-  weight: 50
-})
+// ... (imports)
 
-// Filters & Sorting
+interface ShippingMethod {
+    id: string
+    name: string
+    provider: 'DHL' | 'DEUTSCHE_POST'
+    productCode: string
+    isActive: boolean
+}
+
+const shippingMethods = ref<ShippingMethod[]>([])
+const selectedShippingMethodId = ref<string>('')
+
+const fetchShippingMethods = async () => {
+    try {
+        const res = await axios.get('/api/shipping-methods')
+        shippingMethods.value = res.data.filter((m: any) => m.isActive)
+    } catch (e) {
+        console.error('Error fetching shipping methods', e)
+    }
+}
+
+// Search & Filter State
 const searchQuery = ref('')
 const statusFilter = ref('')
 const sortBy = ref('createdAt')
-const sortOrder = ref('desc')
+const sortOrder = ref<'asc' | 'desc'>('desc')
 
+// Label Form State
+const labelForm = ref({
+    weight: 500,
+    productCode: 'V01PAK' 
+})
+const selectedProvider = ref('DHL') 
+
+// Error Handling
+const labelError = ref<string | null>(null)
+const labelErrorDetails = ref<string | null>(null)
+
+// Status Map
 const statusMap: Record<string, string> = {
-  'OPEN': 'Offen',
-  'SHIPPED': 'Versendet',
-  'CANCELLED': 'Storniert'
+    'OPEN': 'Offen',
+    'IN_PROGRESS': 'In Bearbeitung',
+    'SHIPPED': 'Versendet',
+    'CANCELLED': 'Storniert'
 }
 
-const deutschePostProducts = [
-  { code: 'BRIEF_KOMPAKT', name: 'Brief Kompakt', maxWeight: 50 },
-  { code: 'BRIEF_GROSS', name: 'Brief Groß', maxWeight: 500 },
-  { code: 'BRIEF_MAXI', name: 'Brief Maxi', maxWeight: 1000 },
-  { code: 'WARENPOST', name: 'Warenpost', maxWeight: 1000 }
+// Products (Legacy Fallback)
+const dhlProducts = [
+    { code: 'V01PAK', name: 'DHL Paket (V01PAK)' },
+    { code: 'V53WPAK', name: 'DHL Warenpost (V53WPAK)' }
+]
+const dpProducts = [
+    { code: '10', name: 'Standardbrief' },
+    { code: '20', name: 'Kompaktbrief' },
+    { code: '50', name: 'Maxibrief' }
 ]
 
-let searchTimeout: any
+const currentProducts = computed(() => {
+    return selectedProvider.value === 'DHL' ? dhlProducts : dpProducts
+})
 
 const fetchOrders = async () => {
+  loading.value = true
+  error.value = null
   try {
-    loading.value = true
-    const response = await axios.get('/api/orders', {
-      params: {
-        search: searchQuery.value,
-        status: statusFilter.value || undefined,
-        sortBy: sortBy.value,
-        sortOrder: sortOrder.value
-      }
-    })
+    const params: any = {
+      sort: sortBy.value,
+      order: sortOrder.value
+    }
+    
+    if (searchQuery.value) {
+      params.search = searchQuery.value
+    }
+    
+    if (statusFilter.value) {
+      params.status = statusFilter.value
+    }
+
+    const response = await axios.get('/api/orders', { params })
     orders.value = response.data
   } catch (err: any) {
-    error.value = err.message
+    console.error('Error fetching orders:', err)
+    error.value = 'Fehler beim Laden der Bestellungen: ' + (err.response?.data?.error || err.message)
   } finally {
     loading.value = false
   }
 }
 
 const handleSearch = () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
+    // Debounce could be added here
     fetchOrders()
-  }, 300)
-}
-
-const createLabel = async (orderId: string, type: 'DHL_PAKET' | 'DHL_KLEINPAKET') => {
-  try {
-    await axios.post('/api/shipping/dhl/create-label', {
-      orderId,
-      productType: type
-    })
-    await fetchOrders()
-  } catch (err: any) {
-    alert('Fehler beim Label-Erstellen: ' + (err.response?.data?.message || err.message))
-  }
-}
-
-const openLabelModal = (order: Order) => {
-  labelOrder.value = order
-  showLabelModal.value = true
-  labelForm.value = {
-    productCode: 'BRIEF_KOMPAKT',
-    weight: 50
-  }
 }
 
 const closeLabelModal = () => {
-  showLabelModal.value = false
-  labelOrder.value = null
+    showLabelModal.value = false
+    labelOrder.value = null
+    labelError.value = null
+    labelErrorDetails.value = null
 }
 
 const openManualTracking = (order: Order) => {
-  manualTrackingOrder.value = order
-  showManualTrackingModal.value = true
+    manualTrackingOrder.value = order
+    showManualTrackingModal.value = true
 }
 
-const onManualTrackingSaved = async () => {
-    await fetchOrders()
-    // Refresh selected order if open
-    if (selectedOrder.value) {
-        const updated = orders.value.find(o => o.id === selectedOrder.value?.id)
-        if (updated) selectedOrder.value = updated
-    }
+const onManualTrackingSaved = () => {
+    fetchOrders()
 }
 
-const createDeutschePostLabel = async () => {
+const openLabelModal = async (order: Order) => {
+  labelOrder.value = order
+  showLabelModal.value = true
+  labelError.value = null
+  labelErrorDetails.value = null
+  
+  // Load methods if empty
+  if (shippingMethods.value.length === 0) {
+      await fetchShippingMethods()
+  }
+
+  // Preselect first method if available
+  if (shippingMethods.value.length > 0 && !selectedShippingMethodId.value) {
+      selectedShippingMethodId.value = shippingMethods.value[0].id
+  }
+}
+
+// ... 
+
+const handleCreateLabel = async () => {
   if (!labelOrder.value) return
 
   creatingLabel.value = true
+  labelError.value = null
+  
   try {
-    const response = await axios.post('/api/shipping/label/create', {
-      orderId: labelOrder.value.id,
-      productCode: labelForm.value.productCode,
-      weight: labelForm.value.weight
-    })
+    const selectedMethod = shippingMethods.value.find(m => m.id === selectedShippingMethodId.value)
+    
+    // Prepare Base Payload
+    const payload = {
+        orderId: labelOrder.value.id,
+        weight: labelForm.value.weight,
+        shippingMethodId: selectedMethod?.id
+    }
 
-    alert(`Label erstellt! Tracking: ${response.data.trackingNumber}`)
+    let response;
+    
+    // Fallback logic if no method selected (legacy)
+    if (!selectedMethod) {
+         // Default to DHL Legacy
+         if (selectedProvider.value === 'DHL') {
+            response = await axios.post('/api/shipping/dhl/create-label', { ...payload, productType: labelForm.value.productCode })
+         } else {
+            response = await axios.post('/api/shipping/label/create', { ...payload, productCode: labelForm.value.productCode })
+         }
+    } else {
+        // Use Method-based Logic
+        // Determine Route based on Provider
+        if (selectedMethod.provider === 'DHL') {
+             response = await axios.post('/api/shipping/dhl/create-label', payload)
+        } else {
+             // For Deutsche Post, we might need mapping or update that endpoint too. 
+             // Currently assuming standard fields or refactoring that service later.
+             // For now, mapping method configs to the payload expected by DP service
+             response = await axios.post('/api/shipping/label/create', {
+                 ...payload,
+                 productCode: selectedMethod.productCode 
+             })
+        }
+    }
+
+    // Success Handling
+    const tracking = response.data.shipmentNumber || response.data.trackingNumber
+    alert(`Label erstellt! Tracking: ${tracking}`)
+
     closeLabelModal()
     await fetchOrders()
   } catch (err: any) {
-    alert('Fehler beim Label-Erstellen: ' + (err.response?.data?.error || err.message))
+    // ... (error handling same as before)
+    console.error('Label creation error:', err)
+    labelError.value = err.response?.data?.error || err.message || 'Ein unbekannter Fehler ist aufgetreten.'
+    
+    const details = {
+      message: err.message,
+      response: err.response?.data,
+      status: err.response?.status,
+      config: {
+        url: err.config?.url,
+        data: err.config?.data ? JSON.parse(err.config?.data) : undefined
+      }
+    }
+    labelErrorDetails.value = JSON.stringify(details, null, 2)
   } finally {
     creatingLabel.value = false
   }
 }
+// ...
+
 
 const showDetails = (order: Order) => {
   selectedOrder.value = order
@@ -239,7 +324,7 @@ onMounted(fetchOrders)
 
 <template>
   <div class="px-4 sm:px-6 lg:px-8">
-    <div class="sticky top-16 z-30 bg-gray-100 pb-4 pt-4 -mt-4">
+    <div class="sticky top-0 z-30 bg-gray-50 pb-4 pt-4">
       <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
           <h1 class="text-xl font-semibold text-gray-900">Bestellungen</h1>
@@ -250,17 +335,28 @@ onMounted(fetchOrders)
             @click="startSync" 
             :disabled="isSyncing"
             type="button" 
-            class="inline-flex items-center justify-center rounded-md border border-transparent bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:w-auto disabled:bg-orange-400 disabled:cursor-not-allowed"
+            class="btn-primary inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span v-if="isSyncing" class="mr-2">
-              <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <span class="mr-2">
+              <svg v-if="isSyncing" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
+              <svg v-else class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/> <!-- Replacement generic icon if Etsy SVG unavailable, using simple info or sync icon -->
+                <path d="M16.24 7.76C15.07 6.59 13.54 6 12 6v6l-4.24-4.24c2.34-2.34 6.14-2.34 8.49 0C18.59 10.11 18.59 13.89 16.24 16.24L14.83 14.83c1.56-1.56 1.56-4.09 0-5.66L12 12V6c1.54 0 3.07.59 4.24 1.76z"/>
+              </svg>
             </span>
+             <!-- Using a generic sync icon path above for safety, or actually let's use a nice cloud download or refresh variant -->
+             <svg v-if="!isSyncing" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+             </svg>
             {{ isSyncing ? 'Synchronisiere...' : 'Mit Etsy synchronisieren' }}
           </button>
-          <button @click="fetchOrders" type="button" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
+          <button @click="fetchOrders" type="button" class="btn-secondary inline-flex items-center">
+            <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
             Aktualisieren
           </button>
         </div>
@@ -268,6 +364,7 @@ onMounted(fetchOrders)
       
       <!-- Sync Progress Banner -->
       <div v-if="isSyncing && syncStatus" class="mt-4 rounded-md bg-blue-50 p-4">
+        <!-- ... content same ... -->
         <div class="flex">
           <div class="flex-shrink-0">
             <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -287,31 +384,38 @@ onMounted(fetchOrders)
       </div>
 
       <!-- Filters Toolbar -->
-      <div class="mt-4 flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+      <div class="mt-4 flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
         <div class="flex-1">
-          <input 
-            v-model="searchQuery" 
-            @input="handleSearch"
-            type="text" 
-            placeholder="Suche nach Best.-Nr. oder Kunden..." 
-            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
-          >
+          <div class="relative rounded-md shadow-sm">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <input 
+                v-model="searchQuery" 
+                @input="handleSearch"
+                type="text" 
+                placeholder="Suche nach Best.-Nr. oder Kunden..." 
+                class="block w-full rounded-xl border-gray-300 pl-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+            >
+          </div>
         </div>
         <div class="flex gap-4">
-          <select v-model="statusFilter" @change="fetchOrders" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
+          <select v-model="statusFilter" @change="fetchOrders" class="rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2 bg-white">
             <option value="">Alle Status</option>
             <option value="OPEN">Offen</option>
             <option value="SHIPPED">Versendet</option>
             <option value="CANCELLED">Storniert</option>
           </select>
           
-          <select v-model="sortBy" @change="fetchOrders" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
+          <select v-model="sortBy" @change="fetchOrders" class="rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2 bg-white">
             <option value="createdAt">Datum</option>
             <option value="orderNumber">Bestellnummer</option>
             <option value="totalPrice">Betrag</option>
           </select>
 
-          <button @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; fetchOrders()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+          <button @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; fetchOrders()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
             {{ sortOrder === 'asc' ? '↑' : '↓' }}
           </button>
         </div>
@@ -555,23 +659,50 @@ onMounted(fetchOrders)
             <p class="text-xs text-gray-600">{{ labelOrder.customer.postalCode }} {{ labelOrder.customer.city }}</p>
           </div>
 
-          <!-- Versandart -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Versandart
-            </label>
-            <select
-              v-model="labelForm.productCode"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option v-for="product in deutschePostProducts" :key="product.code" :value="product.code">
-                {{ product.name }} (max. {{ product.maxWeight }}g)
-              </option>
-            </select>
+          <!-- Shipping Method Selection (JTL Style) -->
+          <div v-if="shippingMethods.length > 0" class="mb-4">
+             <label class="block text-sm font-medium text-gray-700 mb-2">
+               Versandart
+             </label>
+             <select
+               v-model="selectedShippingMethodId"
+               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+             >
+               <option v-for="method in shippingMethods" :key="method.id" :value="method.id">
+                 {{ method.name }} ({{ method.provider }})
+               </option>
+             </select>
+          </div>
+
+          <!-- Fallback: Legacy Selection if no methods defined -->
+          <div v-else class="mb-4 border-l-4 border-yellow-400 pl-4 bg-yellow-50 p-2">
+            <p class="text-xs text-yellow-700 mb-2">Keine Versandarten konfiguriert via Settings. Nutze Standard-Auswahl:</p>
+            
+            <label class="block text-sm font-medium text-gray-700 mb-2">Anbieter</label>
+            <div class="flex space-x-4 mb-2">
+               <label class="inline-flex items-center">
+                 <input type="radio" v-model="selectedProvider" value="DEUTSCHE_POST" class="form-radio text-blue-600">
+                 <span class="ml-2">Deutsche Post</span>
+               </label>
+               <label class="inline-flex items-center">
+                 <input type="radio" v-model="selectedProvider" value="DHL" class="form-radio text-blue-600">
+                 <span class="ml-2">DHL</span>
+               </label>
+            </div>
+            
+             <label class="block text-sm font-medium text-gray-700 mb-2">Produkt</label>
+             <select
+               v-model="labelForm.productCode"
+               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+             >
+               <option v-for="product in currentProducts" :key="product.code" :value="product.code">
+                 {{ product.name }}
+               </option>
+             </select>
           </div>
 
           <!-- Gewicht -->
-          <div>
+          <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">
               Gewicht (g)
             </label>
@@ -579,9 +710,23 @@ onMounted(fetchOrders)
               v-model.number="labelForm.weight"
               type="number"
               min="1"
-              max="1000"
+              max="31500"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          <!-- Error Message -->
+          <div 
+            v-if="labelError" 
+            class="mb-4 bg-red-50 border border-red-200 rounded-lg p-3"
+          >
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <p class="text-xs text-red-800 font-medium">
+                  Fehler: {{ labelError }}
+                </p>
+              </div>
+            </div>
           </div>
 
           <!-- Info -->
@@ -603,7 +748,7 @@ onMounted(fetchOrders)
             Abbrechen
           </button>
           <button
-            @click="createDeutschePostLabel"
+            @click="handleCreateLabel"
             :disabled="creatingLabel"
             class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400"
           >

@@ -21,7 +21,9 @@ export enum LogAction {
     SYNC_ORDERS_FAILED = 'SYNC_ORDERS_FAILED',
     SYNC_PRODUCTS_ATTEMPT = 'SYNC_PRODUCTS_ATTEMPT',
     SYNC_PRODUCTS_SUCCESS = 'SYNC_PRODUCTS_SUCCESS',
-    SYNC_PRODUCTS_FAILED = 'SYNC_PRODUCTS_FAILED'
+    SYNC_PRODUCTS_FAILED = 'SYNC_PRODUCTS_FAILED',
+    SHIPPING_LABEL_CREATE_SUCCESS = 'SHIPPING_LABEL_CREATE_SUCCESS',
+    SHIPPING_LABEL_CREATE_FAILED = 'SHIPPING_LABEL_CREATE_FAILED'
 }
 
 export class ActivityLogService {
@@ -57,9 +59,19 @@ export class ActivityLogService {
     /**
      * Get recent logs for a tenant
      */
-    static async getLogs(tenantId: string, limit = 50) {
+    static async getLogs(tenantId: string, limit = 50, type?: LogType, action?: LogAction) {
+        const where: any = { tenantId };
+
+        if (type) {
+            where.type = type;
+        }
+
+        if (action) {
+            where.action = action;
+        }
+
         return prisma.activityLog.findMany({
-            where: { tenantId },
+            where,
             orderBy: { createdAt: 'desc' },
             take: limit
         });

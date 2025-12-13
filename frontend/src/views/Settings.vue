@@ -4,6 +4,7 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { useNotifications } from '../composables/useNotifications'
 import LabelDesigner from '../components/LabelDesigner.vue'
+import ShippingMethodsTable from '../components/ShippingMethodsTable.vue'
 
 const { showSuccess, showError } = useNotifications()
 
@@ -19,6 +20,16 @@ interface LabelProfile {
 }
 
 interface SettingsData {
+    // DHL
+    dhlEnabled: boolean
+    dhlGkpUsername: string
+    dhlGkpPassword?: string // Optional/Masked
+    dhlEkp: string
+    dhlProcedure: string
+    dhlParticipation: string
+    dhlBillingNrPaket: string
+    dhlBillingNrKleinpaket: string
+    
     // User
     firstName: string
     lastName: string
@@ -71,6 +82,15 @@ const currentDesignerProfile = computed(() => {
 })
 
 const form = ref<SettingsData>({
+    dhlEnabled: false,
+    dhlGkpUsername: '',
+    dhlGkpPassword: '',
+    dhlEkp: '',
+    dhlProcedure: '01', // Default
+    dhlParticipation: '01', // Default
+    dhlBillingNrPaket: '',
+    dhlBillingNrKleinpaket: '',
+
     firstName: '',
     lastName: '',
     shopName: '',
@@ -112,6 +132,15 @@ const fetchSettings = async () => {
         const { user, settings, previews: fetchedPreviews } = response.data
         
         form.value = {
+            dhlEnabled: settings.dhlEnabled || false,
+            dhlGkpUsername: settings.dhlGkpUsername || '',
+            dhlGkpPassword: settings.dhlGkpPassword || '', // Will be masked by backend hopefully or empty
+            dhlEkp: settings.dhlEkp || '',
+            dhlProcedure: settings.dhlProcedure || '01',
+            dhlParticipation: settings.dhlParticipation || '01',
+            dhlBillingNrPaket: settings.dhlBillingNrPaket || '',
+            dhlBillingNrKleinpaket: settings.dhlBillingNrKleinpaket || '',
+
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             shopName: user.shopName || '',
@@ -219,8 +248,84 @@ onMounted(() => {
 <template>
   <div class="space-y-6">
 
-    <!-- Printer Settings -->
+    <!-- Shipping Methods (New) -->
     <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+       <ShippingMethodsTable />
+    </div>
+
+    <!-- DHL Integration -->
+    <div id="dhl" class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+      <div class="md:grid md:grid-cols-3 md:gap-6">
+        <div class="md:col-span-1">
+          <h3 class="text-lg font-medium leading-6 text-gray-900">DHL Geschäftskundenversand</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            Hinterlegen Sie hier Ihre EKP und Zugangsdaten, um Labels direkt über Ihren Vertrag zu erstellen.
+          </p>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2">
+            <div class="space-y-6">
+                <!-- Toggle -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input id="dhlEnabled" v-model="form.dhlEnabled" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="dhlEnabled" class="font-medium text-gray-700">DHL Integration aktivieren</label>
+                        <p class="text-gray-500">Aktiviert den DHL-Versand im Bestellprozess.</p>
+                    </div>
+                </div>
+
+                <div v-if="form.dhlEnabled" class="grid grid-cols-6 gap-6 border-t pt-4">
+                     <!-- EKP -->
+                     <div class="col-span-6 sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">EKP (Ihre Kundennummer)</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <input v-model="form.dhlEkp" type="text" maxlength="10" placeholder="z.B. 5000000000" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Die 10-stellige Nummer Ihres DHL Vertrags.</p>
+                    </div>
+
+                    <!-- GKP Credentials -->
+                    <div class="col-span-6 sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">GKP Benutzername</label>
+                        <input v-model="form.dhlGkpUsername" type="text" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">GKP Passwort / Signatur</label>
+                        <input v-model="form.dhlGkpPassword" type="password" autocomplete="new-password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                    </div>
+
+                    <!-- Defaults -->
+                    <div class="col-span-6 sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">Verfahren & Teilnahme</label>
+                        <div class="flex space-x-2">
+                             <input v-model="form.dhlProcedure" type="text" title="Verfahren (meist 01)" maxlength="2" class="mt-1 block w-16 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 text-center">
+                             <input v-model="form.dhlParticipation" type="text" title="Teilnahme (meist 01)" maxlength="2" class="mt-1 block w-16 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 text-center">
+                        </div>
+                    </div>
+
+                    <!-- Billing Numbers -->
+                    <div class="col-span-6">
+                        <h4 class="text-sm font-medium text-gray-900 mt-2 mb-2">Abrechnungsnummern</h4>
+                        <p class="text-xs text-gray-500 mb-2">Optional 14-stellig. Wenn leer, wird automatisch EKP + Verfahren + Teilnahme (0101) verwendet.</p>
+                    </div>
+                    
+                    <div class="col-span-6 sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">Abrechnungsnr. Paket</label>
+                        <input v-model="form.dhlBillingNrPaket" type="text" maxlength="14" placeholder="50xxxxxxxx0101" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">Abrechnungsnr. Kleinpaket (Warenpost)</label>
+                        <input v-model="form.dhlBillingNrKleinpaket" type="text" maxlength="14" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Printer Settings -->
+    <div id="printers" class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
       <div class="md:grid md:grid-cols-3 md:gap-6">
         <div class="md:col-span-1">
           <h3 class="text-lg font-medium leading-6 text-gray-900">Druckereinstellungen</h3>
@@ -367,7 +472,7 @@ onMounted(() => {
     />
 
     <!-- Counters Section (Unchanged) -->
-    <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+    <div id="numbers" class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
       <div class="md:grid md:grid-cols-3 md:gap-6">
         <div class="md:col-span-1">
           <h3 class="text-lg font-medium leading-6 text-gray-900">Nummernkreise</h3>

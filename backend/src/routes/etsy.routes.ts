@@ -228,6 +228,20 @@ router.get('/callback', async (req: Request, res: Response) => {
             }
         });
 
+        // Also update UserSettings to be consistent
+        await prisma.userSettings.upsert({
+            where: { userId },
+            create: {
+                userId,
+                etsyShopName: shopName,
+                etsySyncEnabled: true
+            },
+            update: {
+                etsyShopName: shopName,
+                etsySyncEnabled: true
+            }
+        });
+
         console.log('✅ Database updated successfully!');
 
         // Cleanup cookies

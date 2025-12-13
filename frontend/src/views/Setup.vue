@@ -110,7 +110,7 @@ const completeSetup = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center px-4 py-12">
+  <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
     <div class="max-w-3xl w-full">
       <!-- Progress Bar -->
       <div class="mb-8">
@@ -119,11 +119,11 @@ const completeSetup = async () => {
             <div class="flex items-center">
               <div 
                 class="w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all"
-                :class="currentStep >= step ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'"
+                :class="currentStep >= step ? 'bg-inventivy-blue text-white' : 'bg-gray-200 text-gray-600'"
               >
                 {{ step }}
               </div>
-              <div v-if="step < 5" class="flex-1 h-1 mx-2" :class="currentStep > step ? 'bg-indigo-600' : 'bg-gray-200'"></div>
+              <div v-if="step < 5" class="flex-1 h-1 mx-2" :class="currentStep > step ? 'bg-inventivy-blue' : 'bg-gray-200'"></div>
             </div>
           </div>
         </div>
@@ -141,31 +141,40 @@ const completeSetup = async () => {
         <!-- Step 1: Welcome -->
         <div v-if="currentStep === 1" class="p-8">
           <div class="text-center">
-            <div class="mx-auto w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
-              <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+            <div class="mx-auto w-auto flex justify-center mb-8">
+               <svg class="h-16 w-auto text-inventivy-blue" viewBox="0 0 500 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Icon Part (Cube) -->
+                    <path class="text-inventivy-blue fill-current" d="M40 10 L70 25 L70 60 L40 75 L10 60 L10 25 Z" opacity="0.9"/>
+                    <path class="text-inventivy-dark-blue fill-current" d="M40 10 L70 25 L40 40 L10 25 Z" opacity="0.8"/>
+                    <path class="text-white fill-current" d="M40 40 L70 25 L70 60 L40 75 Z" opacity="0.2"/> 
+                    
+                    <!-- Text: Inventivy -->
+                    <text x="90" y="55" font-family="Inter, sans-serif" font-weight="700" font-size="48" class="text-gray-900 fill-current">Inventivy</text>
+                    
+                    <!-- Text: Etsy ERP -->
+                    <text x="90" y="85" font-family="Inter, sans-serif" font-weight="400" font-size="20" class="text-gray-500 fill-current" letter-spacing="0.1em">ETSY ERP SYSTEM</text>
+                </svg>
             </div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">Willkommen bei Etsy ERP!</h1>
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Willkommen!</h1>
             <p class="text-lg text-gray-600 mb-8">Richten wir Ihr System in wenigen Schritten ein.</p>
             
             <div class="bg-indigo-50 rounded-lg p-6 mb-8 text-left">
               <h3 class="font-semibold text-gray-900 mb-4">Was wir jetzt konfigurieren:</h3>
               <ul class="space-y-3">
                 <li class="flex items-start">
-                  <svg class="w-6 h-6 text-indigo-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-6 h-6 text-inventivy-blue mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
                   <span class="text-gray-700"><strong>Datenquelle:</strong> Etsy-Integration oder CSV-Import</span>
                 </li>
                 <li class="flex items-start">
-                  <svg class="w-6 h-6 text-indigo-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-6 h-6 text-inventivy-blue mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
                   <span class="text-gray-700"><strong>Nummernkreise:</strong> Bestellungen, Rechnungen, Lieferscheine</span>
                 </li>
                 <li class="flex items-start">
-                  <svg class="w-6 h-6 text-indigo-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-6 h-6 text-inventivy-blue mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
                   <span class="text-gray-700"><strong>SKU-Verwaltung:</strong> Automatische Produktnummern</span>
@@ -175,7 +184,7 @@ const completeSetup = async () => {
 
             <button 
               @click="nextStep"
-              class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              class="btn-primary inline-flex items-center"
             >
               Los geht's
               <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +252,7 @@ const completeSetup = async () => {
             </div>
 
             <!-- CSV Import (Active) -->
-            <div class="border-2 border-indigo-600 rounded-lg p-6 bg-white">
+            <div class="border-2 border-inventivy-blue rounded-lg p-6 bg-white">
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -290,13 +299,13 @@ const completeSetup = async () => {
           <div class="mt-8 flex justify-between">
             <button 
               @click="prevStep"
-              class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+              class="btn-secondary"
             >
               ← Zurück
             </button>
             <button 
               @click="skipEtsyConnection"
-              class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              class="btn-primary"
             >
               Weiter mit CSV-Import →
             </button>
@@ -391,13 +400,13 @@ const completeSetup = async () => {
           <div class="mt-8 flex justify-between">
             <button 
               @click="prevStep"
-              class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+              class="btn-secondary"
             >
               ← Zurück
             </button>
             <button 
               @click="nextStep"
-              class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              class="btn-primary"
             >
               Weiter →
             </button>
@@ -409,7 +418,7 @@ const completeSetup = async () => {
           <h2 class="text-2xl font-bold text-gray-900 mb-2">SKU-Verwaltung</h2>
           <p class="text-gray-600 mb-6">Konfigurieren Sie die automatische Produktnummern-Generierung.</p>
 
-          <div class="bg-white border-2 border-indigo-100 rounded-lg p-6">
+          <div class="bg-white border-2 border-inventivy-blue/20 rounded-lg p-6">
             <div class="space-y-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">🔢 SKU-Präfix</label>
@@ -433,9 +442,9 @@ const completeSetup = async () => {
                 <p class="mt-1 text-xs text-gray-500">Startnummer für neue Produkte</p>
               </div>
 
-              <div class="bg-indigo-50 rounded-lg p-4">
+              <div class="bg-blue-50 rounded-lg p-4">
                 <p class="text-sm text-gray-700 mb-2"><strong>Beispiel SKU:</strong></p>
-                <p class="text-2xl font-mono font-bold text-indigo-600">{{ skuExample }}</p>
+                <p class="text-2xl font-mono font-bold text-inventivy-blue">{{ skuExample }}</p>
               </div>
 
               <div class="bg-green-50 border border-green-200 rounded-md p-4">
@@ -452,13 +461,13 @@ const completeSetup = async () => {
           <div class="mt-8 flex justify-between">
             <button 
               @click="prevStep"
-              class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+              class="btn-secondary"
             >
               ← Zurück
             </button>
             <button 
               @click="nextStep"
-              class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              class="btn-primary"
             >
               Weiter →
             </button>
@@ -501,7 +510,7 @@ const completeSetup = async () => {
             <button 
               @click="completeSetup"
               :disabled="loading"
-              class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400"
+              class="btn-primary inline-flex items-center disabled:bg-gray-400"
             >
               <span v-if="!loading">Zum Dashboard</span>
               <span v-else>Speichere...</span>

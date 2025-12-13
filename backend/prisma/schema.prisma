@@ -24,11 +24,18 @@ model User {
   etsyRefreshToken String? // OAuth2 Refresh Token
   tokenExpiresAt   DateTime? // Token expiration
 
+  // Password Reset
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   settings  UserSettings?
   products  Product[]
   labelProfiles LabelProfile[]
+  shippingMethods ShippingMethod[]
+  automationRules AutomationRule[]
+  documentTemplates DocumentTemplate[]
 
   @@index([tenantId])
   @@map("users")
@@ -68,6 +75,21 @@ model UserSettings {
   dhlGkpUsername String? // GKP Username (customer enters this)
   dhlGkpPassword String? // GKP Password (customer enters this)
   dhlEnabled     Boolean @default(false) // Enable/Disable DHL Paket integration
+  
+  // DHL OAuth & Configuration (New)
+  dhlAppId          String? // Client ID for OAuth
+  dhlAppSecret      String? // Client Secret for OAuth
+  dhlEkp            String? // EKP (10 digits)
+  dhlProcedure      String? @default("01") // "01" usually
+  dhlParticipation  String? // "01" usually
+  
+  // Billing Numbers (Abrechnungsnummern)
+  dhlBillingNrPaket      String? // 14 digits
+  dhlBillingNrKleinpaket String? // 14 digits
+  dhlBillingNrWarenpost  String? // 14 digits (legacy/alternative)
+
+  // Defaults
+  dhlDefaultPrinterFormat String? @default("910-300-410") // Common export format
 
   // Deutsche Post Internetmarke settings
   deutschePostUsername      String? // Portokasse Username
@@ -383,8 +405,77 @@ model ActivityLog {
   details   String? // JSON string or text message
   createdAt DateTime @default(now())
 
-  @@index([tenantId])
-  @@index([userId])
   @@index([createdAt])
   @@map("activity_logs")
+}
+
+model AutomationRule {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  isActive    Boolean  @default(true)
+  trigger     String   // Enum AutomationTrigger as string for flexibility: ORDER_IMPORTED, ORDER_PAID, etc.
+  conditions  String   // JSON string of conditions
+  actions     String   // JSON string of actions
+  priority    Int      @default(0)
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([isActive])
+  @@index([trigger])
+  @@map("automation_rules")
+}
+
+model ShippingMethod {
+  id              String   @id @default(uuid())
+  tenantId        String
+  name            String   // Display Name e.g. "DHL Paket", "Warenpost International"
+  provider        String   // DHL, DEUTSCHE_POST
+  productCode     String   // V01PAK, V54EPAK, etc.
+  billingNumber   String?  // The specific billing number for this method (DHL)
+  
+  printerName     String?  // Optional: override printer for this method
+  
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@map("shipping_methods")
+}
+
+model DocumentTemplate {
+  id          String   @id @default(uuid())
+  tenantId    String
+  type        String   // Enum TemplateType: INVOICE, DELIVERY_NOTE, EMAIL
+  name        String
+  subject     String?  // For Emails
+  content     String   // HTML/Text content or config
+  
+  // PDF specific
+  headerText   String?
+  footerText   String?
+  logoPosition String? @default("RIGHT") // LEFT, CENTER, RIGHT
+
+  isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@map("document_templates")
 }

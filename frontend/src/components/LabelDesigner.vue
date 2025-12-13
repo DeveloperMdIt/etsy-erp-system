@@ -64,7 +64,7 @@ const selectedElement = computed(() => {
 })
 
 const initLayout = () => {
-    const size = FORMAT_SIZES[props.format] || FORMAT_SIZES['A6']
+    const size = FORMAT_SIZES[props.format] || FORMAT_SIZES['A6'] || { width: 105, height: 148 }
     layout.value.width = size.width
     layout.value.height = size.height
 

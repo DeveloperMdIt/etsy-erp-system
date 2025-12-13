@@ -31,8 +31,9 @@ const stopPolling = () => {
 
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
-  if (target.files && target.files.length > 0) {
-    selectedFile.value = target.files[0]
+  const files = target.files
+  if (files && files.length > 0) {
+    selectedFile.value = files[0]!
     result.value = null
     error.value = null
   }

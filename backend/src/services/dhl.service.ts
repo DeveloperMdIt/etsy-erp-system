@@ -5,24 +5,66 @@ import { CreateLabelRequest, DHLLabelResponse } from '../types/etsy-types';
 const prisma = new PrismaClient();
 
 export class DHLService {
-    private baseUrl = 'https://api-eu.dhl.com/parcel/de/shipping/v2'; // DHL API v2 (Post & Parcel Germany)
-    // Note: URL might vary depending on exact product (GK vs. P&P)
-    // Using standard GK API endpoint structure as placeholder
+    private baseUrl: string;
 
-    private getAuthHeader() {
-        // Basic Auth is common for older DHL APIs, or API Key for newer ones.
-        // Assuming Basic Auth with User/Signature for now as per common GK integration.
-        const user = process.env.DHL_API_USER;
-        const password = process.env.DHL_API_PASSWORD; // or Signature
-        const token = Buffer.from(`${user}:${password}`).toString('base64');
+    constructor() {
+        // Force Production or use Env
+        const isSandbox = process.env.DHL_API_ENVIRONMENT === 'sandbox';
+        // DHL Parcel DE Shipping V2 Base URL
+        const sandboxUrl = 'https://api-sandbox.dhl.com/parcel/de/shipping/v2';
+        const productionUrl = 'https://api-eu.dhl.com/parcel/de/shipping/v2';
+
+        this.baseUrl = isSandbox ? sandboxUrl : productionUrl;
+
+        console.log(`[DHL] Initialized Service in ${isSandbox ? 'SANDBOX' : 'PRODUCTION'} mode`);
+        console.log(`[DHL] Base URL: ${this.baseUrl}`);
+    }
+
+    private getAuthHeader(apiKey: string, user: string, pass: string) {
+        // Basic Auth with GKP User/Pass + API Key
+        // Detailed OAuth implementation pending correct endpoint verification, using Basic for transition/compatibility as User indicated "Basic Auth ist nur Übergang".
+        // Using GKP credentials from DB.
+
+        const token = Buffer.from(`${user}:${pass}`).toString('base64');
         return {
             'Authorization': `Basic ${token}`,
-            'dhl-api-key': process.env.DHL_API_KEY, // If using API Key
-            'Content-Type': 'application/json'
+            'dhl-api-key': apiKey,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         };
     }
 
-    async createLabel(request: CreateLabelRequest): Promise<DHLLabelResponse> {
+    async createLabel(request: CreateLabelRequest, tenantId: string): Promise<DHLLabelResponse> {
+        // 1. Fetch Tenant Settings for Credentials
+        const user = await prisma.user.findFirst({
+            where: { tenantId }
+        });
+
+        if (!user) throw new Error('User not found for tenant');
+
+        const settings = await prisma.userSettings.findUnique({
+            where: { userId: user.id }
+        });
+
+        if (!settings || !settings.dhlEnabled) {
+            throw new Error('DHL Shipping not enabled or configured for this user.');
+        }
+
+        // 2. Validate Credentials & Billing
+        const appId = process.env.DHL_APP_ID;
+        // User/Pass from DB (GKP)
+        const gkpUser = settings.dhlGkpUsername;
+        const gkpPass = settings.dhlGkpPassword;
+        const ekp = settings.dhlEkp;
+
+        if (!appId) throw new Error('System Configuration Error: DHL_APP_ID missing in backend env.');
+        if (!gkpUser || !gkpPass) throw new Error('DHL GKP Credentials missing in Settings.');
+        if (!ekp) throw new Error('DHL EKP missing in Settings.');
+
+        // 3. Determine Product & Billing Number
+        const billingNrPaket = settings.dhlBillingNrPaket || (ekp + settings.dhlProcedure + settings.dhlParticipation);
+        const billingNrKlein = settings.dhlBillingNrKleinpaket || billingNrPaket; // Fallback
+
         const order = await prisma.order.findUnique({
             where: { id: request.orderId },
             include: { customer: true, items: { include: { product: true } } }
@@ -30,29 +72,27 @@ export class DHLService {
 
         if (!order) throw new Error('Order not found');
 
-        // Determine product and billing number
         let product = '';
         let billingNumber = '';
 
         if (request.productType === 'DHL_KLEINPAKET') {
-            product = 'V06PAK'; // DHL Kleinpaket
-            billingNumber = process.env.DHL_BILLING_NUMBER_KLEINPAKET || '';
+            product = 'V06PAK';
+            billingNumber = billingNrKlein;
         } else if (request.productType === 'DHL_PAKET') {
-            product = 'V01PAK'; // DHL Paket
-            billingNumber = process.env.DHL_BILLING_NUMBER_PAKET || '';
+            product = 'V01PAK';
+            billingNumber = billingNrPaket;
         } else {
-            // Default or throw
             throw new Error(`Unsupported product type: ${request.productType}`);
         }
 
-        if (!billingNumber) {
-            throw new Error(`No billing number configured for ${request.productType}`);
+        if (!billingNumber || billingNumber.length < 14) {
+            throw new Error(`Invalid Billing Number: ${billingNumber}. Check EKP/Verfahren/Teilnahme in Settings.`);
         }
 
         const weight = request.weight || order.items.reduce((sum: number, item: any) => sum + (item.product.weight * item.quantity), 0);
-
         if (weight <= 0) throw new Error('Weight must be greater than 0');
 
+        // 4. Construct Payload
         const payload = {
             "profile": "STANDARD_GRUPPENPROFIL",
             "shipments": [
@@ -61,12 +101,12 @@ export class DHLService {
                     "billingNumber": billingNumber,
                     "refNo": order.orderNumber,
                     "shipper": {
-                        "name1": process.env.SENDER_NAME || "My Shop",
-                        "addressStreet": process.env.SENDER_STREET,
-                        "postalCode": process.env.SENDER_ZIP,
-                        "city": process.env.SENDER_CITY,
+                        "name1": settings.labelCompanyName || process.env.SENDER_NAME || "Shop",
+                        "addressStreet": settings.labelStreet || process.env.SENDER_STREET,
+                        "postalCode": settings.labelPostalCode || process.env.SENDER_ZIP,
+                        "city": settings.labelCity || process.env.SENDER_CITY,
                         "country": "DEU",
-                        "email": process.env.SENDER_EMAIL
+                        "email": settings.labelEmail || process.env.SENDER_EMAIL
                     },
                     "receiver": {
                         "name1": `${order.customer.firstName} ${order.customer.lastName}`,
@@ -74,7 +114,7 @@ export class DHLService {
                         "additionalAddressInformation1": order.customer.addressAddition,
                         "postalCode": order.customer.postalCode,
                         "city": order.customer.city,
-                        "country": "DEU" // Mapping needed for other countries
+                        "country": "DEU" // TODO: Map Country Codes
                     },
                     "details": {
                         "dim": {
@@ -93,21 +133,18 @@ export class DHLService {
         };
 
         try {
-            // Mocking the call for now if no credentials
-            if (!process.env.DHL_API_USER) {
-                console.log('Mocking DHL API Call:', JSON.stringify(payload, null, 2));
-                return {
-                    shipmentNumber: 'TEST-' + Date.now(),
-                    labelUrl: 'https://www.dhl.de/content/dam/images/pdf/dhl-versandschein-online.pdf',
-                    labelData: 'base64-mock-data'
-                };
-            }
+            console.log(`[DHL] Creating label for ${order.orderNumber} with Billing: ${billingNumber}`);
 
             const response = await axios.post(`${this.baseUrl}/orders`, payload, {
-                headers: this.getAuthHeader()
+                headers: this.getAuthHeader(appId, gkpUser, gkpPass)
             });
 
             const shipment = response.data.items[0];
+
+            // Check for API warnings/validation errors even in success 200/207
+            if (shipment.sstatus?.statusCode && shipment.sstatus.statusCode >= 2000) {
+                console.warn('[DHL] API Warning:', shipment.sstatus);
+            }
 
             // Save label info to DB
             await prisma.shippingLabel.create({
@@ -117,7 +154,7 @@ export class DHLService {
                     trackingNumber: shipment.shipmentNo,
                     labelUrl: shipment.label.url,
                     weight: weight,
-                    cost: 0 // API usually doesn't return cost directly in this response
+                    cost: 0
                 }
             });
 
@@ -138,8 +175,15 @@ export class DHLService {
             };
 
         } catch (error: any) {
-            console.error('DHL API Error:', error.response?.data || error.message);
-            throw new Error(`DHL API Error: ${JSON.stringify(error.response?.data || error.message)}`);
+            const dhlError = error.response?.data || error.message;
+            console.error('DHL API Error:', JSON.stringify(dhlError, null, 2));
+
+            // Enhanced Error Parsing
+            let cleanMsg = error.message;
+            if (error.response?.data?.detail) cleanMsg = error.response.data.detail;
+            if (error.response?.data?.title) cleanMsg = `${error.response.data.title}: ${cleanMsg}`;
+
+            throw new Error(JSON.stringify(dhlError)); // Return full object for UI Modal
         }
     }
 }

@@ -9,7 +9,11 @@ const router = Router();
 router.get('/', authenticateToken, async (req: any, res: Response) => {
     try {
         const tenantId = req.user.tenantId;
-        const logs = await ActivityLogService.getLogs(tenantId);
+        const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+        const type = req.query.type as LogType | undefined;
+        const action = req.query.action as LogAction | undefined;
+
+        const logs = await ActivityLogService.getLogs(tenantId, limit, type, action);
         res.json(logs);
     } catch (error: any) {
         console.error('Failed to fetch logs:', error);

@@ -11,6 +11,7 @@ import etsyTrackingService from '../services/etsy-tracking.service';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
+import { ActivityLogService, LogType, LogAction } from '../services/activity-log.service';
 
 const router = Router();
 const dhlService = new DHLService();
@@ -99,7 +100,7 @@ router.get('/dhl/status', authenticateToken, async (req: AuthRequest, res: Respo
 // ============================================================================
 
 // POST /api/shipping/dhl/create-label
-router.post('/dhl/create-label', async (req: Request, res: Response) => {
+router.post('/dhl/create-label', authenticateToken, async (req: AuthRequest, res: Response) => {
     try {
         const validation = CreateLabelSchema.safeParse(req.body);
 
@@ -108,10 +109,36 @@ router.post('/dhl/create-label', async (req: Request, res: Response) => {
             return;
         }
 
-        const result = await dhlService.createLabel(validation.data);
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) throw new Error('Tenant ID required');
+
+        const { shippingMethodId } = req.body;
+        const result = await dhlService.createLabel(validation.data, tenantId, shippingMethodId);
+
+        // Log success
+        await ActivityLogService.log(
+            LogType.SUCCESS,
+            LogAction.SHIPPING_LABEL_CREATE_SUCCESS,
+            `DHL Label erstellt für Bestellung ${result.shipmentNumber}`,
+            req.user?.id,
+            req.user?.tenantId,
+            { orderId: validation.data.orderId, shipmentNumber: result.shipmentNumber }
+        );
+
         res.json(result);
     } catch (error: any) {
         console.error('Shipping error:', error);
+
+        // Log error
+        await ActivityLogService.log(
+            LogType.ERROR,
+            LogAction.SHIPPING_LABEL_CREATE_FAILED,
+            `DHL Label Fehler: ${error.message}`,
+            req.user?.id,
+            req.user?.tenantId,
+            { error: error.message, stack: error.stack }
+        );
+
         res.status(500).json({
             error: 'Shipping label creation failed',
             message: error.message

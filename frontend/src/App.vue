@@ -3,6 +3,8 @@ import { ref, provide, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Notifications from './components/Notifications.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import Breadcrumbs from './components/Breadcrumbs.vue'
+import Sidebar from './components/Sidebar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -50,98 +52,40 @@ const logout = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 font-sans text-gray-900">
-    <!-- Navigation - Only show when authenticated -->
-    <nav v-if="isAuthenticated && !isPublicRoute" class="bg-white shadow-sm sticky top-0 z-40">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex">
-            <div class="flex-shrink-0 flex items-center">
-              <span class="text-xl font-bold text-indigo-600">🛍️ Etsy ERP</span>
-            </div>
-            <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <router-link to="/" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Dashboard
-              </router-link>
-              <router-link to="/orders" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Bestellungen
-              </router-link>
-              <router-link to="/products" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Produkte
-              </router-link>
-              <router-link to="/customers" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Kunden
-              </router-link>
-              <router-link to="/import" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Import
-              </router-link>
-              <router-link to="/activity-log" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Ereignisse
-              </router-link>
-            </div>
-          </div>
-          
-          <!-- User Dropdown Menu -->
-          <div class="flex items-center gap-4 relative">
-             <div class="relative">
-                <button 
-                  @click="isMenuOpen = !isMenuOpen"
-                  class="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none"
-                >
-                  <div class="flex flex-col items-end mr-2">
-                     <span class="font-bold">{{ currentUser?.firstName || currentUser?.email }}</span>
-                     <span v-if="currentUser?.shopName" class="text-xs text-gray-500">{{ currentUser.shopName }}</span>
-                  </div>
-                  <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold border border-indigo-200">
-                    {{ (currentUser?.firstName?.[0] || currentUser?.email?.[0] || 'U').toUpperCase() }}
-                  </div>
-                  <svg class="ml-1 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+  <div class="min-h-screen bg-gray-50 flex font-sans text-gray-900">
+    
+    <!-- Sidebar (Left) -->
+    <Sidebar v-if="isAuthenticated && !isPublicRoute" 
+        :user="currentUser" 
+        :collapsed="false" 
+        @logout="logout" 
+        class="z-50"
+    />
 
-                <!-- Dropdown -->
-                <div 
-                  v-if="isMenuOpen" 
-                  class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 transform origin-top-right"
-                >
-                  <div class="py-1" role="menu" aria-orientation="vertical">
-                    
-                    <div class="px-4 py-3 border-b border-gray-100">
-                      <p class="text-sm">Angemeldet als</p>
-                      <p class="text-sm font-medium text-gray-900 truncate">{{ currentUser?.email }}</p>
-                    </div>
+    <!-- Main Content (Right) -->
+    <div class="flex-1 flex flex-col transition-all duration-300" :class="(isAuthenticated && !isPublicRoute) ? 'ml-64' : ''">
+        
+        <!-- Top Header / Breadcrumbs Area -->
+        <header v-if="isAuthenticated && !isPublicRoute" class="bg-white border-b border-gray-100 h-16 flex items-center justify-between px-8 shadow-sm">
+            <!-- Breadcrumbs -->
+            <Breadcrumbs />
 
-                    <router-link to="/profile" @click="isMenuOpen = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Profil</router-link>
-                    <router-link to="/etsy-connect" @click="isMenuOpen = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Etsy Zugang</router-link>
-                    <router-link to="/settings" @click="isMenuOpen = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Dokumenten Einstellungen</router-link>
-                    <router-link to="/settings/shipping" @click="isMenuOpen = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Versandeinstellungen</router-link>
-                    
-                    <div class="border-t border-gray-100"></div>
-                    
-                    <button 
-                      @click="logout"
-                      class="w-full text-left block px-4 py-2 text-sm text-red-700 hover:bg-gray-100" 
-                      role="menuitem"
-                    >
-                      Abmelden
-                    </button>
-                  </div>
-                </div>
-                
-                <!-- Overlay to close -->
-                <div v-if="isMenuOpen" @click="isMenuOpen = false" class="fixed inset-0 z-40" style="cursor: default;"></div>
+            <!-- Right Side Header Actions (Notification / User fallback) -->
+             <div class="flex items-center space-x-4">
+                 <!-- Notification Icon (Placeholder or Real) -->
+                  <button class="text-gray-400 hover:text-gray-500 relative">
+                     <span class="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" v-if="false"></span>
+                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                  </button>
              </div>
-          </div>
-        </div>
-      </div>
-    </nav>
+        </header>
 
-    <main :class="isPublicRoute ? '' : 'py-10'">
-      <div :class="isPublicRoute ? '' : 'max-w-7xl mx-auto sm:px-6 lg:px-8'">
-        <router-view></router-view>
-      </div>
-    </main>
+        <!-- Page Content -->
+        <main class="flex-1 overflow-y-auto p-6">
+             <router-view></router-view>
+        </main>
+
+    </div>
 
     <!-- Global Components -->
     <Notifications ref="notificationsRef" />
