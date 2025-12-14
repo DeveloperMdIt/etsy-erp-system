@@ -11,6 +11,7 @@ import Settings from '../views/Settings.vue'
 import Profile from '../views/Profile.vue'
 import EtsyConnect from '../views/EtsyConnect.vue'
 import ShippingSettings from '../views/ShippingSettings.vue'
+import LandingPage from '../views/LandingPage.vue'
 
 const routes = [
     // Auth routes (public)
@@ -20,8 +21,11 @@ const routes = [
     // Setup (authenticated, accessible)
     { path: '/setup', component: Setup },
 
+    // Public Landing Page (Root)
+    { path: '/', component: LandingPage, meta: { public: true } },
+
     // Protected routes
-    { path: '/', component: Dashboard, meta: { title: 'Dashboard' } },
+    { path: '/dashboard', component: Dashboard, meta: { title: 'Dashboard' } },
     { path: '/import', component: ImportOrders, meta: { title: 'Import' } },
     { path: '/orders', component: Orders, meta: { title: 'Bestellungen' } },
     { path: '/products', component: Products, meta: { title: 'Produkte' } },
@@ -108,7 +112,12 @@ router.beforeEach((to, _from, next) => {
     }
 
     if (isPublicRoute && token) {
-        return next('/')
+        // If logged in and on landing/login/register, go to actual app dashboard
+        // Check if it's explicitly the landing page (which is public), we might want to allow viewing it even if logged in?
+        // Usually SaaS apps redirect logged-in users to dashboard from root.
+        if (to.path === '/' || to.path === '/login' || to.path === '/register') {
+            return next('/dashboard')
+        }
     }
 
     next()
