@@ -10,7 +10,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-gray-50 min-h-screen flex flex-col">
+  <div class="bg-gray-50 min-h-screen flex flex-col overflow-x-hidden w-full">
     <PublicHeader />
 
     <div class="flex-grow pt-32 pb-20 px-4 sm:px-6 lg:px-8">

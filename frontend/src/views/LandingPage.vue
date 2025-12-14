@@ -116,44 +116,44 @@ const moduleCategories: Category[] = [
 
             <!-- Right Column: Mockup -->
             <div class="lg:col-span-7 relative flex justify-center lg:justify-end">
-                 <!-- Added max-w to control size -->
-                 <div class="relative w-full max-w-md rounded-xl shadow-2xl border border-gray-200 bg-white transition-transform duration-500">
+                 <!-- Increased max-w to lg, but reduced height by removing content -->
+                 <div class="relative w-full max-w-lg rounded-xl shadow-2xl border border-gray-200 bg-white transition-transform duration-500">
                     <!-- Dashboard Mockup Header -->
-                    <div class="h-10 bg-gray-50 border-b flex items-center px-4 gap-2 rounded-t-xl">
-                        <div class="w-3 h-3 rounded-full bg-red-400"></div>
-                        <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
-                        <div class="w-3 h-3 rounded-full bg-green-400"></div>
-                        <div class="ml-4 h-4 w-32 bg-gray-200 rounded-sm"></div>
+                    <div class="h-8 bg-gray-50 border-b flex items-center px-4 gap-2 rounded-t-xl">
+                        <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                        <div class="ml-4 h-3 w-32 bg-gray-200 rounded-sm"></div>
                     </div>
                     
                     <!-- Dashboard Content -->
-                    <div class="p-4 sm:p-6 bg-gray-50 min-h-[350px] sm:min-h-[400px]">
-                        <div class="flex justify-between items-center mb-6">
-                            <div class="h-6 w-32 bg-gray-800 rounded"></div>
-                            <div class="h-8 w-8 bg-white rounded-full border"></div>
+                    <div class="p-4 bg-gray-50">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="h-4 w-24 bg-gray-800 rounded"></div>
+                            <div class="h-6 w-6 bg-white rounded-full border"></div>
                         </div>
 
                         <!-- Info Cards (Stats) -->
-                        <div class="grid grid-cols-2 gap-4 mb-6">
-                             <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                                 <div class="text-xs text-gray-400 uppercase font-semibold mb-1">Umsatz heute</div>
-                                 <div class="text-2xl font-bold text-gray-900 truncate">452,50 €</div>
-                                 <div class="text-xs text-green-500 mt-1">▲ +12% vs. gestern</div>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                             <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                                 <div class="text-[10px] text-gray-400 uppercase font-semibold mb-0.5">Umsatz heute</div>
+                                 <div class="text-xl font-bold text-gray-900 truncate">452,50 €</div>
+                                 <div class="text-[10px] text-green-500">▲ +12%</div>
                              </div>
-                             <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                                 <div class="text-xs text-gray-400 uppercase font-semibold mb-1">Offene Bestellungen</div>
-                                 <div class="text-2xl font-bold text-gray-900">12</div>
-                                 <div class="text-xs text-orange-500 mt-1">⚡ 3 Express</div>
+                             <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                                 <div class="text-[10px] text-gray-400 uppercase font-semibold mb-0.5">Bestellungen</div>
+                                 <div class="text-xl font-bold text-gray-900">12</div>
+                                 <div class="text-[10px] text-orange-500">⚡ 3 Express</div>
                              </div>
                         </div>
 
-                        <!-- Chart Area -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-6">
-                             <div class="flex justify-between items-center mb-4">
-                                <div class="h-4 w-24 bg-gray-200 rounded"></div>
-                                <div class="h-6 w-16 bg-gray-50 rounded"></div>
+                        <!-- Chart Area (Reduced Height) -->
+                        <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                             <div class="flex justify-between items-center mb-2">
+                                <div class="h-3 w-16 bg-gray-200 rounded"></div>
+                                <div class="h-4 w-12 bg-gray-50 rounded"></div>
                              </div>
-                             <div class="h-32 flex items-end space-x-2">
+                             <div class="h-20 flex items-end space-x-2">
                                  <div class="w-1/6 bg-blue-50 h-[40%] rounded-t"></div>
                                  <div class="w-1/6 bg-blue-100 h-[60%] rounded-t"></div>
                                  <div class="w-1/6 bg-blue-200 h-[30%] rounded-t"></div>
@@ -162,40 +162,16 @@ const moduleCategories: Category[] = [
                                  <div class="w-1/6 bg-blue-100 h-[45%] rounded-t"></div>
                              </div>
                         </div>
-
-                        <!-- Recent Orders Table -->
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                             <div class="px-4 py-3 border-b border-gray-50">
-                                 <div class="h-4 w-24 bg-gray-800 rounded"></div>
-                             </div>
-                             <div class="p-4 space-y-3">
-                                 <div class="flex justify-between items-center">
-                                     <div class="h-3 w-8 bg-gray-200 rounded"></div>
-                                     <div class="h-3 w-24 bg-gray-100 rounded"></div>
-                                     <div class="h-3 w-12 bg-green-100 text-green-600 text-[10px] px-1 rounded text-center">Bezahlt</div>
-                                 </div>
-                                 <div class="flex justify-between items-center">
-                                     <div class="h-3 w-8 bg-gray-200 rounded"></div>
-                                     <div class="h-3 w-20 bg-gray-100 rounded"></div>
-                                     <div class="h-3 w-12 bg-orange-100 text-orange-600 text-[10px] px-1 rounded text-center">Offen</div>
-                                 </div>
-                                 <div class="flex justify-between items-center">
-                                     <div class="h-3 w-8 bg-gray-200 rounded"></div>
-                                     <div class="h-3 w-22 bg-gray-100 rounded"></div>
-                                     <div class="h-3 w-12 bg-green-100 text-green-600 text-[10px] px-1 rounded text-center">Versendet</div>
-                                 </div>
-                             </div>
-                        </div>
                         
                         <!-- Floating Badge -->
-                        <div class="absolute -right-6 top-10 bg-white p-3 rounded-lg shadow-xl border border-gray-100 animate-bounce delay-1000 hidden sm:block">
-                            <div class="flex items-center space-x-3">
-                                <div class="bg-green-100 p-2 rounded-full">
-                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <div class="absolute -right-4 top-8 bg-white p-2 rounded-lg shadow-xl border border-gray-100 animate-bounce delay-1000 hidden sm:block scale-90">
+                            <div class="flex items-center space-x-2">
+                                <div class="bg-green-100 p-1.5 rounded-full">
+                                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
                                 <div>
-                                    <div class="text-xs text-gray-500">Sync Status</div>
-                                    <div class="text-sm font-bold text-gray-900">Alles aktuell</div>
+                                    <div class="text-[10px] text-gray-500 leading-none">Status</div>
+                                    <div class="text-xs font-bold text-gray-900 leading-tight">Aktuell</div>
                                 </div>
                             </div>
                         </div>
