@@ -42,6 +42,44 @@ const form = ref({
     content: ''
 })
 const isLoading = ref(false)
+const lastFocusedInput = ref<'subject' | 'content'>('content')
+const subjectInput = ref<HTMLInputElement | null>(null)
+const contentInput = ref<HTMLTextAreaElement | null>(null)
+
+// Variables
+const availableVars = [
+    { label: 'Vorname', value: '{firstName}' },
+    { label: 'Nachname', value: '{lastName}' },
+    { label: 'Link (Verifizierung)', value: '{link}' }
+]
+
+const insertVariable = (variable: string) => {
+    if (lastFocusedInput.value === 'content' && contentInput.value) {
+        const el = contentInput.value
+        const start = el.selectionStart
+        const end = el.selectionEnd
+        const text = form.value.content
+        const before = text.substring(0, start)
+        const after = text.substring(end, text.length)
+        form.value.content = before + variable + after
+        setTimeout(() => {
+            el.focus()
+            el.selectionStart = el.selectionEnd = start + variable.length
+        }, 0)
+    } else if (lastFocusedInput.value === 'subject' && subjectInput.value) {
+        const el = subjectInput.value
+        const start = el.selectionStart || 0
+        const end = el.selectionEnd || 0
+        const text = form.value.subject
+        const before = text.substring(0, start)
+        const after = text.substring(end, text.length)
+        form.value.subject = before + variable + after
+        setTimeout(() => {
+            el.focus()
+            el.selectionStart = el.selectionEnd = start + variable.length
+        }, 0)
+    }
+}
 
 const loadTemplate = async (tmpl: EmailTemplate) => {
     selectedTemplate.value = tmpl
@@ -165,13 +203,39 @@ const sendTestEmail = async () => {
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Betreff</label>
-                    <input v-model="form.subject" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <input 
+                        ref="subjectInput"
+                        v-model="form.subject" 
+                        @focus="lastFocusedInput = 'subject'"
+                        type="text" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Inhalt (HTML)</label>
-                    <p class="text-xs text-gray-500 mb-2">Verfügbare Variablen: {firstName}, {lastName}, {link} (nur Verifizierung)</p>
-                    <textarea v-model="form.content" rows="15" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-mono text-sm"></textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Inhalt (HTML)</label>
+                    
+                    <!-- Toolbar for variables -->
+                    <div class="flex flex-wrap gap-2 mb-2 p-2 bg-gray-50 rounded border border-gray-100">
+                        <span class="text-xs text-gray-500 flex items-center mr-2">Variablen einfügen:</span>
+                        <button 
+                            v-for="v in availableVars" 
+                            :key="v.value"
+                            @click="insertVariable(v.value)"
+                            class="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
+                            title="Klicken zum Einfügen"
+                        >
+                            {{ v.value }}
+                        </button>
+                    </div>
+
+                    <textarea 
+                        ref="contentInput"
+                        v-model="form.content" 
+                        @focus="lastFocusedInput = 'content'"
+                        rows="15" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-mono text-sm"
+                    ></textarea>
                 </div>
             </div>
         </div>
