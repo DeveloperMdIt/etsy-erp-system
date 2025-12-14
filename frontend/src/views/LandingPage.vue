@@ -85,116 +85,131 @@ const moduleCategories: Category[] = [
     <PublicHeader />
 
     <!-- Hero Section -->
-    <div class="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden bg-gradient-to-b from-gray-50 to-white">
+    <div class="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden bg-gradient-to-b from-gray-50 to-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div class="text-center max-w-4xl mx-auto">
-          <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-6xl md:text-7xl mb-8 break-words leading-tight">
-            <span class="block">Deine Warenwirtschaft.</span>
-            <span class="block text-inventivy-blue">Flexibel wie dein Business.</span>
-          </h1>
-          <p class="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-gray-500 px-2">
-            Starte mit dem Kernsystem und buche Module einfach dazu, wenn du sie brauchst.
-            Professionelle Funktionen für E-Commerce – ohne Ballast, ohne versteckte Kosten.
-          </p>
-          <div class="mt-10 max-w-sm mx-auto sm:max-w-none flex flex-col sm:flex-row justify-center gap-4 px-4 sm:px-0">
-            <router-link to="/register" class="w-full sm:w-auto flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-inventivy-blue hover:bg-blue-700 md:py-4 md:text-lg md:px-10 shadow-xl shadow-blue-200 transition-all hover:scale-105">
-              Kostenlos starten
-            </router-link>
-            <a href="#features" class="w-full sm:w-auto flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10 transition-all hover:scale-105">
-              Funktionen entdecken
-            </a>
-          </div>
-        </div>
         
-        <!-- Laptop Mockup -->
-        <div class="mt-16 sm:mt-24 relative">
-             <div class="relative rounded-xl overflow-hidden shadow-2xl border border-gray-200 bg-gray-50">
-                 <!-- Use the generated image or a placeholder if not ready, for now using a clean div approach or the image user might expect -->
-                 <!-- Since I cannot put the actual generated file path directly if it's not served, I will use an img tag pointing to a relative path assuming it gets copied or I can stick to a CSS mockup if preferred. User asked for "images like this". Integrating the generated one. -->
-                 <!-- For production deployment I would need to put the asset in public. For now, I will use a high quality CSS mockup or similar structure if I can't guarantee the asset link. 
-                 Wait, I can create a CSS laptop Frame! Or I can rely on the fact that I can't easily push the generated image to the user's repo without complex moves. 
-                 User asked "Do we get images like this". I will simulate it with a placeholder that represents the structure for now, or just use a nice CSS representation.
-                 Actually, sticky to the previous CSS code structure but refined is safer, or try to reference a placeholder. 
-                 Let's stay with the CSS mockup structure but make it responsive and clean. -->
-                 
-                  <div class="relative bg-gray-900 rounded-[1rem] shadow-xl ring-1 ring-gray-900/5 sm:rounded-[2rem]">
-                      <!-- Screen bezel -->
-                      <div class="rounded-[1rem] overflow-hidden bg-white aspect-[16/10] sm:rounded-[2rem] border-[8px] sm:border-[16px] border-gray-800 relative">
-                          <!-- Camera dot -->
-                           <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -mt-[6px] sm:-mt-[12px] w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-700 rounded-full z-20"></div>
+        <div class="lg:grid lg:grid-cols-12 lg:gap-16 items-center">
+            
+            <!-- Left Column: Text -->
+            <div class="lg:col-span-6 text-center lg:text-left mb-16 lg:mb-0">
+                <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl mb-6 leading-tight">
+                    <span class="block">Deine Warenwirtschaft.</span>
+                    <span class="block text-inventivy-blue">Flexibel wie dein Business.</span>
+                </h1>
+                <p class="mt-4 text-lg text-gray-500 max-w-lg mx-auto lg:mx-0">
+                    Starte mit dem Kernsystem und buche Module einfach dazu, wenn du sie brauchst.
+                    Professionelle Funktionen für E-Commerce – ohne Ballast, ohne versteckte Kosten.
+                </p>
+                <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <router-link to="/register" class="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-inventivy-blue hover:bg-blue-700 md:py-4 md:text-lg shadow-xl shadow-blue-200 transition-all hover:scale-105">
+                        Kostenlos starten
+                    </router-link>
+                    <a href="#features" class="flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg transition-all hover:scale-105">
+                        Funktionen
+                    </a>
+                </div>
+            </div>
 
-                           <!-- Actual Content (Dashboard Preview) -->
-                            <div class="w-full h-full bg-gray-50 overflow-hidden flex flex-col">
-                                <!-- Top Bar -->
-                                <div class="h-8 sm:h-12 bg-white border-b flex items-center px-4 justify-between shrink-0">
-                                     <div class="w-20 h-3 bg-gray-200 rounded"></div>
-                                      <div class="flex space-x-2">
-                                          <div class="w-6 h-6 rounded-full bg-gray-200"></div>
-                                          <div class="w-6 h-6 rounded-full bg-gray-200"></div>
-                                      </div>
+            <!-- Right Column: Mockup -->
+            <div class="lg:col-span-6 relative">
+                 <div class="relative rounded-xl shadow-2xl border border-gray-200 bg-white transform rotate-1 hover:rotate-0 transition-transform duration-500">
+                    <!-- Dashboard Mockup Header -->
+                    <div class="h-10 bg-gray-50 border-b flex items-center px-4 gap-2 rounded-t-xl">
+                        <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                        <div class="ml-4 h-4 w-32 bg-gray-200 rounded-sm"></div>
+                    </div>
+                    
+                    <!-- Dashboard Content -->
+                    <div class="p-6 bg-gray-50 min-h-[400px]">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="h-6 w-32 bg-gray-800 rounded"></div>
+                            <div class="h-8 w-8 bg-white rounded-full border"></div>
+                        </div>
+
+                        <!-- Info Cards (Stats) -->
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                             <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                 <div class="text-xs text-gray-400 uppercase font-semibold mb-1">Umsatz heute</div>
+                                 <div class="text-2xl font-bold text-gray-900">452,50 €</div>
+                                 <div class="text-xs text-green-500 mt-1">▲ +12% vs. gestern</div>
+                             </div>
+                             <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                 <div class="text-xs text-gray-400 uppercase font-semibold mb-1">Offene Bestellungen</div>
+                                 <div class="text-2xl font-bold text-gray-900">12</div>
+                                 <div class="text-xs text-orange-500 mt-1">⚡ 3 Express</div>
+                             </div>
+                        </div>
+
+                        <!-- Chart Area -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-6">
+                             <div class="flex justify-between items-center mb-4">
+                                <div class="h-4 w-24 bg-gray-200 rounded"></div>
+                                <div class="h-6 w-16 bg-gray-50 rounded"></div>
+                             </div>
+                             <div class="h-32 flex items-end space-x-2">
+                                 <div class="w-1/6 bg-blue-50 h-[40%] rounded-t"></div>
+                                 <div class="w-1/6 bg-blue-100 h-[60%] rounded-t"></div>
+                                 <div class="w-1/6 bg-blue-200 h-[30%] rounded-t"></div>
+                                 <div class="w-1/6 bg-blue-500 h-[80%] rounded-t shadow-lg shadow-blue-200"></div>
+                                 <div class="w-1/6 bg-blue-300 h-[50%] rounded-t"></div>
+                                 <div class="w-1/6 bg-blue-100 h-[45%] rounded-t"></div>
+                             </div>
+                        </div>
+
+                        <!-- Recent Orders Table -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                             <div class="px-4 py-3 border-b border-gray-50">
+                                 <div class="h-4 w-24 bg-gray-800 rounded"></div>
+                             </div>
+                             <div class="p-4 space-y-3">
+                                 <div class="flex justify-between items-center">
+                                     <div class="h-3 w-8 bg-gray-200 rounded"></div>
+                                     <div class="h-3 w-24 bg-gray-100 rounded"></div>
+                                     <div class="h-3 w-12 bg-green-100 text-green-600 text-[10px] px-1 rounded text-center">Bezahlt</div>
+                                 </div>
+                                 <div class="flex justify-between items-center">
+                                     <div class="h-3 w-8 bg-gray-200 rounded"></div>
+                                     <div class="h-3 w-20 bg-gray-100 rounded"></div>
+                                     <div class="h-3 w-12 bg-orange-100 text-orange-600 text-[10px] px-1 rounded text-center">Offen</div>
+                                 </div>
+                                 <div class="flex justify-between items-center">
+                                     <div class="h-3 w-8 bg-gray-200 rounded"></div>
+                                     <div class="h-3 w-22 bg-gray-100 rounded"></div>
+                                     <div class="h-3 w-12 bg-green-100 text-green-600 text-[10px] px-1 rounded text-center">Versendet</div>
+                                 </div>
+                             </div>
+                        </div>
+                        
+                        <!-- Floating Badge -->
+                        <div class="absolute -right-6 top-10 bg-white p-3 rounded-lg shadow-xl border border-gray-100 animate-bounce delay-1000 hidden lg:block">
+                            <div class="flex items-center space-x-3">
+                                <div class="bg-green-100 p-2 rounded-full">
+                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
-                                <div class="flex flex-1 overflow-hidden">
-                                     <!-- Sidebar -->
-                                     <div class="w-16 sm:w-48 bg-white border-r hidden sm:block p-4 space-y-3 shrink-0">
-                                          <div class="h-8 bg-inventivy-blue/10 text-inventivy-blue rounded flex items-center px-3 font-medium text-xs sm:text-sm">Dashboard</div>
-                                          <div class="h-8 hover:bg-gray-50 rounded flex items-center px-3 text-gray-600 text-xs sm:text-sm">Bestellungen</div>
-                                          <div class="h-8 hover:bg-gray-50 rounded flex items-center px-3 text-gray-600 text-xs sm:text-sm">Produkte</div>
-                                          <div class="h-8 hover:bg-gray-50 rounded flex items-center px-3 text-gray-600 text-xs sm:text-sm">Kunden</div>
-                                     </div>
-                                      <!-- Main Content -->
-                                      <div class="flex-1 p-4 sm:p-8 overflow-y-auto">
-                                          <div class="flex justify-between items-end mb-6">
-                                              <div>
-                                                  <div class="h-4 w-32 bg-gray-200 rounded mb-2"></div>
-                                                  <div class="h-8 w-48 bg-gray-800 rounded"></div>
-                                              </div>
-                                              <div class="h-8 w-24 bg-inventivy-blue rounded hidden sm:block"></div>
-                                          </div>
-                                          
-                                          <!-- Stats Grid -->
-                                          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                                              <div class="bg-white p-4 rounded-lg shadow-sm border">
-                                                  <div class="h-3 w-16 bg-gray-100 rounded mb-2"></div>
-                                                  <div class="h-6 w-24 bg-gray-800 rounded"></div>
-                                              </div>
-                                              <div class="bg-white p-4 rounded-lg shadow-sm border">
-                                                  <div class="h-3 w-16 bg-gray-100 rounded mb-2"></div>
-                                                  <div class="h-6 w-24 bg-green-500 rounded"></div>
-                                              </div>
-                                              <div class="bg-white p-4 rounded-lg shadow-sm border">
-                                                  <div class="h-3 w-16 bg-gray-100 rounded mb-2"></div>
-                                                  <div class="h-6 w-24 bg-gray-800 rounded"></div>
-                                              </div>
-                                               <div class="bg-white p-4 rounded-lg shadow-sm border">
-                                                  <div class="h-3 w-16 bg-gray-100 rounded mb-2"></div>
-                                                  <div class="h-6 w-24 bg-purple-500 rounded"></div>
-                                              </div>
-                                          </div>
-
-                                          <!-- Table Mockup -->
-                                          <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
-                                              <div class="h-10 border-b bg-gray-50"></div>
-                                              <div class="p-4 space-y-3">
-                                                  <div class="h-4 w-full bg-gray-100 rounded"></div>
-                                                  <div class="h-4 w-full bg-gray-100 rounded"></div>
-                                                  <div class="h-4 w-full bg-gray-100 rounded"></div>
-                                              </div>
-                                          </div>
-                                      </div>
+                                <div>
+                                    <div class="text-xs text-gray-500">Sync Status</div>
+                                    <div class="text-sm font-bold text-gray-900">Alles aktuell</div>
                                 </div>
                             </div>
-                      </div>
-                      <div class="relative bg-gray-800 mx-auto h-3 sm:h-4 w-[120%] -ml-[10%] rounded-b-xl shadow-2xl opacity-50 blur-xl top-[-2px]"></div>
-                  </div>
-             </div>
+                        </div>
+
+                    </div>
+                 </div>
+                 
+                 <!-- Background Blur -->
+                 <div class="absolute -inset-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl opacity-50 blur-2xl -z-10"></div>
+            </div>
+
         </div>
 
       </div>
       
       <!-- Decorative Background Elements -->
       <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/50 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-100/50 rounded-full blur-3xl"></div>
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/30 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-100/30 rounded-full blur-3xl"></div>
       </div>
     </div>
 
