@@ -15,6 +15,7 @@ import LandingPage from '../views/LandingPage.vue'
 import Pricing from '../views/Pricing.vue'
 import PrivacyPolicy from '../views/PrivacyPolicy.vue'
 import Terms from '../views/Terms.vue'
+import Imprint from '../views/Imprint.vue'
 import DataProcessingAgreement from '../views/DataProcessingAgreement.vue'
 
 const routes = [
@@ -31,6 +32,7 @@ const routes = [
     { path: '/privacy', component: PrivacyPolicy, meta: { public: true } },
     { path: '/terms', component: Terms, meta: { public: true } },
     { path: '/agb', redirect: '/terms' },
+    { path: '/impressum', component: Imprint, meta: { public: true } },
     { path: '/avv', component: DataProcessingAgreement, meta: { public: true } },
     { path: '/about', component: () => import('../views/About.vue'), meta: { public: true } },
 

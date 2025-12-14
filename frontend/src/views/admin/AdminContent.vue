@@ -1,7 +1,7 @@
-<script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, inject } from 'vue'
 import axios from 'axios'
 
+const notifications = inject<any>('notifications')
 const pages = ref<any[]>([])
 const selectedSlug = ref('')
 const currentContent = ref('')
@@ -51,10 +51,18 @@ const savePage = async () => {
             content: currentContent.value,
             isPublished: isPublished.value
         })
-        alert('Seite gespeichert')
+        
+        notifications.value.notify({
+            type: 'success',
+            message: 'Seite erfolgreich gespeichert'
+        })
+        
         fetchPages()
     } catch (error) {
-        alert('Fehler beim Speichern')
+        notifications.value.notify({
+            type: 'error',
+            message: 'Fehler beim Speichern der Änderungen'
+        })
     }
 }
 

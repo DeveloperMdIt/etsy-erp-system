@@ -12,6 +12,8 @@
           <span class="mx-2">|</span>
           <router-link to="/terms" class="hover:text-white transition-colors">AGB</router-link>
           <span class="mx-2">|</span>
+          <router-link to="/impressum" class="hover:text-white transition-colors">Impressum</router-link>
+          <span class="mx-2">|</span>
           <router-link to="/avv" class="hover:text-white transition-colors">AVV</router-link>
         </p>
       </div>
