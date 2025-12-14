@@ -5,6 +5,7 @@ import Notifications from './components/Notifications.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import Breadcrumbs from './components/Breadcrumbs.vue'
 import Sidebar from './components/Sidebar.vue'
+import CookieBanner from './components/CookieBanner.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -90,5 +91,6 @@ const logout = () => {
     <!-- Global Components -->
     <Notifications ref="notificationsRef" />
     <ConfirmDialog ref="confirmDialogRef" />
+    <CookieBanner />
   </div>
 </template>

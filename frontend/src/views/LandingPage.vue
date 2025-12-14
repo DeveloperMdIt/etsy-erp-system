@@ -25,6 +25,7 @@ const features = [
     icon: '📊'
   }
 ]
+import Logo from '../components/Logo.vue'
 </script>
 
 <template>
@@ -34,18 +35,16 @@ const features = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
           <div class="flex items-center">
-            <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-500">
-              inventivy
-            </span>
+             <Logo logoClass="h-10" />
           </div>
           <div class="hidden md:flex space-x-8">
-            <a href="#features" class="text-gray-600 hover:text-emerald-600 font-medium">Funktionen</a>
-            <a href="#pricing" class="text-gray-600 hover:text-emerald-600 font-medium">Preise</a>
-            <a href="#about" class="text-gray-600 hover:text-emerald-600 font-medium">Über uns</a>
+            <a href="#features" class="text-gray-600 hover:text-inventivy-blue font-medium">Funktionen</a>
+            <router-link to="/pricing" class="text-gray-600 hover:text-inventivy-blue font-medium">Preise</router-link>
+            <a href="#about" class="text-gray-600 hover:text-inventivy-blue font-medium">Über uns</a>
           </div>
           <div class="flex items-center space-x-4">
-            <router-link to="/login" class="text-gray-600 hover:text-emerald-600 font-medium">Login</router-link>
-            <router-link to="/register" class="bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-emerald-700 transition shadow-lg shadow-emerald-200">
+            <router-link to="/login" class="text-gray-600 hover:text-inventivy-blue font-medium">Login</router-link>
+            <router-link to="/register" class="bg-inventivy-blue text-white px-5 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200">
               Kostenlos testen
             </router-link>
           </div>
@@ -59,14 +58,14 @@ const features = [
         <div class="text-center max-w-3xl mx-auto">
           <h1 class="text-5xl tracking-tight font-extrabold text-gray-900 sm:text-6xl md:text-7xl mb-8">
             <span class="block">Der einfache Weg zum</span>
-            <span class="block text-emerald-600">E-Commerce Erfolg</span>
+            <span class="block text-inventivy-blue">E-Commerce Erfolg</span>
           </h1>
           <p class="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
             Verbinde deine Shops, automatisiere deinen Versand und behalte den Überblick.
             Alles in einer modernen, intuitiven Plattform.
           </p>
           <div class="mt-10 max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center gap-4">
-            <router-link to="/register" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 md:py-4 md:text-lg md:px-10 shadow-xl shadow-emerald-200 transition-all hover:scale-105">
+            <router-link to="/register" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-inventivy-blue hover:bg-blue-700 md:py-4 md:text-lg md:px-10 shadow-xl shadow-blue-200 transition-all hover:scale-105">
               Jetzt starten
             </router-link>
             <a href="#demo" class="w-full flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10 transition-all hover:scale-105">
@@ -78,7 +77,7 @@ const features = [
       
       <!-- Decorative Background Elements -->
       <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-100/50 rounded-full blur-3xl"></div>
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/50 rounded-full blur-3xl"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-100/50 rounded-full blur-3xl"></div>
       </div>
     </div>
@@ -133,7 +132,7 @@ const features = [
     <div id="features" class="py-24 bg-gray-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-          <h2 class="text-base text-emerald-600 font-semibold tracking-wide uppercase">Features</h2>
+          <h2 class="text-base text-inventivy-blue font-semibold tracking-wide uppercase">Features</h2>
           <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
             Alles was du brauchst in einer App
           </p>
@@ -145,7 +144,7 @@ const features = [
               <div class="flow-root bg-white rounded-xl px-6 pb-8 h-full shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
                 <div class="-mt-6">
                   <div>
-                    <span class="inline-flex items-center justify-center p-3 bg-emerald-500 rounded-xl shadow-lg">
+                    <span class="inline-flex items-center justify-center p-3 bg-inventivy-blue rounded-xl shadow-lg text-white">
                       <span class="text-2xl">{{ feature.icon }}</span>
                     </span>
                   </div>
@@ -162,16 +161,16 @@ const features = [
     </div>
 
     <!-- CTA Section -->
-    <div class="bg-emerald-700">
+    <div class="bg-inventivy-blue">
       <div class="max-w-2xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
         <h2 class="text-3xl font-extrabold text-white sm:text-4xl">
           <span class="block">Bereit dein Business zu skalieren?</span>
-          <span class="block text-emerald-200">Starte heute kostenlos.</span>
+          <span class="block text-blue-200">Starte heute kostenlos.</span>
         </h2>
-        <p class="mt-4 text-lg leading-6 text-emerald-100">
+        <p class="mt-4 text-lg leading-6 text-blue-100">
           Keine Kreditkarte erforderlich. 14 Tage kostenlos testen.
         </p>
-        <router-link to="/register" class="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-emerald-600 bg-white hover:bg-emerald-50 sm:w-auto">
+        <router-link to="/register" class="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-inventivy-blue bg-white hover:bg-blue-50 sm:w-auto">
           Jetzt loslegen
         </router-link>
       </div>

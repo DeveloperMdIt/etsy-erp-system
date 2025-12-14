@@ -3,48 +3,10 @@
     
     <!-- Logo area -->
     <router-link to="/dashboard" class="flex items-center justify-center h-16 border-b border-slate-800 bg-sidebar-bg font-bold text-xl tracking-wider overflow-hidden hover:bg-opacity-90 transition-colors">
-        <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            :viewBox="collapsed ? '0 0 90 120' : '0 0 520 120'"
-            class="transition-all duration-300"
-            :class="collapsed ? 'h-8' : 'h-10'"
-        >
-          <!-- Icon: clean isometric cube -->
-          <g transform="translate(0,12)">
-            <!-- outer cube -->
-            <polygon
-              points="40,0 80,22 80,66 40,88 0,66 0,22"
-              fill="none"
-              stroke="#2563EB"
-              stroke-width="6"
-              stroke-linejoin="round"/>
-
-            <!-- vertical center edge -->
-            <line x1="40" y1="0" x2="40" y2="88"
-                  stroke="#2563EB"
-                  stroke-width="6"
-                  stroke-linecap="round"/>
-          </g>
-
-          <!-- Text - Only show if not collapsed (optimization) or let viewBox handle clipping but avoiding rendering text is better -->
-          <template v-if="!collapsed">
-              <text x="120" y="78"
-                    font-family="Inter, Arial, sans-serif"
-                    font-size="56"
-                    font-weight="600"
-                    fill="#2563EB">
-                Invent
-              </text>
-
-              <text x="295" y="78"
-                    font-family="Inter, Arial, sans-serif"
-                    font-size="56"
-                    font-weight="600"
-                    fill="#22C55E">
-                ivy
-              </text>
-          </template>
-        </svg>
+        <Logo 
+            :collapsed="collapsed" 
+            logoClass="h-full"
+        />
     </router-link>
 
     <!-- Nav Items -->
@@ -116,4 +78,5 @@ const navItems = [
     { name: 'Kunden', path: '/customers', icon: IconCustomers },
     { name: 'Einstellungen', path: '/settings', icon: IconSettings },
 ]
+import Logo from './Logo.vue';
 </script>

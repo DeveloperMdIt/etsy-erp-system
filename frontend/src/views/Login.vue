@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useNotifications } from '../composables/useNotifications'
+import Logo from '../components/Logo.vue'
 
 const { showSuccess, showError, showWarning } = useNotifications()
 const router = useRouter()
@@ -56,14 +57,10 @@ const login = async () => {
       <!-- Logo/Header -->
       <div class="text-center mb-8 flex flex-col items-center">
         <router-link to="/">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" class="h-20 w-auto mb-2 hover:opacity-90 transition-opacity">
-            <g transform="translate(0,12)">
-              <polygon points="40,0 80,22 80,66 40,88 0,66 0,22" fill="none" stroke="#2563EB" stroke-width="6" stroke-linejoin="round"/>
-              <line x1="40" y1="0" x2="40" y2="88" stroke="#2563EB" stroke-width="6" stroke-linecap="round"/>
-            </g>
-            <text x="120" y="78" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="600" fill="#2563EB">Invent</text>
-            <text x="295" y="78" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="600" fill="#22C55E">ivy</text>
-          </svg>
+          <Logo 
+            containerClass="mb-2 hover:opacity-90 transition-opacity" 
+            logoClass="h-20"
+          />
         </router-link>
         <p class="text-gray-600">Shop-Verwaltungssystem</p>
       </div>
