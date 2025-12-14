@@ -143,6 +143,27 @@ const features = [
       </div>
     </div>
 
+    <!-- About Teaser -->
+    <div class="py-20 bg-white border-t border-gray-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl mb-6">
+          Warenwirtschaft aus der Praxis
+        </h2>
+        <p class="mt-4 max-w-3xl mx-auto text-xl text-gray-500 leading-relaxed">
+          Inventivy ist eine praxisnahe Warenwirtschaft für den professionellen Onlinehandel.
+          Entstanden aus eigener Erfahrung im E-Commerce, entwickelt für Händler, die leistungsfähige Funktionen benötigen, ohne sich an hohe Fixkosten oder überdimensionierte Systeme zu binden.
+        </p>
+        <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-500">
+          Unser Fokus liegt auf klaren Prozessen, verständlicher Bedienung und einem fairen Kosten-Nutzen-Verhältnis. Inventivy wächst modular mit den Anforderungen seiner Nutzer.
+        </p>
+        <div class="mt-8">
+          <router-link to="/about" class="text-inventivy-blue font-medium hover:text-blue-700 underline text-lg">
+            Mehr über uns erfahren →
+          </router-link>
+        </div>
+      </div>
+    </div>
+
     <!-- CTA Section -->
     <div class="bg-inventivy-blue">
       <div class="max-w-2xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">

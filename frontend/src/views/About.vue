@@ -18,65 +18,94 @@ onMounted(() => {
         
         <h1>Über uns – Inventivy</h1>
         
-        <p class="lead text-xl text-gray-600">
-          Inventivy ist aus der Praxis des E-Commerce entstanden.
+        <!-- Intro / Warum Inventivy -->
+        <h2>Warum Inventivy?</h2>
+        <p class="lead">
+          Viele Warenwirtschafts- und ERP-Systeme sind entweder funktional eingeschränkt oder wirtschaftlich kaum tragbar – insbesondere für Einzelunternehmer und kleine Unternehmen. Inventivy verfolgt einen anderen Ansatz.
         </p>
         
-        <p>
-          Seit mehreren Jahren sind wir selbst im Onlinehandel tätig und haben in dieser Zeit zahlreiche Warenwirtschafts-, ERP- und Versandlösungen im Alltag eingesetzt und getestet.
-        </p>
-
-        <p>
-          Dabei zeigte sich immer wieder dasselbe Bild:
-          Entweder fehlten genau die Funktionen, die für einen effizienten Arbeitsalltag notwendig sind, oder die Systeme waren preislich so angesetzt, dass sie für Einzelunternehmer und kleine Unternehmen im heutigen Wettbewerbsumfeld kaum wirtschaftlich nutzbar waren.
-        </p>
-
-        <p>
-          Mit zunehmendem Bestellvolumen wurde zudem deutlich, dass einfache Lösungen wie Excel-Listen, manuelle Datenpflege und händische Labelerstellung keine tragfähige Basis mehr darstellen. Um Zeit zu sparen und Prozesse zu stabilisieren, mussten professionelle Systeme eingesetzt werden – auch wenn diese oft unnötig komplex oder kostenintensiv waren.
-        </p>
-
-        <h3 class="text-inventivy-blue font-bold mt-8">Aus genau diesem Spannungsfeld heraus ist Inventivy entstanden.</h3>
-
-        <p>
-          Unser Anspruch ist es, eine Warenwirtschaft zu entwickeln, die leistbar bleibt, praxisnah funktioniert und dennoch umfangreiche Funktionen bietet, die den Arbeitsalltag von Onlinehändlern nachhaltig erleichtern. Inventivy richtet sich gezielt an kleine und mittlere Händler, die professionell arbeiten möchten, ohne sich an hohe Fixkosten oder überdimensionierte Systeme zu binden.
-        </p>
-
-        <p>
-          Inventivy wird konsequent aus der praktischen Anwendung heraus weiterentwickelt. Neue Funktionen und Module entstehen nicht aus theoretischen Konzepten, sondern aus realen Anforderungen des täglichen E-Commerce-Betriebs.
-        </p>
-
-        <h2>Vision & Weiterentwicklung</h2>
-        <p>
-          Inventivy ist als modulares System konzipiert und wird schrittweise erweitert. Geplant sind unter anderem folgende Module und Anbindungen:
-        </p>
-        <ul>
-          <li>Adressvervollständigung und Adressprüfung zur Reduzierung von Fehlzustellungen</li>
-          <li>Zahlungsanbindungen, unter anderem an Bank- und Zahlungsdienste</li>
-          <li>Schnittstellen zu Buchhaltungs- und Abrechnungssystemen wie lexoffice, BuchhaltungsButler und sevDesk</li>
-          <li>Anbindungen an weitere Verkaufsplattformen wie eBay, Amazon, Kaufland und weitere Marktplätze</li>
-          <li>Integration zusätzlicher Paket- und Versanddienstleister</li>
-          <li>Anbindungen an Shopsysteme wie WordPress/WooCommerce, Shopify und weitere Systeme</li>
-          <li>Langfristig die Weiterentwicklung eines eigenen Shopsystems, das direkt aus der Warenwirtschaft heraus betrieben werden kann</li>
+        <p><strong>Inventivy steht für:</strong></p>
+        <ul class="checklist">
+          <li>Praxisorientierte Funktionen statt unnötiger Komplexität</li>
+          <li>Bezahlbare Nutzung ohne hohe Einstiegshürden</li>
+          <li>Modulare Erweiterbarkeit nach tatsächlichem Bedarf</li>
+          <li>Transparente Kostenstrukturen</li>
+          <li>Entwicklung aus realen Anforderungen des Onlinehandels</li>
         </ul>
-        <p>
-          Alle Erweiterungen folgen dabei einem klaren Grundsatz: bezahlbar bleiben, echten Nutzen schaffen und messbar Zeit sparen.
+
+        <p class="font-medium text-gray-800 border-l-4 border-inventivy-blue pl-4 py-1 bg-blue-50">
+          Inventivy ist kein theoretisches ERP-System, sondern ein Werkzeug für den täglichen Einsatz im E-Commerce.
         </p>
 
-        <h2>Hinter Inventivy</h2>
+        <!-- Vision & Roadmap -->
+        <h2>Vision & Zukunft</h2>
         <p>
-          Inventivy vereint technische Kompetenz mit praxisnaher Anwenderperspektive.
-          Die Entwicklung erfolgt durch einen Fachinformatiker mit logistischem Hintergrund, wodurch Prozesse, Abläufe und Anforderungen aus der Praxis direkt in die Software einfließen. Ergänzt wird diese Sicht durch kontinuierliches Testen aus Anwendersicht, insbesondere durch nicht technisch geprägte Nutzer. Dadurch wird sichergestellt, dass Inventivy nicht nur leistungsfähig, sondern auch verständlich und effizient bedienbar bleibt.
+          Inventivy ist als langfristig wachsendes System konzipiert. Ziel ist der Aufbau einer zentralen Plattform, die die wichtigsten Prozesse des Onlinehandels zuverlässig und bezahlbar abdeckt.
+        </p>
+        
+        <h3>Geplante Erweiterungen</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 not-prose mt-6 mb-8">
+          <div class="bg-gray-50 p-5 rounded-lg border border-gray-100">
+            <h4 class="font-bold text-gray-900 mb-3 text-lg">Daten & Qualität</h4>
+            <ul class="space-y-2 text-gray-600 text-sm">
+                <li class="flex items-start"><span class="mr-2 text-inventivy-blue">•</span>Adressvervollständigung</li>
+                <li class="flex items-start"><span class="mr-2 text-inventivy-blue">•</span>Adressprüfung zur Reduzierung von Rückläufern</li>
+            </ul>
+          </div>
+
+          <div class="bg-gray-50 p-5 rounded-lg border border-gray-100">
+             <h4 class="font-bold text-gray-900 mb-3 text-lg">Finanzen & Buchhaltung</h4>
+             <ul class="space-y-2 text-gray-600 text-sm">
+                <li class="flex items-start"><span class="mr-2 text-inventivy-blue">•</span>Zahlungsanbindungen (Banken und Zahlungsdienste)</li>
+                <li class="flex items-start"><span class="mr-2 text-inventivy-blue">•</span>Schnittstellen zu lexoffice, BuchhaltungsButler und sevDesk</li>
+             </ul>
+          </div>
+
+          <div class="bg-gray-50 p-5 rounded-lg border border-gray-100">
+             <h4 class="font-bold text-gray-900 mb-3 text-lg">Verkauf & Marktplätze</h4>
+             <ul class="space-y-2 text-gray-600 text-sm">
+                <li class="flex items-start"><span class="mr-2 text-inventivy-blue">•</span>Anbindungen an eBay, Amazon, Kaufland und weitere Plattformen</li>
+                <li class="flex items-start"><span class="mr-2 text-inventivy-blue">•</span>Erweiterung auf zusätzliche Verkaufskanäle</li>
+             </ul>
+          </div>
+
+          <div class="bg-gray-50 p-5 rounded-lg border border-gray-100">
+             <h4 class="font-bold text-gray-900 mb-3 text-lg">Versand & Logistik</h4>
+             <ul class="space-y-2 text-gray-600 text-sm">
+                <li class="flex items-start"><span class="mr-2 text-inventivy-blue">•</span>Integration weiterer Paket- und Versanddienstleister</li>
+                <li class="flex items-start"><span class="mr-2 text-inventivy-blue">•</span>Optimierung von Versand- und Labelprozessen</li>
+             </ul>
+          </div>
+           <div class="bg-gray-50 p-5 rounded-lg border border-gray-100 md:col-span-2">
+             <h4 class="font-bold text-gray-900 mb-3 text-lg">Shops & Systeme</h4>
+             <ul class="space-y-2 text-gray-600 text-sm">
+                <li class="flex items-start"><span class="mr-2 text-inventivy-blue">•</span>Anbindung an WordPress/WooCommerce, Shopify und weitere Shopsysteme</li>
+                <li class="flex items-start"><span class="mr-2 text-inventivy-blue">•</span>Langfristige Entwicklung eines eigenen Shopsystems, direkt integriert in die Warenwirtschaft</li>
+             </ul>
+          </div>
+        </div>
+
+        <p>
+          Alle Erweiterungen folgen einem klaren Grundsatz: <strong>echter Nutzen, messbare Zeitersparnis und wirtschaftliche Tragfähigkeit.</strong>
         </p>
 
-        <h2>Mitgestalten statt nur nutzen</h2>
+        <!-- Vertrauen & Mitgestaltung -->
+        <h2>Zusammenarbeit & Weiterentwicklung</h2>
         <p>
-          Inventivy versteht sich als wachsendes System.
-          Wünsche, Anregungen und praxisnahe Ideen für neue Funktionen oder Module sind ausdrücklich willkommen und fließen – sofern sinnvoll und umsetzbar – in die Weiterentwicklung ein.
+          Inventivy wird kontinuierlich weiterentwickelt.
+          Anregungen und praxisnahe Funktionswünsche aus dem täglichen Einsatz sind ausdrücklich willkommen und fließen – sofern sinnvoll und realistisch – in die Planung zukünftiger Module ein.
+        </p>
+        <p>
+          So entsteht ein System, das sich an realen Anforderungen orientiert und gemeinsam mit seinen Nutzern wächst.
         </p>
 
-        <p class="font-bold text-gray-800 mt-8 border-l-4 border-inventivy-blue pl-4">
-          Inventivy – eine Warenwirtschaft aus der Praxis für den professionellen Onlinehandel.
-        </p>
+        <!-- Closing -->
+        <div class="mt-12 p-8 bg-inventivy-blue/5 rounded-xl text-center border border-inventivy-blue/10">
+          <p class="text-xl font-bold text-gray-800 italic m-0">
+            "Inventivy – modular, praxisnah und wirtschaftlich gedacht."
+          </p>
+        </div>
 
       </div>
     </div>
@@ -91,15 +120,23 @@ h1 {
   @apply text-3xl font-bold text-gray-900 mb-8;
 }
 h2 {
-  @apply text-2xl font-bold text-gray-800 mt-10 mb-4 pb-2 border-b border-gray-200;
+  @apply text-2xl font-bold text-gray-800 mt-12 mb-6 pb-2 border-b border-gray-200;
+}
+h3 {
+  @apply text-xl font-bold text-gray-800 mt-8 mb-4;
 }
 p {
   @apply text-gray-600 mb-4 leading-relaxed;
 }
-ul {
-  @apply list-disc pl-5 mb-4 text-gray-600;
+/* Custom checklist style */
+ul.checklist {
+  @apply list-none pl-0 mb-6 space-y-2;
 }
-li {
-  @apply mb-1;
+ul.checklist li {
+  @apply relative pl-8 text-gray-700 font-medium;
+}
+ul.checklist li::before {
+  content: "✓";
+  @apply absolute left-0 text-inventivy-blue font-bold;
 }
 </style>
