@@ -19,7 +19,6 @@ router.get('/users', async (req: Request, res: Response) => {
             include: {
                 _count: {
                     select: {
-                        orders: true,
                         products: true
                     }
                 }
@@ -38,7 +37,7 @@ router.get('/users', async (req: Request, res: Response) => {
             role: u.role,
             isBlocked: u.isBlocked,
             createdAt: u.createdAt,
-            orderCount: u._count?.orders || 0,
+            orderCount: 0, // Order relation not directly on User
             productCount: u._count?.products || 0,
         }));
 

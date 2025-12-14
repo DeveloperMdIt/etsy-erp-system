@@ -16,14 +16,19 @@ onMounted(async () => {
         const usersRes = await axios.get('/api/admin/users')
         const users = usersRes.data
         
-        stats.value[0].value = users.length.toString()
-        const newUsers = users.filter((u: any) => new Date(u.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length
-        stats.value[0].change = `+${newUsers} letzte 7 Tage`
-        stats.value[0].changeType = newUsers > 0 ? 'increase' : 'neutral'
+        if (stats.value[0]) {
+            stats.value[0].value = users.length.toString()
+            const newUsers = users.filter((u: any) => new Date(u.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length
+            stats.value[0].change = `+${newUsers} letzte 7 Tage`
+            stats.value[0].changeType = newUsers > 0 ? 'increase' : 'neutral'
+        }
 
         const modulesRes = await axios.get('/api/admin/modules')
         const activeModules = modulesRes.data.filter((m: any) => m.isActive).length
-        stats.value[1].value = activeModules.toString()
+        
+        if (stats.value[1]) {
+            stats.value[1].value = activeModules.toString()
+        }
 
     } catch (error) {
         console.error('Dashboard Stats Error:', error)
