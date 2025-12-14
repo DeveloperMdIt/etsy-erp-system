@@ -14,7 +14,7 @@ onMounted(() => {
     <PublicHeader />
 
     <div class="flex-grow pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow sm:p-12 p-6 prose prose-blue prose-lg">
+      <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow sm:p-12 p-6 prose prose-blue prose-sm sm:prose-lg break-words">
         
         <h1>Datenschutz&shy;erklärung</h1>
         
