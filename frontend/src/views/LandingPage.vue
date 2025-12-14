@@ -117,7 +117,7 @@ const moduleCategories: Category[] = [
             <!-- Right Column: Mockup -->
             <div class="lg:col-span-7 relative flex justify-center lg:justify-end">
                  <!-- Added max-w to control size -->
-                 <div class="relative w-full max-w-2xl rounded-xl shadow-2xl border border-gray-200 bg-white transition-transform duration-500">
+                 <div class="relative w-full max-w-md rounded-xl shadow-2xl border border-gray-200 bg-white transition-transform duration-500">
                     <!-- Dashboard Mockup Header -->
                     <div class="h-10 bg-gray-50 border-b flex items-center px-4 gap-2 rounded-t-xl">
                         <div class="w-3 h-3 rounded-full bg-red-400"></div>

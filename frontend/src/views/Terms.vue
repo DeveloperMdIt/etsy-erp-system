@@ -14,7 +14,7 @@ onMounted(() => {
     <PublicHeader />
 
     <div class="flex-grow pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow sm:p-12 p-6 prose prose-blue prose-sm sm:prose-lg break-words">
+      <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow p-4 sm:p-12 prose prose-blue prose-sm sm:prose-lg break-words overflow-hidden">
         
         <h1>Allgemeine Geschäftsbedingungen (AGB)</h1>
         
