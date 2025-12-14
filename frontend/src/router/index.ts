@@ -71,7 +71,7 @@ const routes = [
     {
         path: '/settings/channels',
         component: EtsyConnect,
-        meta: { title: 'Kanäle', parent: '/settings' }
+        meta: { title: 'Kanäle', parent: '/settings', requiresModule: 'Auftragsabwicklung' }
     },
     {
         path: '/settings/activity-log',
@@ -81,7 +81,7 @@ const routes = [
     {
         path: '/settings/automation',
         component: () => import('../views/AutomationRules.vue'),
-        meta: { title: 'Automatisierung', requiresAuth: true, parent: '/settings' }
+        meta: { title: 'Automatisierung', requiresAuth: true, parent: '/settings', requiresModule: 'Automatisierung' }
     },
     {
         path: '/settings/automation/:id',
@@ -159,6 +159,32 @@ router.beforeEach((to, _from, next) => {
         // Usually SaaS apps redirect logged-in users to dashboard from root.
         if (to.path === '/' || to.path === '/login' || to.path === '/register') {
             return next('/dashboard')
+        }
+    }
+
+    // Module Enforcement
+    if (to.meta.requiresModule) {
+        try {
+            const userStr = localStorage.getItem('user')
+            if (userStr) {
+                const user = JSON.parse(userStr)
+                // If user has no modules array (legacy session), we might want to let them pass or force reload.
+                // For now, if they don't have the module, redirect to subscription
+                const modules = user.modules || []
+
+                // Admin bypass? Maybe.
+                if (user.role === 'ADMIN') {
+                    return next()
+                }
+
+                if (!modules.includes(to.meta.requiresModule)) {
+                    // Redirect to subscription with a message?
+                    // We can't easily pass a message via router without query params
+                    return next('/subscription')
+                }
+            }
+        } catch (e) {
+            console.error('Error checking modules', e)
         }
     }
 

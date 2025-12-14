@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, inject } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
+import { useNotifications } from '../../composables/useNotifications'
 
-const notifications = inject<any>('notifications')
+const { showSuccess, showError } = useNotifications()
 const pages = ref<any[]>([])
 const selectedSlug = ref('')
 const currentContent = ref('')
@@ -13,7 +14,7 @@ const loading = ref(true)
 const availablePages = [
     { slug: 'privacy-policy', label: 'Datenschutzerklärung' },
     { slug: 'terms', label: 'AGB' },
-    { slug: 'imprint', label: 'Impressum' }, // Added Imprint
+    { slug: 'imprint', label: 'Impressum' },
     { slug: 'dpa', label: 'AVV' }
 ]
 
@@ -53,17 +54,11 @@ const savePage = async () => {
             isPublished: isPublished.value
         })
         
-        notifications.value.notify({
-            type: 'success',
-            message: 'Seite erfolgreich gespeichert'
-        })
+        showSuccess('Seite erfolgreich gespeichert')
         
         fetchPages()
     } catch (error) {
-        notifications.value.notify({
-            type: 'error',
-            message: 'Fehler beim Speichern der Änderungen'
-        })
+        showError('Fehler beim Speichern der Änderungen')
     }
 }
 

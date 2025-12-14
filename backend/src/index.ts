@@ -66,6 +66,7 @@ app.use('/api/automation', automationRoutes); // Register Automation Routes
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes); // Mount Admin Routes (was missing)
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/public', publicRoutes);
 app.use('/api/templates', templatesRouter);
 
 // Error handling middleware

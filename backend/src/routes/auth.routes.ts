@@ -101,7 +101,15 @@ router.post('/login', async (req: Request, res: Response) => {
         }
 
         // Find user
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({
+            where: { email },
+            include: {
+                userModules: {
+                    where: { isActive: true },
+                    include: { module: true }
+                }
+            }
+        });
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
@@ -137,13 +145,16 @@ router.post('/login', async (req: Request, res: Response) => {
                 lastName: user.lastName,
                 shopName: user.shopName,
                 role: user.role,
-                tenantId: user.tenantId
+                role: user.role,
+                tenantId: user.tenantId,
+                modules: user.userModules.map(um => um.module.name)
             }
+        }
         });
     } catch (error: any) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Login failed' });
-    }
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+}
 });
 
 // GET /api/auth/me
@@ -167,7 +178,12 @@ router.get('/me', async (req: Request, res: Response) => {
                 shopName: true,
                 role: true,
                 etsyShopId: true,
+                etsyShopId: true,
                 createdAt: true,
+                userModules: {
+                    where: { isActive: true },
+                    include: { module: true }
+                }
             },
         });
 
@@ -175,7 +191,14 @@ router.get('/me', async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        res.json({ user });
+        // Transform response to include simple modules list
+        const userWithModules = {
+            ...user,
+            modules: user.userModules.map(um => um.module.name),
+            userModules: undefined // Remove the complex object
+        };
+
+        res.json({ user: userWithModules });
     } catch (error: any) {
         if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
             return res.status(401).json({ error: 'Invalid or expired token' });
