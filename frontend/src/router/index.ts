@@ -119,6 +119,7 @@ const routes = [
             { path: 'users', component: () => import('../views/admin/AdminUsers.vue'), meta: { title: 'Kundenverwaltung' } },
             { path: 'modules', component: () => import('../views/admin/AdminModules.vue'), meta: { title: 'Module' } },
             { path: 'settings', component: () => import('../views/admin/AdminSettings.vue'), meta: { title: 'Systemeinstellungen' } },
+            { path: 'emails', component: () => import('../views/admin/AdminEmailTemplates.vue'), meta: { title: 'System E-Mails' } },
             { path: 'content', component: () => import('../views/admin/AdminContent.vue'), meta: { title: 'CMS' } },
         ]
     },
