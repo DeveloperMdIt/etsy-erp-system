@@ -63,6 +63,7 @@ app.use('/api/labels', labelRoutes);
 app.use('/api/shipping-methods', shippingMethodRoutes);
 app.use('/api/automation', automationRoutes); // Register Automation Routes
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin', adminRoutes); // Mount Admin Routes (was missing)
 app.use('/api/templates', templatesRouter);
 
 // Error handling middleware

@@ -43,6 +43,10 @@ const isPublicRoute = computed(() => {
   return route.meta.public === true
 })
 
+const isAdminRoute = computed(() => {
+  return route.path.startsWith('/admin')
+})
+
 const logout = () => {
   localStorage.removeItem('authToken')
   localStorage.removeItem('user')
@@ -56,7 +60,7 @@ const logout = () => {
   <div class="min-h-screen bg-gray-50 flex font-sans text-gray-900">
     
     <!-- Sidebar (Left) -->
-    <Sidebar v-if="isAuthenticated && !isPublicRoute" 
+    <Sidebar v-if="isAuthenticated && !isPublicRoute && !isAdminRoute" 
         :user="currentUser" 
         :collapsed="false" 
         @logout="logout" 
@@ -64,10 +68,10 @@ const logout = () => {
     />
 
     <!-- Main Content (Right) -->
-    <div class="flex-1 flex flex-col transition-all duration-300" :class="(isAuthenticated && !isPublicRoute) ? 'ml-64' : ''">
+    <div class="flex-1 flex flex-col transition-all duration-300" :class="(isAuthenticated && !isPublicRoute && !isAdminRoute) ? 'ml-64' : ''">
         
         <!-- Top Header / Breadcrumbs Area -->
-        <header v-if="isAuthenticated && !isPublicRoute" class="bg-white border-b border-gray-100 h-16 flex items-center justify-between px-8 shadow-sm">
+        <header v-if="isAuthenticated && !isPublicRoute && !isAdminRoute" class="bg-white border-b border-gray-100 h-16 flex items-center justify-between px-8 shadow-sm">
             <!-- Breadcrumbs -->
             <Breadcrumbs />
 

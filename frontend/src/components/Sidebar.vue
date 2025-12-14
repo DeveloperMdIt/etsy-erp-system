@@ -11,7 +11,7 @@
 
     <!-- Nav Items -->
     <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
-        <router-link v-for="item in navItems" :key="item.path" :to="item.path" 
+        <router-link v-for="item in displayNavItems" :key="item.path" :to="item.path" 
             class="group flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors"
             :class="isActive(item.path) ? 'bg-sidebar-active text-white shadow-md' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'"
             :title="collapsed ? item.name : ''"
@@ -78,5 +78,14 @@ const navItems = [
     { name: 'Kunden', path: '/customers', icon: IconCustomers },
     { name: 'Einstellungen', path: '/settings', icon: IconSettings },
 ]
+
+const adminItem = { name: 'Admin Panel', path: '/admin', icon: { template: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>` } }
+
+const displayNavItems = computed(() => {
+    if (props.user?.role === 'ADMIN') {
+        return [...navItems, adminItem]
+    }
+    return navItems
+})
 import Logo from './Logo.vue';
 </script>
