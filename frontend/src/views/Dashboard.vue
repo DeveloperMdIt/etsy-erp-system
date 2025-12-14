@@ -4,7 +4,7 @@
   </div>
 
   <div v-else class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight mb-8">Dashboard</h2>
+    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight mb-8" translate="no">Dashboard</h2>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
         

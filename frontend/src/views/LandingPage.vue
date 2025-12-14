@@ -98,7 +98,7 @@ const features = [
                 <div class="col-span-1 bg-gray-50 p-4 rounded-lg hidden md:block">
                    <div class="h-4 w-24 bg-gray-200 rounded mb-4"></div>
                    <div class="space-y-2">
-                      <div class="h-8 w-full bg-indigo-50 text-indigo-700 rounded flex items-center px-2">Dashboard</div>
+                      <div class="h-8 w-full bg-indigo-50 text-indigo-700 rounded flex items-center px-2" translate="no">Dashboard</div>
                       <div class="h-8 w-full hover:bg-gray-100 rounded flex items-center px-2">Bestellungen</div>
                       <div class="h-8 w-full hover:bg-gray-100 rounded flex items-center px-2">Produkte</div>
                    </div>

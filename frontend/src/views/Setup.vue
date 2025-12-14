@@ -512,7 +512,7 @@ const completeSetup = async () => {
               :disabled="loading"
               class="btn-primary inline-flex items-center disabled:bg-gray-400"
             >
-              <span v-if="!loading">Zum Dashboard</span>
+              <span v-if="!loading" translate="no">Zum Dashboard</span>
               <span v-else>Speichere...</span>
               <svg v-if="!loading" class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
