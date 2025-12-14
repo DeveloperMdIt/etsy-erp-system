@@ -2,7 +2,7 @@
   <div class="flex flex-col w-64 bg-sidebar-bg h-full text-sidebar-text transition-all duration-300 left-0 top-0 fixed" :class="collapsed ? 'w-20' : 'w-64'">
     
     <!-- Logo area -->
-    <router-link to="/" class="flex items-center justify-center h-16 border-b border-slate-800 bg-sidebar-bg font-bold text-xl tracking-wider overflow-hidden hover:bg-opacity-90 transition-colors">
+    <router-link to="/dashboard" class="flex items-center justify-center h-16 border-b border-slate-800 bg-sidebar-bg font-bold text-xl tracking-wider overflow-hidden hover:bg-opacity-90 transition-colors">
         <svg 
             xmlns="http://www.w3.org/2000/svg" 
             :viewBox="collapsed ? '0 0 90 120' : '0 0 520 120'"
