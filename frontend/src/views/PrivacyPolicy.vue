@@ -22,7 +22,8 @@ onMounted(() => {
         Der nach Art. 4 Nr. 7 DSGVO Verantwortliche für die Datenverarbeitung ist:
       </p>
       <p>
-        <strong>Michael Deja</strong><br>
+        <strong>Inventivy</strong><br>
+        Michael Deja<br>
         An der Hohl 4<br>
         36318 Schwalmtal<br>
         E-Mail: info@inventivy.de
