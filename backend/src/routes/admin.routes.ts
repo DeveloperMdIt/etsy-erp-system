@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
+import { EmailService } from '../services/email.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -193,6 +194,28 @@ router.put('/content/:slug', async (req: Request, res: Response) => {
         res.json(page);
     } catch (error) {
         res.status(500).json({ error: 'Failed to save content page' });
+    }
+});
+
+
+// ==========================================
+// EMAIL TESTING
+// ==========================================
+
+router.post('/emails/test', async (req: Request, res: Response) => {
+    try {
+        const { recipient, subject, content } = req.body;
+
+        if (!recipient || !subject || !content) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        await EmailService.sendMail(recipient, subject, content);
+
+        res.json({ message: 'Test email sent successfully' });
+    } catch (error) {
+        console.error('Test Email Error:', error);
+        res.status(500).json({ error: 'Failed to send test email' });
     }
 });
 
