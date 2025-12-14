@@ -1,32 +1,47 @@
 <script setup lang="ts">
-import Logo from '../components/Logo.vue'
+import { ref, onMounted } from 'vue'
+import PublicHeader from '../components/PublicHeader.vue'
+import PublicFooter from '../components/PublicFooter.vue'
+import BackToTop from '../components/BackToTop.vue'
+
+onMounted(() => {
+  window.scrollTo(0, 0)
+})
+
+const openFaq = ref<number | null>(null)
+
+const faqs = [
+  {
+    question: 'Wie lange dauert die Testphase?',
+    answer: 'Du kannst Inventivy 30 Tage lang uneingeschränkt und völlig kostenlos testen. Es ist keine Kreditkarte erforderlich.'
+  },
+  {
+    question: 'Muss ich Zahlungsdaten hinterlegen?',
+    answer: 'Nein, für die Testphase und das Basis-Paket sind keine Zahlungsdaten notwendig.'
+  },
+  {
+     question: 'Kann ich jederzeit kündigen?',
+     answer: 'Ja, unsere kostenpflichtigen Pakete sind monatlich kündbar. Es gibt keine langen Vertragslaufzeiten.'
+  },
+  {
+      question: 'Was passiert nach der Testphase?',
+      answer: 'Dein Account wird automatisch in das kostenlose Basis-Paket umgestellt. Du musst nichts tun, wenn du kein Upgrade möchtest.'
+  }
+]
+
+const toggleFaq = (index: number) => {
+  if (openFaq.value === index) {
+    openFaq.value = null
+  } else {
+    openFaq.value = index
+  }
+}
 </script>
 
 <template>
-  <div class="bg-white">
+  <div class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Navigation -->
-    <nav class="absolute w-full z-10 top-0">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-20">
-          <div class="flex items-center">
-             <router-link to="/">
-                <Logo logoClass="h-10" />
-             </router-link>
-          </div>
-          <div class="hidden md:flex space-x-8">
-            <router-link to="/#features" class="text-gray-600 hover:text-inventivy-blue font-medium">Funktionen</router-link>
-            <router-link to="/pricing" class="text-inventivy-blue font-semibold">Preise</router-link>
-            <router-link to="/#about" class="text-gray-600 hover:text-inventivy-blue font-medium">Über uns</router-link>
-          </div>
-          <div class="flex items-center space-x-4">
-            <router-link to="/login" class="text-gray-600 hover:text-inventivy-blue font-medium">Login</router-link>
-            <router-link to="/register" class="bg-inventivy-blue text-white px-5 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200">
-              Kostenlos testen
-            </router-link>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <PublicHeader />
 
     <!-- Header -->
     <div class="pt-32 pb-12 bg-gradient-to-b from-gray-50 to-white text-center px-4">
@@ -40,7 +55,7 @@ import Logo from '../components/Logo.vue'
     </div>
 
     <!-- Pricing Toggle / Explanation -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow">
         
         <!-- Basis Model -->
         <div class="mb-20">
@@ -198,9 +213,11 @@ import Logo from '../components/Logo.vue'
                 </div>
             </div>
         </div>
+        </div>
+        </div>
 
         <!-- FAQ Section -->
-        <div class="mt-24">
+        <div class="mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
              <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-12">Häufig gestellte Fragen</h2>
              <div class="space-y-4 max-w-3xl mx-auto">
                  <div v-for="(faq, index) in faqs" :key="index" class="border rounded-lg bg-white overflow-hidden shadow-sm">
@@ -219,12 +236,13 @@ import Logo from '../components/Logo.vue'
              </div>
         </div>
 
-      </div>
-    </div>
-
     <!-- Footer -->
     <PublicFooter />
     
     <BackToTop />
   </div>
 </template>
+
+<style scoped>
+/* Scoped styles if needed */
+</style>

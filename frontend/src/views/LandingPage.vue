@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Logo from '../components/Logo.vue' // Keeping Logo import if feature icons rely on similar logic or just cleanup
+
 import PublicHeader from '../components/PublicHeader.vue'
 import PublicFooter from '../components/PublicFooter.vue'
 import BackToTop from '../components/BackToTop.vue'
