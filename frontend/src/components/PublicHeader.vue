@@ -10,7 +10,7 @@ const isMobileMenuOpen = ref(false)
 </script>
 
 <template>
-    <nav class="absolute w-full z-10 top-0 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+    <nav class="fixed w-full z-50 top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 transition-all duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
           <!-- Logo -->

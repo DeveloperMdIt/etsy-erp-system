@@ -1,31 +1,67 @@
 <script setup lang="ts">
-
+import { ref } from 'vue'
 import PublicHeader from '../components/PublicHeader.vue'
 import PublicFooter from '../components/PublicFooter.vue'
 import BackToTop from '../components/BackToTop.vue'
 
-// const router = useRouter()
-
-const features = [
+const moduleCategories = [
   {
-    title: 'Multi-Channel Vertrieb',
-    description: 'Verwalte deine Bestellungen von Etsy, eBay und eigenem Shop an einem Ort.',
-    icon: '🌐'
+    title: 'Auftragsabwicklung',
+    icon: '📦',
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+    features: [
+      'Auftragsdokumente (Rechnung, Lieferschein)',
+      'Versandlabels (DHL, Deutsche Post)',
+      'Kundenportal',
+      'Mahnwesen',
+      'Retourenmanagement',
+      'Stornierung & Gutschriften',
+      'Zahlungsabgleich'
+    ]
   },
   {
-    title: 'Automatisierter Versand',
-    description: 'Erstelle Versandlabels für DHL, Deutsche Post und mehr mit einem Klick.',
-    icon: '📦'
+    title: 'Artikelverwaltung',
+    icon: '🏷️',
+    color: 'text-green-600',
+    bg: 'bg-green-50',
+    features: [
+      'Bestandsabgleich (Multi-Channel)',
+      'Lagerverwaltung',
+      'Stücklisten & Sets',
+      'Digitale Artikel',
+      'Bildspeicher',
+      'Seriennummern',
+      'Preiskalkulation'
+    ]
   },
   {
-    title: 'Rechnungsstellung',
-    description: 'Automatische Erstellung und Versand von Rechnungen & Lieferscheinen.',
-    icon: '📄'
+    title: 'Automatisierung',
+    icon: '⚡',
+    color: 'text-purple-600',
+    bg: 'bg-purple-50',
+    features: [
+      'Automatische Rechnungsstellung',
+      'Automatischer E-Mail Versand',
+      'Regelbasierte Aktionen',
+      'Zeitgesteuerte Aufgaben',
+      'Bestellstatus-Updates',
+      'Export-Automatisierung'
+    ]
   },
   {
-    title: 'Bestandsmanagement',
-    description: 'Synchronisiere deinen Warenbestand über alle Kanäle hinweg.',
-    icon: '📊'
+    title: 'Finanzen & Buchhaltung',
+    icon: '💰',
+    color: 'text-orange-600',
+    bg: 'bg-orange-50',
+    features: [
+      'DATEV-Export',
+      'Umsatzberichte',
+      'Lexoffice Schnittstelle',
+      'SevDesk Anbindung',
+      'OSS-Verfahren (One Stop Shop)',
+      'Währungsumrechnung'
+    ]
   }
 ]
 </script>
@@ -38,21 +74,21 @@ const features = [
     <!-- Hero Section -->
     <div class="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden bg-gradient-to-b from-gray-50 to-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div class="text-center max-w-3xl mx-auto">
+        <div class="text-center max-w-4xl mx-auto">
           <h1 class="text-5xl tracking-tight font-extrabold text-gray-900 sm:text-6xl md:text-7xl mb-8">
-            <span class="block">Der einfache Weg zum</span>
-            <span class="block text-inventivy-blue">E-Commerce Erfolg</span>
+            <span class="block">Deine Warenwirtschaft.</span>
+            <span class="block text-inventivy-blue">Flexibel wie dein Business.</span>
           </h1>
-          <p class="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-            Verbinde deine Shops, automatisiere deinen Versand und behalte den Überblick.
-            Alles in einer modernen, intuitiven Plattform.
+          <p class="mt-6 max-w-2xl mx-auto text-xl text-gray-500">
+            Starte mit dem Kernsystem und buche Module einfach dazu, wenn du sie brauchst.
+            Professionelle Funktionen für E-Commerce – ohne Ballast, ohne versteckte Kosten.
           </p>
           <div class="mt-10 max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center gap-4">
             <router-link to="/register" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-inventivy-blue hover:bg-blue-700 md:py-4 md:text-lg md:px-10 shadow-xl shadow-blue-200 transition-all hover:scale-105">
-              Jetzt starten
+              Kostenlos starten
             </router-link>
-            <a href="#demo" class="w-full flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10 transition-all hover:scale-105">
-              Demo ansehen
+            <a href="#features" class="w-full flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10 transition-all hover:scale-105">
+              Funktionen entdecken
             </a>
           </div>
         </div>
@@ -65,81 +101,91 @@ const features = [
       </div>
     </div>
 
-    <!-- UI Mockup Section -->
-    <div class="relative -mt-12 lg:-mt-24 pb-20">
+    <!-- Core Value Proposition: Modular System -->
+    <div class="py-16 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="relative bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
-          <div class="absolute top-0 w-full h-8 bg-gray-50 border-b flex items-center px-4 gap-2">
-            <div class="w-3 h-3 rounded-full bg-red-400"></div>
-            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
-            <div class="w-3 h-3 rounded-full bg-green-400"></div>
-          </div>
-          <div class="p-2 pt-10">
-            <!-- Simplified Dashboard Mockup -->
-             <div class="grid grid-cols-4 gap-4 p-4 text-left">
-                <div class="col-span-1 bg-gray-50 p-4 rounded-lg hidden md:block">
-                   <div class="h-4 w-24 bg-gray-200 rounded mb-4"></div>
-                   <div class="space-y-2">
-                      <div class="h-8 w-full bg-indigo-50 text-indigo-700 rounded flex items-center px-2" translate="no">Dashboard</div>
-                      <div class="h-8 w-full hover:bg-gray-100 rounded flex items-center px-2">Bestellungen</div>
-                      <div class="h-8 w-full hover:bg-gray-100 rounded flex items-center px-2">Produkte</div>
-                   </div>
-                </div>
-                <div class="col-span-4 md:col-span-3">
-                   <div class="flex justify-between mb-6">
-                      <div class="h-8 w-48 bg-gray-200 rounded"></div>
-                      <div class="h-8 w-24 bg-indigo-600 rounded"></div>
-                   </div>
-                   <div class="grid grid-cols-3 gap-4 mb-6">
-                      <div class="bg-white border rounded-lg p-4 shadow-sm">
-                         <div class="text-sm text-gray-500">Umsatz heute</div>
-                         <div class="text-2xl font-bold mt-1">452,00 €</div>
-                      </div>
-                      <div class="bg-white border rounded-lg p-4 shadow-sm">
-                         <div class="text-sm text-gray-500">Offene Bestellungen</div>
-                         <div class="text-2xl font-bold mt-1 text-orange-500">12</div>
-                      </div>
-                      <div class="bg-white border rounded-lg p-4 shadow-sm">
-                         <div class="text-sm text-gray-500">Versendet</div>
-                         <div class="text-2xl font-bold mt-1 text-green-600">28</div>
-                      </div>
-                   </div>
-                </div>
-             </div>
-          </div>
+        <div class="text-center mb-16">
+          <h2 class="text-base text-inventivy-blue font-semibold tracking-wide uppercase">Das Prinzip</h2>
+          <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+            Zahle nur, was du nutzt
+          </p>
+          <p class="mt-4 max-w-3xl text-xl text-gray-500 mx-auto">
+            Inventivy ist modular aufgebaut. Das Basis-System ist kostenlos. 
+            Spezielle Funktionen und Erweiterungen (Module) kannst du flexibel hinzubuchen – genau dann, wenn dein Business sie erfordert.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div class="bg-gray-50 rounded-2xl p-8 border border-gray-100 text-center">
+                <div class="text-4xl mb-4">🌱</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Für Starter</h3>
+                <p class="text-gray-600">Nutze alle Grundfunktionen kostenlos. Perfekt für den Start ohne Risiko und Fixkosten.</p>
+            </div>
+            <div class="bg-inventivy-blue/5 rounded-2xl p-8 border border-inventivy-blue/20 text-center relative overflow-hidden">
+                 <div class="absolute top-0 right-0 bg-inventivy-blue text-white text-xs font-bold px-3 py-1 rounded-bl-lg">Empfohlen</div>
+                <div class="text-4xl mb-4">🚀</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Für Wachstumsphasen</h3>
+                <p class="text-gray-600">Buche Automatisierung und erweiterte Schnittstellen dazu, um Zeit zu sparen.</p>
+            </div>
+            <div class="bg-gray-50 rounded-2xl p-8 border border-gray-100 text-center">
+                <div class="text-4xl mb-4">🏢</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Für Profis</h3>
+                <p class="text-gray-600">Volle Power mit Multi-Lager, Mitarbeiter-Accounts und Premium-Support.</p>
+            </div>
         </div>
       </div>
     </div>
 
-    <!-- Features Section -->
+    <!-- Modular Feature Grid -->
     <div id="features" class="py-24 bg-gray-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-          <h2 class="text-base text-inventivy-blue font-semibold tracking-wide uppercase">Features</h2>
+        <div class="text-center mb-16">
+          <h2 class="text-base text-inventivy-blue font-semibold tracking-wide uppercase">Alle Module</h2>
           <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            Alles was du brauchst in einer App
+            Ein Baukasten für deinen Erfolg
+          </p>
+          <p class="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+            Wähle aus über 50 Funktionen die Bausteine, die zu deinem Workflow passen.
           </p>
         </div>
 
-        <div class="mt-20">
-          <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            <div v-for="feature in features" :key="feature.title" class="pt-6">
-              <div class="flow-root bg-white rounded-xl px-6 pb-8 h-full shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-                <div class="-mt-6">
-                  <div>
-                    <span class="inline-flex items-center justify-center p-3 bg-inventivy-blue rounded-xl shadow-lg text-white">
-                      <span class="text-2xl">{{ feature.icon }}</span>
-                    </span>
-                  </div>
-                  <h3 class="mt-8 text-lg font-medium text-gray-900 tracking-tight">{{ feature.title }}</h3>
-                  <p class="mt-5 text-base text-gray-500">
-                    {{ feature.description }}
-                  </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+          <div v-for="category in moduleCategories" :key="category.title" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+            <div class="p-6 border-b border-gray-50 flex items-center justify-between" :class="category.bg">
+                <div class="flex items-center space-x-4">
+                    <span class="text-3xl">{{ category.icon }}</span>
+                    <h3 class="text-xl font-bold text-gray-900">{{ category.title }}</h3>
                 </div>
-              </div>
+            </div>
+            <div class="p-6">
+                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <li v-for="feature in category.features" :key="feature" class="flex items-start text-gray-600">
+                        <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span class="text-sm font-medium">{{ feature }}</span>
+                    </li>
+                     <!-- Placeholder for 'more' -->
+                     <li class="flex items-start text-inventivy-blue opacity-75">
+                        <svg class="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <span class="text-sm font-medium italic">... und vieles mehr</span>
+                    </li>
+                </ul>
             </div>
           </div>
         </div>
+        
+        <div class="mt-12 text-center">
+             <router-link to="/register" class="inline-flex items-center text-inventivy-blue font-bold hover:text-blue-700">
+                Alle Funktionen im Detail ansehen
+                <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+             </router-link>
+        </div>
+
       </div>
     </div>
 
