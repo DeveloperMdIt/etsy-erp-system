@@ -1,6 +1,6 @@
 {
     "name": "etsy-erp-backend",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "ERP/WMS Backend for Etsy Shop Management",
     "main": "dist/index.js",
     "scripts": {
