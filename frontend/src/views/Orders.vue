@@ -213,8 +213,9 @@ const openLabelModal = async (order: Order) => {
 
   // Preselect first method if available
   if (shippingMethods.value.length > 0 && !selectedShippingMethodId.value) {
-    if (shippingMethods.value.length > 0) {
-      selectedShippingMethodId.value = shippingMethods.value[0].id
+    const firstMethod = shippingMethods.value[0];
+    if (firstMethod) {
+      selectedShippingMethodId.value = firstMethod.id
     }
   }
 }
