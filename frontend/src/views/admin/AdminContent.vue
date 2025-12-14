@@ -1,3 +1,4 @@
+<script setup lang="ts">
 import { ref, onMounted, watch, inject } from 'vue'
 import axios from 'axios'
 
