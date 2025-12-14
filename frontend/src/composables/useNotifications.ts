@@ -23,10 +23,10 @@ export function useNotifications() {
         }, 5000);
     };
 
-    const showSuccess = (message: string) => showNotification('success', message);
-    const showError = (message: string) => showNotification('error', message);
-    const showInfo = (message: string) => showNotification('info', message);
-    const showWarning = (message: string) => showNotification('warning', message);
+    const showSuccess = (titleOrMessage: string, message?: string) => showNotification('success', message || titleOrMessage);
+    const showError = (titleOrMessage: string, message?: string) => showNotification('error', message || titleOrMessage);
+    const showInfo = (titleOrMessage: string, message?: string) => showNotification('info', message || titleOrMessage);
+    const showWarning = (titleOrMessage: string, message?: string) => showNotification('warning', message || titleOrMessage);
 
     const removeNotification = (id: number) => {
         const index = notifications.value.findIndex(n => n.id === id);

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import ManualTrackingModal from '../components/ManualTrackingModal.vue'
 
@@ -213,7 +213,9 @@ const openLabelModal = async (order: Order) => {
 
   // Preselect first method if available
   if (shippingMethods.value.length > 0 && !selectedShippingMethodId.value) {
+    if (shippingMethods.value.length > 0) {
       selectedShippingMethodId.value = shippingMethods.value[0].id
+    }
   }
 }
 

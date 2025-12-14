@@ -33,7 +33,7 @@ const config = ref({
 
 // Etsy connection status (will be enabled later)
 const etsyAvailable = ref(false)
-const etsyConnected = ref(false)
+// const etsyConnected = ref(false)
 
 // Preview examples
 const orderExample = computed(() => {
