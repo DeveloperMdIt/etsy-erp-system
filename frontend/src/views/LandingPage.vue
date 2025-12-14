@@ -10,13 +10,7 @@ interface Feature {
   price?: number
 }
 
-interface Category {
-  title: string
-  icon: string
-  color: string
-  bg: string
-  features: Feature[]
-}
+
 
 const modules = ref<any[]>([])
 
