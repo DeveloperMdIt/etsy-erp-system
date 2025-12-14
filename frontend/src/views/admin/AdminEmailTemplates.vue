@@ -71,7 +71,7 @@ const saveTemplate = async () => {
     if (!selectedTemplate.value) return
     isLoading.value = true
     try {
-        await axios.post('/api/admin/settings', {
+        await axios.put('/api/admin/settings', {
             settings: [
                 { key: selectedTemplate.value.subjectKey, value: form.value.subject },
                 { key: selectedTemplate.value.contentKey, value: form.value.content }
