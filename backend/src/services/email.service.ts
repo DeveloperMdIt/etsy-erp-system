@@ -1,35 +1,51 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import prisma from '../utils/prisma';
 
 dotenv.config();
 
-// Create transporter only if credentials exist
-const createTransporter = () => {
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-        const port = parseInt(process.env.SMTP_PORT || '587');
-        const secure = port === 465; // true for 465, false for other ports (587, 25)
+// Helper to get SMTP settings
+const getTransporterConfig = async () => {
+    // Try individual system settings first
+    const host = await prisma.systemSetting.findUnique({ where: { key: 'SMTP_HOST' } });
+    const port = await prisma.systemSetting.findUnique({ where: { key: 'SMTP_PORT' } });
+    const user = await prisma.systemSetting.findUnique({ where: { key: 'SMTP_USER' } });
+    const pass = await prisma.systemSetting.findUnique({ where: { key: 'SMTP_PASS' } });
 
-        return nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port,
-            secure,
+    // Fallback to env
+    const smtpHost = host?.value || process.env.SMTP_HOST;
+    const smtpPort = port?.value ? parseInt(port.value) : parseInt(process.env.SMTP_PORT || '587');
+    const smtpUser = user?.value || process.env.SMTP_USER;
+    const smtpPass = pass?.value || process.env.SMTP_PASS;
+
+    if (smtpHost && smtpUser && smtpPass) {
+        return {
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465,
             auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
+                user: smtpUser,
+                pass: smtpPass,
             },
-        });
+        };
     }
     return null;
 };
 
 export const EmailService = {
     async sendMail(to: string, subject: string, html: string) {
-        const transporter = createTransporter();
+        const config = await getTransporterConfig();
 
-        if (transporter) {
+        if (config) {
+            const transporter = nodemailer.createTransport(config);
             try {
+                // Get From Address
+                const fromSetting = await prisma.systemSetting.findUnique({ where: { key: 'SUPPORT_EMAIL' } });
+                const fromAddress = fromSetting?.value || process.env.SUPPORT_EMAIL || config.auth.user;
+                const shopName = process.env.SHOP_NAME || 'Inventivy';
+
                 const info = await transporter.sendMail({
-                    from: `"${process.env.SHOP_NAME || 'Inventivy'}" <${process.env.SMTP_USER}>`,
+                    from: `"${shopName}" <${fromAddress}>`,
                     to,
                     subject,
                     html,
@@ -41,7 +57,7 @@ export const EmailService = {
                 throw error;
             }
         } else {
-            console.log('--- EMAIL SIMULATION ---');
+            console.log('--- EMAIL SIMULATION (No credentials found) ---');
             console.log('To:', to);
             console.log('Subject:', subject);
             console.log('Content:', html);

@@ -15,7 +15,11 @@ const knownKeys = [
     { key: 'DHL_APP_ID', label: 'DHL App ID', desc: 'Für DHL Geschäftskunden API' },
     { key: 'DHL_APP_SECRET', label: 'DHL App Secret', desc: 'Geheimschlüssel' },
     { key: 'IMPRESSUM_ADDRESS', label: 'Impressum Adresse', desc: 'Wird in Emails/Footer angezeigt' },
-    { key: 'SUPPORT_EMAIL', label: 'Support Email', desc: 'Absender für System-Mails' },
+    { key: 'SMTP_HOST', label: 'SMTP Host', desc: 'z.B. smtp.netcup.net' },
+    { key: 'SMTP_PORT', label: 'SMTP Port', desc: '465 (SSL) oder 587 (TLS)' },
+    { key: 'SMTP_USER', label: 'SMTP User', desc: 'Deine Email Adresse' },
+    { key: 'SMTP_PASS', label: 'SMTP Password', desc: 'Dein Email Passwort' },
+    { key: 'SUPPORT_EMAIL', label: 'Absender Email', desc: 'Email Adresse im From-Feld' },
 ]
 
 const formValues = ref<Record<string, string>>({})

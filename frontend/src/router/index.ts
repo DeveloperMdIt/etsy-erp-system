@@ -22,6 +22,7 @@ const routes = [
     // Auth routes (public)
     { path: '/login', component: Login, meta: { public: true } },
     { path: '/register', component: Register, meta: { public: true } },
+    { path: '/verify-email', component: () => import('../views/VerifyEmail.vue'), meta: { public: true } },
 
     // Setup (authenticated, accessible)
     { path: '/setup', component: Setup },

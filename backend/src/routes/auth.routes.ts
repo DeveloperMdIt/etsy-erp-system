@@ -31,6 +31,9 @@ router.post('/register', async (req: Request, res: Response) => {
         // Hash password
         const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
+        // Verification Token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+
         // Create user and default settings transaction
         const user = await prisma.$transaction(async (tx) => {
             const newUser = await tx.user.create({
@@ -40,6 +43,8 @@ router.post('/register', async (req: Request, res: Response) => {
                     firstName: firstName || null,
                     lastName: lastName || null,
                     shopName: shopName || null,
+                    isVerified: false, // Default false
+                    verificationToken: verificationToken
                 },
             });
 
@@ -50,44 +55,65 @@ router.post('/register', async (req: Request, res: Response) => {
                     invoiceNumberFormat: 'RE-{YYYY}-{####}',
                     deliveryNoteFormat: 'LS-{YYYY}-{####}',
                     customerNumberFormat: 'KD-{YYYY}-{####}',
-                    // Add other defaults as needed
                 }
             });
 
             return newUser;
         });
 
-        // Send Welcome Email
+        // Send Verification Email
+        const verificationLink = `${process.env.FRONTEND_URL || 'https://inventivy.de'}/verify-email?token=${verificationToken}&email=${email}`;
+
         try {
             await EmailService.sendMail(
                 email,
-                'Willkommen bei Inventivy!',
+                'Bitte bestätige deine Email',
                 `
                 <h1>Willkommen, ${firstName || 'Benutzer'}!</h1>
                 <p>Vielen Dank für deine Registrierung bei Inventivy.</p>
-                <p>Dein Shop "${shopName || ''}" wurde erfolgreich angelegt.</p>
-                <p>Du kannst dich jetzt einloggen und loslegen.</p>
-                <br>
-                <p>Viele Grüße,<br>Dein Inventivy Team</p>
+                <p>Bitte klicke auf den folgenden Link, um deinen Account zu aktivieren:</p>
+                <a href="${verificationLink}" style="padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px;">Email bestätigen</a>
+                <br><br>
+                <p>Oder kopiere diesen Link in deinen Browser:</p>
+                <p>${verificationLink}</p>
                 `
             );
         } catch (emailError) {
-            console.error('Failed to send welcome email:', emailError);
-            // Don't fail registration if email fails
+            console.error('Failed to send verification email:', emailError);
         }
 
-        // Generate JWT
-        const token = jwt.sign({
-            userId: user.id,
-            email: user.email,
-            tenantId: user.tenantId,
-            role: user.role
-        }, JWT_SECRET, { expiresIn: '7d' });
+        // Do NOT return token. Force login after verification.
+        res.json({ message: 'Registration successful. Please check your email to verify your account.' });
 
-        res.json({ user, token });
     } catch (error: any) {
         console.error('Registration error:', error);
         res.status(500).json({ error: 'Registration failed' });
+    }
+});
+
+// POST /api/auth/verify-email
+router.post('/verify-email', async (req: Request, res: Response) => {
+    try {
+        const { email, token } = req.body;
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user || user.verificationToken !== token) {
+            return res.status(400).json({ error: 'Invalid verification token' });
+        }
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                isVerified: true,
+                verificationToken: null
+            }
+        });
+
+        res.json({ success: true, message: 'Email verified successfully' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Verification failed' });
     }
 });
 
@@ -112,6 +138,12 @@ router.post('/login', async (req: Request, res: Response) => {
         });
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Check verification
+        if (!user.isVerified) {
+            // Optional: Allow resend verification email here?
+            return res.status(403).json({ error: 'Please verify your email address first.' });
         }
 
         const isValid = await bcrypt.compare(password, user.passwordHash);

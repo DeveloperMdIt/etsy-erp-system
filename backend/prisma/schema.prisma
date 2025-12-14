@@ -31,6 +31,11 @@ model User {
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
 
+  // Email Verification
+  isVerified           Boolean   @default(false)
+  verificationToken    String?
+  verificationExpires  DateTime?
+
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   settings  UserSettings?
