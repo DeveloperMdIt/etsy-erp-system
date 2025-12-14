@@ -1,5 +1,8 @@
 <script setup lang="ts">
-// import { useRouter } from 'vue-router'
+import Logo from '../components/Logo.vue' // Keeping Logo import if feature icons rely on similar logic or just cleanup
+import PublicHeader from '../components/PublicHeader.vue'
+import PublicFooter from '../components/PublicFooter.vue'
+import BackToTop from '../components/BackToTop.vue'
 
 // const router = useRouter()
 
@@ -25,32 +28,12 @@ const features = [
     icon: '📊'
   }
 ]
-import Logo from '../components/Logo.vue'
 </script>
 
 <template>
   <div class="bg-white">
     <!-- Navigation -->
-    <nav class="absolute w-full z-10 top-0">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-20">
-          <div class="flex items-center">
-             <Logo logoClass="h-10" />
-          </div>
-          <div class="hidden md:flex space-x-8">
-            <a href="#features" class="text-gray-600 hover:text-inventivy-blue font-medium">Funktionen</a>
-            <router-link to="/pricing" class="text-gray-600 hover:text-inventivy-blue font-medium">Preise</router-link>
-            <a href="#about" class="text-gray-600 hover:text-inventivy-blue font-medium">Über uns</a>
-          </div>
-          <div class="flex items-center space-x-4">
-            <router-link to="/login" class="text-gray-600 hover:text-inventivy-blue font-medium">Login</router-link>
-            <router-link to="/register" class="bg-inventivy-blue text-white px-5 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200">
-              Kostenlos testen
-            </router-link>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <PublicHeader />
 
     <!-- Hero Section -->
     <div class="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden bg-gradient-to-b from-gray-50 to-white">
@@ -177,17 +160,9 @@ import Logo from '../components/Logo.vue'
     </div>
 
     <!-- Footer -->
-    <footer class="bg-gray-800">
-      <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <p class="text-center text-base text-gray-400">
-          &copy; 2025 Inventivy. Alle Rechte vorbehalten. 
-          <span class="mx-2">|</span>
-          <router-link to="/privacy" class="hover:text-white transition-colors">Datenschutz</router-link>
-          <span class="mx-2">|</span>
-          <router-link to="/terms" class="hover:text-white transition-colors">AGB</router-link>
-        </p>
-      </div>
-    </footer>
+    <PublicFooter />
+    
+    <BackToTop />
   </div>
 </template>
 

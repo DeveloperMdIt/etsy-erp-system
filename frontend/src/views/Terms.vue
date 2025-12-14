@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import PublicHeader from '../components/PublicHeader.vue'
+import PublicFooter from '../components/PublicFooter.vue'
+import BackToTop from '../components/BackToTop.vue'
 
 onMounted(() => {
   window.scrollTo(0, 0)
@@ -7,59 +10,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow sm:p-12 p-6 prose prose-blue prose-lg">
-      
-      <h1>Allgemeine Geschäftsbedingungen</h1>
-      
-      <h2>Präambel</h2>
-      <p>
-        Der Kunde benötigt zur Durchführung seiner Geschäftsprozesse Standardsoftwareanwendungen und Speicherplatz zum Ablegen der erzeugten Anwendungsdaten.
-      </p>
-      <p>
-        Der Anbieter bietet die zeitweise Nutzung solcher Softwareanwendungen über eine Telekommunikationsverbindung sowie die Möglichkeit zur Ablage von Anwendungsdaten gegen Entgelt an.
-      </p>
-      <p>
-        Mit diesem Vertrag vereinbaren die Vertragspartner, dass der Anbieter dem Kunden die Nutzungsmöglichkeit für die benötigten Softwareanwendungen zum Zugriff über eine Telekommunikationsverbindung sowie Speicherplatz für seine Anwendungsdaten zur Verfügung stellt.
-      </p>
-
-      <h2>§ 1 Vertragsgegenstand, Vertragsschluss, Anbieter</h2>
-      <p>
-        (1) Gegenstand dieses Vertrags ist die zeitlich beschränkte Bereitstellung der in Anhang 1 vereinbarten Softwareanwendungen (im Folgenden, auch bei Mehrzahl: ANWENDUNG) zur Nutzung ihrer Funktionalitäten, die technische Ermöglichung der Nutzung der ANWENDUNG durch eine Zugriffssoftware (im Folgenden: ZUGRIFFSSOFTWARE) und die Einräumung bzw. Vermittlung von Nutzungsrechten an der ANWENDUNG sowie die Bereitstellung von Speicherplatz für die vom Kunden durch Nutzung der ANWENDUNG erzeugten und/oder die zur Nutzung der ANWENDUNG erforderlichen Daten (im Folgenden: ANWENDUNGSDATEN) im vereinbarten Umfang durch den Anbieter gegenüber dem Kunden gegen Zahlung des vereinbarten Entgelts.
-      </p>
-      <p>
-        (2) Der Vertragsschluss erfolgt mit dem Anbieter:<br>
-        <strong>Inventivy</strong><br>
-        Michael Deja<br>
-        An der Hohl 4<br>
-        36318 Schwalmtal<br>
-        E-Mail: info@inventivy.de
-      </p>
-      <p>
-        (3) Die Darstellungen in der ANWENDUNG stellen ein konkretes Angebot an den Kunden dar zum Abschluss eines kostenpflichtigen Vertrags. Mit Speicherung der Rechnungsdaten in der ANWENDUNG nimmt der Kunde das Angebot an.
-      </p>
-
-      <h2>§ 2 Besondere Bedingungen für die kostenfreie Testphase & Basis-Modell</h2>
-      <p>
-        (1) Dem Kunden wird das Recht eingeräumt, die ANWENDUNG über einen Zeitraum von 30 Tagen zu testen. Berechtigt für diese Testphase sind ausschließlich Unternehmer im Sinne des § 14 BGB.
-      </p>
-      <p>
-        (2) Die Testphase wird vom Kunden gestartet, indem er sich unter www.inventivy.de registriert. Hierfür ist lediglich die Angabe einer validen E-Mail-Adresse sowie die Wahl eines sicheren Passworts erforderlich. Mit Registrierung beginnt die kostenfreie Testphase von 30 Tagen.
-      </p>
-      <p>
-        (3) Sollte der Kunde nach Ablauf der 30 Tage noch nicht das Volumen von 20 Bestellungen pro Monat erreicht haben, verlängert sich die kostenfreie Phase automatisch so lange, bis dieses Volumen erstmals erreicht wird (Basis-Modell).
-      </p>
-      <p>
-        (4) In der Testphase ist der Kunde berechtigt, sämtliche Funktionen der ANWENDUNG kostenfrei zu testen.
-      </p>
-      <p>
-        (5) Der Kunde ist nicht berechtigt, während der reinen Testphase (erste 30 Tage) Produktivdaten als ANWENDUNGSDATEN einzugeben, es sei denn, er beabsichtigt die fortlaufende Nutzung im Basis-Modell.
-      </p>
-      <p>
-        (6) Der Kunde kann jederzeit während der Testphase in einen kostenpflichtigen Tarif wechseln.
-      </p>
-      <p>
-        (7) Möchte der Kunde die Nutzung beenden, kann er sein Konto selbst über „Benutzerkonto“ / „Konto löschen“ löschen und damit deaktivieren.
       </p>
 
       <h2>§ 3 Bereitstellung von ANWENDUNG und Speicherplatz</h2>

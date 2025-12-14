@@ -8,52 +8,6 @@ onMounted(() => {
 
 <template>
   <div class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow sm:p-12 p-6 prose prose-blue prose-lg">
-      
-      <h1>Datenschutz&shy;erklärung</h1>
-      
-      <h2>I. Geltungsbereich</h2>
-      <p>
-        Hiermit informieren wir als Verantwortliche gem. Art. 13 und 14 der Datenschutz-Grundverordnung (DSGVO) betroffene Personen über den Umgang mit personenbezogenen Daten. Das Dokument gilt ab sofort. Durch eventuelle künftige Änderungen der Datenverarbeitungsprozesse oder aufgrund geänderter gesetzlicher beziehungsweise behördlicher Vorgaben kann es notwendig werden, dieses Dokument anzupassen.
-      </p>
-
-      <h2>II. Wer ist für die Datenverarbeitung verantwortlich?</h2>
-      <p>
-        Der nach Art. 4 Nr. 7 DSGVO Verantwortliche für die Datenverarbeitung ist:
-      </p>
-      <p>
-        <strong>Inventivy</strong><br>
-        Michael Deja<br>
-        An der Hohl 4<br>
-        36318 Schwalmtal<br>
-        E-Mail: info@inventivy.de
-      </p>
-
-      <h2>III. Gibt es einen Datenschutzbeauftragten?</h2>
-      <p>
-        Aufgrund der gesetzlichen Bestimmungen ist kein Datenschutzbeauftragter bestellt. Bei Fragen zum Datenschutz wenden Sie sich bitte direkt an den Verantwortlichen unter der oben genannten Adresse.
-      </p>
-
-      <h2>IV. Wofür verarbeiten wir Ihre Daten?</h2>
-      <p>Neben den nachfolgend beschriebenen Verarbeitungen beachten Sie bitte auch die Informationen über Cookies unter Ziffer IX.</p>
-
-      <h3>IV.1. Logfiles / Hosting</h3>
-      <p>
-        Besuchen Sie unsere Internetpräsenz ohne sich zu registrieren oder uns anderweitig Informationen zu übermitteln, erheben wir nur folgende Daten, die Ihr Browser an unseren Server übermittelt (sog. „Server-Logfiles“):
-      </p>
-      <ul>
-        <li>Die einzelnen Seiten unserer Internetpräsenz (URL)</li>
-        <li>Datum und Uhrzeit zum Zeitpunkt des Zugriffes</li>
-        <li>Menge der gesendeten Daten in Byte</li>
-        <li>Quelle/Verweis, von welchem Sie auf die Seite gelangten</li>
-        <li>Verwendeter Browser</li>
-        <li>Verwendetes Betriebssystem</li>
-        <li>Verwendete IP-Adresse (ggf. in anonymisierter Form)</li>
-      </ul>
-      <p>
-        Unsere Internetpräsenz wird bei einem Hostingprovider gespeichert und zum Abruf vorgehalten. Der eingesetzte Webserver speichert die vorgenannten Server-Logfiles.
-      </p>
-      <p><strong>Zweck der Verarbeitung:</strong> Hosting der Internetpräsenz</p>
       <p><strong>Rechtsgrundlage und berechtigte Interessen:</strong> Die Verarbeitung erfolgt auf Basis unseres überwiegenden berechtigten Interesses (Art. 6 Abs. 1 lit. f DSGVO) an der Sicherheit und Stabilität unserer Internetpräsenz durch Beauftragung eines Dienstleisters zur Erbringung von Infrastruktur- und Plattformdienstleistungen, Rechenkapazität, Speicherplatz und Datenbankdienste, Sicherheitsleistungen sowie technische Wartungsleistungen.</p>
       <p><strong>Datenempfänger/Auftragsverarbeiter:</strong> NETCUP GmbH, Daimlerstraße 25, 76185 Karlsruhe</p>
 

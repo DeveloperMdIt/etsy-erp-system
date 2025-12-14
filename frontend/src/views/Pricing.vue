@@ -47,181 +47,184 @@ import Logo from '../components/Logo.vue'
             <div class="text-center mb-10">
                 <span class="inline-block py-1 px-3 rounded-full bg-green-100 text-green-800 font-semibold text-sm mb-4">Für ALLE Nutzer aktiv</span>
                 <h2 class="text-3xl font-bold text-gray-900">Das Basis-Modell</h2>
-                <p class="text-gray-600 mt-2">Die faire Abrechnung pro Bestellung. Ohne Grundgebühr, ohne Risiko.</p>
+        <div class="text-center">
+          <h2 class="text-base text-inventivy-blue font-semibold tracking-wide uppercase">Preise</h2>
+          <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+            Faire Preise für jede Phase deines Business
+          </p>
+          <p class="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+            Starte kostenlos und wähle später den Plan, der zu deinem Wachstum passt. 
+            Keine versteckten Kosten.
+          </p>
+        </div>
+
+        <!-- Pricing Tiers -->
+        <div class="mt-16 grid gap-8 lg:grid-cols-4 md:grid-cols-2 grid-cols-1">
+            <!-- Free / Basic Tier -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col relative overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+               <div class="absolute top-0 w-full h-2 bg-gray-400"></div>
+                <div class="p-8 flex-grow">
+                    <h3 class="text-xl font-semibold text-gray-900">Basis</h3>
+                    <p class="mt-4 text-gray-500 text-sm">Ideal für den Start und kleine Shops.</p>
+                    <div class="mt-6 flex items-baseline">
+                        <span class="text-4xl font-extrabold text-gray-900">0 €</span>
+                        <span class="ml-1 text-xl font-medium text-gray-500">/Monat</span>
+                    </div>
+                    <ul class="mt-6 space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600">Bis zu 20 Bestellungen/Monat</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600">Alle Grundfunktionen</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600">Community Support</span>
+                        </li>
+                    </ul>
+                </div>
+                 <div class="p-8 bg-gray-50 border-t border-gray-100">
+                    <router-link to="/register" class="block w-full text-center px-6 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-700 hover:bg-white transition-colors">
+                        Kostenlos starten
+                    </router-link>
+                </div>
             </div>
 
-            <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-                <div class="p-8 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-900">Pay-per-Order</h3>
-                        <p class="text-sm text-gray-500">Dein Sicherheitsnetz für den Start</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-3xl font-bold text-gray-900">0 €</span>
-                        <span class="text-gray-500 block text-sm">Grundgebühr / Monat</span>
-                    </div>
+            <!-- Starter Tier -->
+            <div class="bg-white rounded-2xl shadow-lg border-inventivy-blue border-2 flex flex-col relative overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 scale-105 z-10">
+                <div class="absolute top-0 w-full h-8 bg-inventivy-blue text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center">
+                    Beliebt
                 </div>
-                <div class="p-0">
-                    <table class="w-full text-left">
-                        <thead class="bg-gray-50/50 text-gray-500 text-xs uppercase font-semibold">
-                            <tr>
-                                <th class="px-8 py-4">Bestellungen / Monat</th>
-                                <th class="px-8 py-4 text-right">Preis je Bestellung</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-sm">
-                            <tr class="hover:bg-green-50/30 transition-colors">
-                                <td class="px-8 py-5 font-medium text-gray-900 flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    0 – 20 Bestellungen
-                                </td>
-                                <td class="px-8 py-5 text-right font-bold text-green-600">KOSTENLOS</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-8 py-5 font-medium text-gray-900">21 – 100 Bestellungen</td>
-                                <td class="px-8 py-5 text-right font-medium">0,25 €</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-8 py-5 font-medium text-gray-900">101 – 300 Bestellungen</td>
-                                <td class="px-8 py-5 text-right font-medium">0,20 €</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-8 py-5 font-medium text-gray-900">301 – 1.000 Bestellungen</td>
-                                <td class="px-8 py-5 text-right font-medium">0,15 €</td>
-                            </tr>
-                             <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-8 py-5 font-medium text-gray-900">> 1.000 Bestellungen</td>
-                                <td class="px-8 py-5 text-right font-medium text-inventivy-blue">Individuell anfragen</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                 <div class="p-8 pt-12 flex-grow">
+                    <h3 class="text-xl font-semibold text-gray-900">Starter</h3>
+                    <p class="mt-4 text-gray-500 text-sm">Für wachsende Shops mit mehr Volumen.</p>
+                    <div class="mt-6 flex items-baseline">
+                        <span class="text-4xl font-extrabold text-gray-900">10 €</span> <!-- Example Price -->
+                        <span class="ml-1 text-xl font-medium text-gray-500">/Monat</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">+ 0,07 € pro weiterer Bestellung</p>
+
+                    <ul class="mt-6 space-y-4">
+                        <li class="flex items-start">
+                             <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600"><strong>Inkl. 100 Bestellungen</strong></span>
+                        </li>
+                         <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600">Alles aus Basis</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600">E-Mail Support</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600">Automatisierung (5 Regeln)</span>
+                        </li>
+                    </ul>
                 </div>
-                <div class="p-6 bg-gray-50 border-t border-gray-100 text-center text-sm text-gray-500">
-                    Jederzeit kündbar. Keine Mindestlaufzeit. Ideal für saisonales Geschäft.
+                <div class="p-8 bg-gray-50 border-t border-gray-100">
+                     <router-link to="/register" class="block w-full text-center px-6 py-3 bg-inventivy-blue border border-transparent rounded-lg text-base font-medium text-white hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
+                        14 Tage testen
+                    </router-link>
+                </div>
+            </div>
+
+            <!-- Pro Tier -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col relative overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+               <div class="absolute top-0 w-full h-2 bg-purple-500"></div>
+                <div class="p-8 flex-grow">
+                    <h3 class="text-xl font-semibold text-gray-900">Pro</h3>
+                    <p class="mt-4 text-gray-500 text-sm">Für professionelle Verkäufer.</p>
+                    <div class="mt-6 flex items-baseline">
+                        <span class="text-4xl font-extrabold text-gray-900">29 €</span>
+                        <span class="ml-1 text-xl font-medium text-gray-500">/Monat</span>
+                    </div>
+                     <p class="text-xs text-gray-400 mt-1">+ 0,05 € pro weiterer Bestellung</p>
+                    <ul class="mt-6 space-y-4">
+                         <li class="flex items-start">
+                             <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600"><strong>Inkl. 500 Bestellungen</strong></span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600">Priorisierter Support</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600">Unbegrenzte Automatisierung</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="p-8 bg-gray-50 border-t border-gray-100">
+                     <router-link to="/register" class="block w-full text-center px-6 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-700 hover:bg-white transition-colors">
+                        14 Tage testen
+                    </router-link>
+                </div>
+            </div>
+
+            <!-- Enterprise Tier -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col relative overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+               <div class="absolute top-0 w-full h-2 bg-gray-900"></div>
+                <div class="p-8 flex-grow">
+                    <h3 class="text-xl font-semibold text-gray-900">Plus</h3>
+                    <p class="mt-4 text-gray-500 text-sm">High Volume & Brands.</p>
+                    <div class="mt-6 flex items-baseline">
+                        <span class="text-4xl font-extrabold text-gray-900">49 €</span>
+                        <span class="ml-1 text-xl font-medium text-gray-500">/Monat</span>
+                    </div>
+                     <p class="text-xs text-gray-400 mt-1">+ 0,04 € pro weiterer Bestellung</p>
+                    <ul class="mt-6 space-y-4">
+                        <li class="flex items-start">
+                             <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600"><strong>Inkl. 1000 Bestellungen</strong></span>
+                        </li>
+                         <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600">Premium Support (Tel.)</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-gray-600">Dediziertes Onboarding</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="p-8 bg-gray-50 border-t border-gray-100">
+                     <router-link to="/register" class="block w-full text-center px-6 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-700 hover:bg-white transition-colors">
+                        14 Tage testen
+                    </router-link>
                 </div>
             </div>
         </div>
 
-        <!-- Packages -->
-        <div>
-            <div class="text-center mb-12">
-                 <span class="inline-block py-1 px-3 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm mb-4">Optional & Flexibel</span>
-                <h2 class="text-3xl font-bold text-gray-900">Spar-Pakete</h2>
-                <p class="text-gray-600 mt-2">Für wachsende Shops. Buche ein Paket, um deine Kosten zu deckeln.</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                <!-- Starter -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-lg p-8 relative overflow-hidden transition-transform hover:-translate-y-1">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Starter</h3>
-                    <p class="text-gray-500 text-sm mb-6">Für aktive Etsy-Seller</p>
-                    <div class="flex items-baseline mb-6">
-                        <span class="text-4xl font-extrabold text-gray-900">9,90 €</span>
-                        <span class="text-gray-500 ml-2">/ Monat</span>
-                    </div>
-                    <ul class="space-y-4 mb-8 text-sm">
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span>Inklusive <strong>200 Bestellungen</strong></span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-blue-500 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                            <span class="text-gray-600">Ø nur 0,05 € / Bestellung</span>
-                        </li>
-                         <li class="flex items-start">
-                             <svg class="w-5 h-5 text-green-500 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span>Etsy & eigener Shop</span>
-                        </li>
-                    </ul>
-                    <router-link to="/register" class="block w-full text-center py-3 px-4 bg-inventivy-blue hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
-                        Wählen
-                    </router-link>
-                </div>
-
-                <!-- Pro -->
-                <div class="bg-white rounded-2xl border-2 border-inventivy-blue shadow-xl p-8 relative overflow-hidden transform scale-105 z-10">
-                     <div class="absolute top-0 right-0 bg-inventivy-blue text-white text-xs font-bold px-3 py-1 rounded-bl-lg">BELIEBT</div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Pro</h3>
-                    <p class="text-gray-500 text-sm mb-6">Für wachsende Shops</p>
-                    <div class="flex items-baseline mb-6">
-                        <span class="text-4xl font-extrabold text-gray-900">19,90 €</span>
-                        <span class="text-gray-500 ml-2">/ Monat</span>
-                    </div>
-                    <ul class="space-y-4 mb-8 text-sm">
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span>Inklusive <strong>1.000 Bestellungen</strong></span>
-                        </li>
-                         <li class="flex items-start">
-                            <svg class="w-5 h-5 text-blue-500 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                            <span class="text-gray-600">Ø nur 0,02 € / Bestellung</span>
-                        </li>
-                        <li class="flex items-start">
-                             <svg class="w-5 h-5 text-green-500 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span>Priorisierter Support</span>
-                        </li>
-                    </ul>
-                    <router-link to="/register" class="block w-full text-center py-3 px-4 bg-inventivy-blue hover:bg-blue-700 text-white rounded-lg font-bold transition-colors shadow-lg shadow-blue-200">
-                        Jetzt starten
-                    </router-link>
-                </div>
-
-                <!-- Plus -->
-                <div class="bg-gray-50 rounded-2xl border border-gray-200 p-8 relative overflow-hidden transition-transform hover:-translate-y-1">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Plus</h3>
-                    <p class="text-gray-500 text-sm mb-6">Power-Seller & Agenturen</p>
-                    <div class="flex items-baseline mb-6">
-                        <span class="text-4xl font-extrabold text-gray-900">39,90 €</span>
-                        <span class="text-gray-500 ml-2">/ Monat</span>
-                    </div>
-                    <ul class="space-y-4 mb-8 text-sm">
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span>Hohe Limits (auf Anfrage)</span>
-                        </li>
-                         <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span>3 Etsy-Shops inklusive</span>
-                        </li>
-                        <li class="flex items-start">
-                             <svg class="w-5 h-5 text-green-500 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span>2 Benutzer-Logins</span>
-                        </li>
-                    </ul>
-                    <router-link to="/register" class="block w-full text-center py-3 px-4 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                        Kontaktieren
-                    </router-link>
-                </div>
-            </div>
+        <!-- FAQ Section -->
+        <div class="mt-24">
+             <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-12">Häufig gestellte Fragen</h2>
+             <div class="space-y-4 max-w-3xl mx-auto">
+                 <div v-for="(faq, index) in faqs" :key="index" class="border rounded-lg bg-white overflow-hidden shadow-sm">
+                     <button @click="toggleFaq(index)" class="w-full flex justify-between items-center p-4 text-left focus:outline-none">
+                         <span class="font-medium text-gray-900 text-lg">{{ faq.question }}</span>
+                         <span class="transform transition-transform duration-200 text-inventivy-blue" :class="{'rotate-180': openFaq === index}">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                         </span>
+                     </button>
+                      <div v-show="openFaq === index" class="p-4 pt-0 text-gray-600 bg-gray-50 border-t border-gray-100">
+                         {{ faq.answer }}
+                     </div>
+                 </div>
+             </div>
         </div>
 
-        <div class="mt-20 text-center max-w-2xl mx-auto">
-            <h3 class="text-xl font-bold mb-4">Häufige Fragen</h3>
-            <div class="text-left space-y-4">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="font-bold">Muss ich mich sofort für ein Paket entscheiden?</p>
-                    <p class="text-gray-600 text-sm mt-1">Nein! Du startest immer im Basis-Tarif. Wenn du merkst, dass du mit einem Paket günstiger fährst, kannst du jederzeit mit einem Klick wechseln.</p>
-                </div>
-                 <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="font-bold">Gibt es eine Mindestlaufzeit?</p>
-                    <p class="text-gray-600 text-sm mt-1">Nein. Alle Pakete sind monatlich kündbar. Wir wollen dich durch Leistung binden, nicht durch Verträge.</p>
-                </div>
-            </div>
-        </div>
-
+      </div>
     </div>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 mt-20">
-      <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <p class="text-center text-base text-gray-400">
-          &copy; 2025 Inventivy. Alle Rechte vorbehalten.
-          <span class="mx-2">|</span>
-          <router-link to="/privacy" class="hover:text-white transition-colors">Datenschutz</router-link>
-          <span class="mx-2">|</span>
-          <router-link to="/terms" class="hover:text-white transition-colors">AGB</router-link>
-        </p>
-      </div>
-    </footer>
+    <PublicFooter />
+    
+    <BackToTop />
   </div>
 </template>
