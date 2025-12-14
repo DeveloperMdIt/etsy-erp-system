@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
+import PublicHeader from '../components/PublicHeader.vue'
+import PublicFooter from '../components/PublicFooter.vue'
 
 // Types
 interface Feature {
