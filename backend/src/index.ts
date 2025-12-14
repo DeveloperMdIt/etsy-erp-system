@@ -35,6 +35,12 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
 
+// Debug Middleware: Log every request
+app.use((req: Request, res: Response, next: NextFunction) => {
+    console.log(`[DEBUG] ${req.method} ${req.url}`);
+    next();
+});
+
 // Serve static files (logos, labels)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
