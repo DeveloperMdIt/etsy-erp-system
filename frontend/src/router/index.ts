@@ -32,6 +32,7 @@ const routes = [
     { path: '/terms', component: Terms, meta: { public: true } },
     { path: '/agb', redirect: '/terms' },
     { path: '/avv', component: DataProcessingAgreement, meta: { public: true } },
+    { path: '/about', component: () => import('../views/About.vue'), meta: { public: true } },
 
     // Protected routes
     { path: '/dashboard', component: Dashboard, meta: { title: 'Dashboard' } },
@@ -109,6 +110,18 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(),
     routes,
+    scrollBehavior(to, _from, savedPosition) {
+        if (to.hash) {
+            return {
+                el: to.hash,
+                behavior: 'smooth',
+            }
+        }
+        if (savedPosition) {
+            return savedPosition
+        }
+        return { top: 0 }
+    }
 })
 
 // Simple navigation guard - just auth check

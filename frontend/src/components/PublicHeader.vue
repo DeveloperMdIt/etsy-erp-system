@@ -22,9 +22,9 @@ const isMobileMenuOpen = ref(false)
           
           <!-- Desktop Navigation -->
           <div class="hidden md:flex space-x-8">
-            <router-link to="/#features" class="text-gray-600 hover:text-inventivy-blue font-medium">Funktionen</router-link>
+            <router-link :to="{ path: '/', hash: '#features' }" class="text-gray-600 hover:text-inventivy-blue font-medium">Funktionen</router-link>
             <router-link to="/pricing" class="text-gray-600 hover:text-inventivy-blue font-medium">Preise</router-link>
-            <router-link to="/#about" class="text-gray-600 hover:text-inventivy-blue font-medium">Über uns</router-link>
+            <router-link to="/about" class="text-gray-600 hover:text-inventivy-blue font-medium">Über uns</router-link>
           </div>
 
           <!-- Actions -->
@@ -55,9 +55,9 @@ const isMobileMenuOpen = ref(false)
        <!-- Mobile Menu -->
        <div v-if="isMobileMenuOpen" class="md:hidden bg-white border-t border-gray-100">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          <router-link to="/#features" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Funktionen</router-link>
+          <router-link :to="{ path: '/', hash: '#features' }" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Funktionen</router-link>
           <router-link to="/pricing" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Preise</router-link>
-          <router-link to="/#about" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Über uns</router-link>
+          <router-link to="/about" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Über uns</router-link>
           <router-link to="/login" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Login</router-link>
           <router-link to="/register" class="block w-full text-center px-4 py-2 mt-4 border border-transparent text-base font-medium rounded-md text-white bg-inventivy-blue hover:bg-blue-700">Kostenlos testen</router-link>
         </div>
