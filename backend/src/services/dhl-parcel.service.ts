@@ -63,9 +63,7 @@ export class DHLParcelService {
             ? 'https://api-sandbox.dhl.com'
             : 'https://api-eu.dhl.com';
 
-        if (!this.apiKey || !this.apiSecret) {
-            console.warn('⚠️  DHL API credentials not configured. Please add DHL_API_KEY and DHL_API_SECRET to .env');
-        }
+
     }
 
     async getAppCredentials() {
