@@ -80,7 +80,8 @@ router.post('/register', async (req: Request, res: Response) => {
         const token = jwt.sign({
             userId: user.id,
             email: user.email,
-            tenantId: user.tenantId
+            tenantId: user.tenantId,
+            role: user.role
         }, JWT_SECRET, { expiresIn: '7d' });
 
         res.json({ user, token });
@@ -116,6 +117,7 @@ router.post('/login', async (req: Request, res: Response) => {
             userId: user.id,
             email: user.email,
             tenantId: user.tenantId,
+            role: user.role
         }, JWT_SECRET, { expiresIn: '7d' });
 
         // Log successful login
