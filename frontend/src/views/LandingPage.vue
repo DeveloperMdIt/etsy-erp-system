@@ -1,4 +1,4 @@
-
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 
@@ -43,7 +43,7 @@ const moduleCategories = computed(() => {
     })
 
     return Object.keys(grouped).map(title => {
-        const config = categoryConfig[title] || categoryConfig['Sonstiges']
+const config = categoryConfig[title] || categoryConfig['Sonstiges']!
         return {
             title,
             icon: config.icon,
