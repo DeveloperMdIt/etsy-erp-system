@@ -25,9 +25,9 @@ const createCustomerSchema = z.object({
  * GET /api/customers
  * Get all customers for the current tenant
  */
-router.get('/', async (req: AuthRequest, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = (req as AuthRequest).user?.tenantId;
         if (!tenantId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
@@ -69,10 +69,10 @@ router.get('/', async (req: AuthRequest, res: Response) => {
  * GET /api/customers/:id
  * Get customer details
  */
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const tenantId = req.user?.tenantId;
+        const tenantId = (req as AuthRequest).user?.tenantId;
         if (!tenantId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
@@ -111,9 +111,9 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
  * POST /api/customers
  * Create a new customer
  */
-router.post('/', async (req: AuthRequest, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = (req as AuthRequest).user?.tenantId;
         if (!tenantId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
@@ -157,10 +157,10 @@ router.post('/', async (req: AuthRequest, res: Response) => {
  * PATCH /api/customers/:id
  * Update customer information
  */
-router.patch('/:id', async (req: AuthRequest, res: Response) => {
+router.patch('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const tenantId = req.user?.tenantId;
+        const tenantId = (req as AuthRequest).user?.tenantId;
         if (!tenantId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }

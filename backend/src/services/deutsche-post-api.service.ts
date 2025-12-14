@@ -78,7 +78,7 @@ export class DeutschePostApiService {
             this.tokenExpiry = new Date(Date.now() + (this.token!.expires_in * 1000));
 
             console.log('✅ Deutsche Post authentication successful');
-            return this.token;
+            return this.token!;
         } catch (error: any) {
             console.error('❌ Deutsche Post authentication failed:', error.response?.data || error.message);
 

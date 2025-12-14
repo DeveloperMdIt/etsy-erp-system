@@ -1,13 +1,13 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { AuthRequest, authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
-router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
-        const userId = req.user?.userId;
-        const tenantId = req.user?.tenantId;
+        const userId = (req as AuthRequest).user?.userId;
+        const tenantId = (req as AuthRequest).user?.tenantId;
 
         if (!userId || !tenantId) {
             return res.status(401).json({ error: 'Unauthorized' });

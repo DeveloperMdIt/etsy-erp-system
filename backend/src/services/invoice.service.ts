@@ -43,7 +43,7 @@ export class InvoiceService {
         }
 
         // 4. Generate Number
-        const invoiceNumber = await numberRangeService.getNextNumber('INVOICE', userId);
+        const invoiceNumber = await numberRangeService.generateNumber('INVOICE', userId);
 
         // 5. Render PDF
         const pdfBuffer = await PdfRendererService.generatePdf({

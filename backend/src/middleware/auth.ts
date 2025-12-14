@@ -15,7 +15,7 @@ export interface AuthRequest extends Request {
  * Middleware to verify JWT token and extract user information
  */
 export const authenticateToken = (
-    req: AuthRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ) => {
@@ -33,7 +33,7 @@ export const authenticateToken = (
         const decoded = jwt.verify(token, jwtSecret) as any;
         console.log('Decoded Token:', decoded); // Debug log
         const userId = decoded.userId || decoded.id;
-        req.user = {
+        (req as AuthRequest).user = {
             id: userId,
             userId: userId, // Alias
             email: decoded.email,

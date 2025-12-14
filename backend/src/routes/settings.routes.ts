@@ -109,6 +109,33 @@ router.put('/', async (req: Request, res: Response) => {
             deutschePostEnabled,
 
             // ... (rest)
+            printerInvoice,
+            formatInvoice,
+            printerDeliveryNote,
+            formatDeliveryNote,
+            printerLabel,
+            formatLabel,
+            defaultPrinter,
+            autoPrintEnabled,
+            printerDeutschePost,
+            printerDHL,
+            etsySyncEnabled,
+            labelLogoPath,
+            labelCompanyName,
+            labelStreet,
+            labelPostalCode,
+            labelCity,
+            labelCountry,
+            labelPhone,
+            labelSizePreset,
+            labelCustomWidth,
+            labelCustomHeight,
+            orderNumberFormat,
+            invoiceNumberFormat,
+            deliveryNoteFormat,
+            supplierOrderFormat,
+            customerNumberFormat,
+            skuPrefix,
         } = req.body;
 
         await prisma.$transaction(async (tx) => {

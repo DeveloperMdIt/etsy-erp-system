@@ -31,9 +31,8 @@ async function testDashboardLogic() {
         console.log('Checking Orders...');
         const openOrdersCount = await prisma.order.count({
             where: {
-                userId,
-                financialStatus: 'PAID',
-                fulfillmentStatus: 'OPEN'
+                tenantId: userId, // Assuming userId here acts as tenant
+                status: 'OPEN'
             }
         });
         console.log('Open Orders:', openOrdersCount);
@@ -46,24 +45,24 @@ async function testDashboardLogic() {
         const revenueData = await prisma.order.groupBy({
             by: ['createdAt'],
             where: {
-                userId,
+                tenantId: userId,
                 createdAt: {
                     gte: thirtyDaysAgo
                 },
-                financialStatus: 'PAID'
+                status: { not: 'CANCELLED' }
             },
             _sum: {
-                totalAmount: true
+                totalPrice: true
             }
         });
         console.log('Revenue Data query success. Items:', revenueData.length);
 
         // 4. Logs
         console.log('Checking Logs...');
-        const recentErrors = await prisma.log.findMany({
+        const recentErrors = await prisma.activityLog.findMany({
             where: {
-                userId,
-                level: 'ERROR'
+                tenantId: userId,
+                type: 'ERROR'
             },
             orderBy: {
                 createdAt: 'desc'

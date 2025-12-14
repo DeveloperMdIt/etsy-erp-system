@@ -332,7 +332,7 @@ export class EtsyImportService {
     async importProductsFromApi(userId: string, tenantId: string) {
         const { EtsyApiService } = await import('./etsy-api.service');
         const ImportStatusService = (await import('./import-status.service')).default;
-        const { SKUManagementService } = await import('./sku-management.service');
+        const SKUManagementService = (await import('./sku-management.service')).default;
 
         try {
             const products = await EtsyApiService.fetchProducts(userId);

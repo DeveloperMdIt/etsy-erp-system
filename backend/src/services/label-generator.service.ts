@@ -77,7 +77,7 @@ export class LabelGeneratorService {
     /**
      * Generate label PDF
      */
-    async generateLabelPDF(data: LabelData, outputPath: string): Promise<string> {
+    async generateLabelPDF(data: LabelData, outputPath?: string): Promise<string | Buffer> {
         return new Promise((resolve, reject) => {
             try {
                 // Determine label size
@@ -103,29 +103,47 @@ export class LabelGeneratorService {
                     margins: { top: 0, bottom: 0, left: 0, right: 0 } // No auto margins, we use absolute positioning
                 });
 
-                const stream = fs.createWriteStream(outputPath);
-                doc.pipe(stream);
+                if (outputPath) {
+                    // Write to file
+                    const stream = fs.createWriteStream(outputPath);
+                    doc.pipe(stream);
 
-                // --- Rendering Logic ---
-                if (data.layout) {
-                    // Dynamic Rendering based on Layout
-                    this.renderDynamicLayout(doc, data.layout, data);
+                    // --- Rendering Logic ---
+                    if (data.layout) {
+                        this.renderDynamicLayout(doc, data.layout, data);
+                    } else {
+                        this.renderLegacyLayout(doc, widthPoints, heightPoints, data);
+                    }
+
+                    doc.end();
+
+                    stream.on('finish', () => {
+                        console.log('✅ Label PDF generated:', outputPath);
+                        resolve(outputPath);
+                    });
+
+                    stream.on('error', (error) => {
+                        console.error('❌ Failed to generate label PDF:', error);
+                        reject(error);
+                    });
                 } else {
-                    // Legacy Hardcoded Rendering (Fallback)
-                    this.renderLegacyLayout(doc, widthPoints, heightPoints, data);
+                    // Return Buffer
+                    const buffers: Buffer[] = [];
+                    doc.on('data', buffers.push.bind(buffers));
+                    doc.on('end', () => {
+                        const pdfData = Buffer.concat(buffers);
+                        resolve(pdfData);
+                    });
+
+                    // --- Rendering Logic ---
+                    if (data.layout) {
+                        this.renderDynamicLayout(doc, data.layout, data);
+                    } else {
+                        this.renderLegacyLayout(doc, widthPoints, heightPoints, data);
+                    }
+
+                    doc.end();
                 }
-
-                doc.end();
-
-                stream.on('finish', () => {
-                    console.log('✅ Label PDF generated:', outputPath);
-                    resolve(outputPath);
-                });
-
-                stream.on('error', (error) => {
-                    console.error('❌ Failed to generate label PDF:', error);
-                    reject(error);
-                });
 
             } catch (error) {
                 console.error('❌ Label generation error:', error);

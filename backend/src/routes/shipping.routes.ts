@@ -70,9 +70,9 @@ router.post('/dhl/test', async (req: Request, res: Response) => {
 });
 
 // GET /api/shipping/dhl/status - Get DHL Paket status
-router.get('/dhl/status', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get('/dhl/status', authenticateToken, async (req: Request, res: Response) => {
     try {
-        const userId = req.user?.userId;
+        const userId = (req as AuthRequest).user?.userId;
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
@@ -100,7 +100,7 @@ router.get('/dhl/status', authenticateToken, async (req: AuthRequest, res: Respo
 // ============================================================================
 
 // POST /api/shipping/dhl/create-label
-router.post('/dhl/create-label', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post('/dhl/create-label', authenticateToken, async (req: Request, res: Response) => {
     try {
         const validation = CreateLabelSchema.safeParse(req.body);
 
@@ -109,11 +109,11 @@ router.post('/dhl/create-label', authenticateToken, async (req: AuthRequest, res
             return;
         }
 
-        const tenantId = req.user?.tenantId;
+        const tenantId = (req as AuthRequest).user?.tenantId;
         if (!tenantId) throw new Error('Tenant ID required');
 
         const { shippingMethodId } = req.body;
-        const result = await dhlService.createLabel(validation.data, tenantId, shippingMethodId);
+        const result = await dhlService.createLabel(validation.data, tenantId);
 
         // Log success
         await ActivityLogService.log(
@@ -154,9 +154,9 @@ router.post('/dhl/create-label', authenticateToken, async (req: AuthRequest, res
  * GET /api/shipping/deutsche-post/status
  * Get Deutsche Post connection status
  */
-router.get('/deutsche-post/status', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get('/deutsche-post/status', authenticateToken, async (req: Request, res: Response) => {
     try {
-        const userId = req.user!.id;
+        const userId = (req as AuthRequest).user!.id;
 
         const settings = await prisma.userSettings.findUnique({
             where: { userId }
@@ -184,15 +184,13 @@ router.get('/deutsche-post/status', authenticateToken, async (req: AuthRequest, 
  * POST /api/shipping/deutsche-post/test
  * Test Deutsche Post API connection
  */
-router.post('/deutsche-post/test', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post('/deutsche-post/test', authenticateToken, async (req: Request, res: Response) => {
     try {
         const { username, password, clientId, clientSecret } = req.body;
 
         const result = await deutschePostApiService.testConnection({
             username,
-            password,
-            clientId,
-            clientSecret
+            password
         });
 
         res.json(result);
@@ -206,9 +204,9 @@ router.post('/deutsche-post/test', authenticateToken, async (req: AuthRequest, r
  * GET /api/shipping/deutsche-post/balance
  * Get Portokasse wallet balance
  */
-router.get('/deutsche-post/balance', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get('/deutsche-post/balance', authenticateToken, async (req: Request, res: Response) => {
     try {
-        const userId = req.user!.id;
+        const userId = (req as AuthRequest).user!.id;
 
         const balance = await deutschePostApiService.getWalletBalance(userId);
 
@@ -223,10 +221,10 @@ router.get('/deutsche-post/balance', authenticateToken, async (req: AuthRequest,
  * POST /api/shipping/label/create
  * Create shipping label and auto-print
  */
-router.post('/label/create', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post('/label/create', authenticateToken, async (req: Request, res: Response) => {
     try {
-        const userId = req.user!.id;
-        const tenantId = req.user!.tenantId;
+        const userId = (req as AuthRequest).user!.id;
+        const tenantId = (req as AuthRequest).user!.tenantId;
         const { orderId, productCode, weight } = req.body;
 
         // Get order details
@@ -281,7 +279,7 @@ router.post('/label/create', authenticateToken, async (req: AuthRequest, res: Re
             senderStreet: settings.labelStreet || '',
             senderPostalCode: settings.labelPostalCode || '',
             senderCity: settings.labelCity || '',
-            senderCountry: settings.labelCountry,
+            senderCountry: settings.labelCountry || undefined, // Fix null vs undefined mismatch
             recipientName: `${order.customer.firstName} ${order.customer.lastName}`,
             recipientStreet: order.customer.street,
             recipientPostalCode: order.customer.postalCode,
@@ -289,16 +287,14 @@ router.post('/label/create', authenticateToken, async (req: AuthRequest, res: Re
             recipientCountry: order.customer.country,
             trackingNumber: labelResponse.trackingNumber,
             logoPath: settings.labelLogoPath || undefined,
-            sizePreset: settings.labelSizePreset || undefined,
-            customWidth: settings.labelCustomWidth || undefined,
-            customHeight: settings.labelCustomHeight || undefined
+            sizePreset: settings.labelSizePreset || undefined
         }, labelPath);
 
         // Save shipping label
         const shippingLabel = await prisma.shippingLabel.create({
             data: {
                 orderId: order.id,
-                provider: 'DEUTSCHE_POST_BRIEF_KOMPAKT',
+                provider: 'DEUTSCHE_POST_BRIEF_KOMPAKT', // Enum value added to Schema
                 trackingNumber: labelResponse.trackingNumber,
                 labelPath: labelPath,
                 labelUrl: labelResponse.labelUrl,
@@ -327,7 +323,7 @@ router.post('/label/create', authenticateToken, async (req: AuthRequest, res: Re
         if (settings.etsySyncEnabled && order.platform === 'ETSY' && order.externalOrderId) {
             try {
                 // Determine tenantId from request
-                const tenantId = req.user?.tenantId;
+                const tenantId = (req as AuthRequest).user?.tenantId;
                 if (tenantId) {
                     await etsyTrackingService.syncTrackingToEtsy(
                         tenantId,
@@ -361,7 +357,7 @@ router.post('/label/create', authenticateToken, async (req: AuthRequest, res: Re
  * GET /api/shipping/printers
  * Get available printers
  */
-router.get('/printers', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get('/printers', authenticateToken, async (req: Request, res: Response) => {
     try {
         const printers = await printingService.getAvailablePrinters();
         res.json({ printers });
@@ -375,9 +371,9 @@ router.get('/printers', authenticateToken, async (req: AuthRequest, res: Respons
  * POST /api/shipping/logo/upload
  * Upload company logo
  */
-router.post('/logo/upload', authenticateToken, upload.single('logo'), async (req: AuthRequest, res: Response) => {
+router.post('/logo/upload', authenticateToken, upload.single('logo'), async (req: Request, res: Response) => {
     try {
-        const userId = req.user!.id;
+        const userId = (req as AuthRequest).user!.id;
 
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });

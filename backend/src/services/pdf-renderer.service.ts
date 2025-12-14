@@ -66,14 +66,14 @@ export class PdfRendererService {
 
         // Header Text? (e.g. customized in template)
         if (template.headerText) {
-            doc.fontSize(8).text(template.headerText, 50, 40, { width: 500, align: 'right', color: 'gray' });
+            doc.fontSize(8).fillColor('gray').text(template.headerText, 50, 40, { width: 500, align: 'right' });
         }
     }
 
     private static renderAddresses(doc: PDFKit.PDFDocument, { settings, order }: RenderContext) {
         // Sender line (small)
         const senderLine = `${settings.labelCompanyName || ''} • ${settings.labelStreet || ''} • ${settings.labelPostalCode || ''} ${settings.labelCity || ''}`;
-        doc.fontSize(8).text(senderLine, 50, 130, { underline: true, color: '#444' });
+        doc.fontSize(8).fillColor('#444').text(senderLine, 50, 130, { underline: true });
 
         // Recipient Address
         doc.fontSize(10).fillColor('black').moveDown();
