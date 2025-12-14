@@ -236,6 +236,7 @@ const toggleFaq = (index: number) => {
              </div>
         </div>
 
+    </div>
     <!-- Footer -->
     <PublicFooter />
     
