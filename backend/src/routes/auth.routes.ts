@@ -176,7 +176,6 @@ router.get('/me', async (req: Request, res: Response) => {
                 shopName: true,
                 role: true,
                 etsyShopId: true,
-                etsyShopId: true,
                 createdAt: true,
                 userModules: {
                     where: { isActive: true },
