@@ -7,7 +7,8 @@ import {
   PuzzlePieceIcon, 
   Cog6ToothIcon, 
   DocumentTextIcon, 
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  EnvelopeIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -18,7 +19,7 @@ const navigation = [
   { name: 'Kunden', href: '/admin/users', icon: UsersIcon },
   { name: 'Module', href: '/admin/modules', icon: PuzzlePieceIcon },
   { name: 'Inhalte (CMS)', href: '/admin/content', icon: DocumentTextIcon },
-  { name: 'E-Mails', href: '/admin/emails', icon: DocumentTextIcon },
+  { name: 'E-Mails', href: '/admin/emails', icon: EnvelopeIcon },
   { name: 'System', href: '/admin/settings', icon: Cog6ToothIcon },
   { name: 'Zurück zur App', href: '/dashboard', icon: ArrowRightOnRectangleIcon },
 ]
