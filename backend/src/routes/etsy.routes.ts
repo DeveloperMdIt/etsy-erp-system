@@ -45,7 +45,7 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
 });
 
 // 2. Init OAuth
-router.get('/connect', authenticateToken as any, (req: any, res: Response) => {
+router.get('/connect', authenticateToken as any, async (req: any, res: Response) => {
     // Generate State & Challenge
     const state = crypto.randomBytes(16).toString('hex');
     const codeVerifier = crypto.randomBytes(32).toString('base64url');
@@ -65,13 +65,13 @@ router.get('/connect', authenticateToken as any, (req: any, res: Response) => {
         'favorites_r'
     ].join(' ');
 
-    const { key: ETSY_KEY } = await getEtsyKeys();
+    const { key: etsyClientId } = await getEtsyKeys();
 
     const authUrl = `https://www.etsy.com/oauth/connect?` +
         `response_type=code` +
         `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
         `&scope=${encodeURIComponent(scopes)}` +
-        `&client_id=${ETSY_KEY}` +
+        `&client_id=${etsyClientId}` +
         `&state=${state}` +
         `&code_challenge=${codeChallenge}` +
         `&code_challenge_method=S256`;
@@ -98,11 +98,11 @@ router.get('/callback', async (req: Request, res: Response) => {
         console.log('🔵 OAuth Callback - Code received:', code);
 
         // Exchange code for token
-        const { key: ETSY_KEY } = await getEtsyKeys();
+        const { key: etsyClientId } = await getEtsyKeys();
 
         const tokenResponse = await axios.post('https://api.etsy.com/v3/public/oauth/token', {
             grant_type: 'authorization_code',
-            client_id: ETSY_KEY,
+            client_id: etsyClientId,
             redirect_uri: REDIRECT_URI,
             code: code as string,
             code_verifier: codeVerifier
@@ -114,14 +114,12 @@ router.get('/callback', async (req: Request, res: Response) => {
         // Get User Info (Identity)
         const userResp = await rateLimitedGet(`https://api.etsy.com/v3/application/users/${tokenResponse.data.access_token.split('.')[0]}`, {
             headers: {
-                'x-api-key': ETSY_KEY,
+                'x-api-key': etsyClientId,
                 'Authorization': `Bearer ${access_token}`
             }
         });
 
         const userIdEtsy = userResp.data.user_id;
-        // Try to get login_name or similar if available (check docs or response)
-        // userResp.data keys: user_id, primary_email... (login_name might be protected or specific)
 
         console.log('✅ Etsy User ID:', userIdEtsy);
 
@@ -130,10 +128,9 @@ router.get('/callback', async (req: Request, res: Response) => {
         let shopId = null;
         let shopName = 'Verbundener Shop';
 
-        const { key: ETSY_KEY } = await getEtsyKeys();
         try {
             const shopResp = await rateLimitedGet(`https://api.etsy.com/v3/application/users/${userIdEtsy}/shops`, {
-                headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
+                headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${access_token}` }
             });
 
             if (shopResp.data.count > 0) {
@@ -144,29 +141,11 @@ router.get('/callback', async (req: Request, res: Response) => {
             }
         } catch (e: any) { console.log('   /shops failed:', e.message); }
 
-        // FALLBACK 1: Search Shop by User Name (if no shop returned)
-        // Assuming user_id might match shop owner? No, search by name "DekoWeltenDE" worked.
-        // But we don't know the name yet.
-        // Maybe try to search shop by Login Name? (Guessing)
-        // Or if we have a name from previous attempts?
-
-        // FALLBACK 2: Listings (The old problematic one, but maybe fixed if we use correct endpoint?)
-        // The old endpoint was: shops/${userIdEtsy}/listings/active. This is likely WRONG if userIdEtsy != ShopID.
-        // We will skip it or Try FIND LISTING VIA USER?
-        // Method: findAllShopListingsActive requires shop_id.
-        // There is no endpoints for "find listings by user id".
-
-        // Strategy: If shopId is still null, we log a warning. The user might need manual intervention or we rely on 'DekoWeltenDE' hardcoded discovery (not safe for general).
-        // However, we can try searching for 'DekoWeltenDE' specifically if the user is 'michaelc.deja'? 
-        // No, that's hacking.
-
-        // What if we try to fetch '/application/shops/{userIdEtsy}'?
         if (!shopId) {
             console.log('🔵 Fallback: Trying /application/shops/{userIdEtsy} ...');
             try {
-                const { key: ETSY_KEY } = await getEtsyKeys();
                 const r = await rateLimitedGet(`https://api.etsy.com/v3/application/shops/${userIdEtsy}`, {
-                    headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
+                    headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${access_token}` }
                 });
                 if (r.data) {
                     shopId = r.data.shop_id?.toString();
@@ -185,9 +164,8 @@ router.get('/callback', async (req: Request, res: Response) => {
 
                 if (searchName) {
                     console.log(`🔵 Fallback: Searching for Shop Name '${searchName}'...`);
-                    const { key: ETSY_KEY } = await getEtsyKeys();
                     const r = await axios.get(`https://openapi.etsy.com/v3/application/shops?shop_name=${encodeURIComponent(searchName)}`, {
-                        headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
+                        headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${access_token}` }
                     });
 
                     // Filter by user_id to be safe (if possible) or take best match
@@ -199,10 +177,6 @@ router.get('/callback', async (req: Request, res: Response) => {
                         shopName = matches[0].shop_name;
                         console.log(`✅ Shop Found via DB Name Search: ${shopName} (${shopId})`);
                     } else if (r.data.count === 1) {
-                        // If only 1 result and name matches exactly, assume it's the one even if User ID differs? (Risky)
-                        // Better safe: Only if User ID matches.
-                        // But if User ID mismatch is the problem, maybe we should trust the name?
-                        // Lets stick to User ID match for now to avoid hijacking other shops.
                         console.log(`⚠️ Shop found by name '${searchName}' but User ID mismatch. Expected ${userIdEtsy}, found ${r.data.results[0].user_id}`);
                     }
                 }
@@ -213,9 +187,8 @@ router.get('/callback', async (req: Request, res: Response) => {
         if (!shopId) {
             console.log('🔵 Fallback: Searching for DekoWeltenDE...');
             try {
-                const { key: ETSY_KEY } = await getEtsyKeys();
                 const r = await axios.get(`https://openapi.etsy.com/v3/application/shops?shop_name=DekoWeltenDE`, {
-                    headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
+                    headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${access_token}` }
                 });
                 const matches = r.data.results?.filter((s: any) => s.user_id == userIdEtsy);
                 if (matches && matches.length > 0) {
