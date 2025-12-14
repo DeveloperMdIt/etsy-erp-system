@@ -27,6 +27,9 @@ import dashboardRoutes from './routes/dashboard.routes';   // Import Dashboard
 
 import etsyRoutes from './routes/etsy.routes';           // Import Etsy (was missing from some previous view)
 import shippingMethodRoutes from './routes/shipping-method.routes'; // Import Shipping Methods
+// import dhlRoutes from './routes/dhl.routes'; // Does not exist, creating error
+import adminRoutes from './routes/admin.routes';
+import publicRoutes from './routes/public.routes';
 
 import { templatesRouter } from './routes/templates.routes';
 
@@ -55,6 +58,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/etsy', etsyRoutes);
 app.use('/api/logs', logsRoutes);
 app.use('/api/debug', debugRoutes);
+// app.use('/api/dhl', dhlRoutes); // Mount DHL routes
 app.use('/api/labels', labelRoutes);
 app.use('/api/shipping-methods', shippingMethodRoutes);
 app.use('/api/automation', automationRoutes); // Register Automation Routes

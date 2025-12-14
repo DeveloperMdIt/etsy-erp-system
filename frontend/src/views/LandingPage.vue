@@ -1,12 +1,13 @@
-<script setup lang="ts">
-import PublicHeader from '../components/PublicHeader.vue'
-import PublicFooter from '../components/PublicFooter.vue'
-import BackToTop from '../components/BackToTop.vue'
+
+import { ref, onMounted, computed } from 'vue'
+import axios from 'axios'
 
 // Types
 interface Feature {
   name: string
   status: 'active' | 'planned'
+  description?: string
+  price?: number
 }
 
 interface Category {
@@ -17,66 +18,51 @@ interface Category {
   features: Feature[]
 }
 
-const moduleCategories: Category[] = [
-  {
-    title: 'Auftragsabwicklung',
-    icon: '📦',
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-    features: [
-      { name: 'Auftragsdokumente (Rechnung, Lieferschein)', status: 'active' },
-      { name: 'Versandlabels (DHL, Deutsche Post)', status: 'active' },
-      { name: 'Kundenportal', status: 'planned' },
-      { name: 'Mahnwesen', status: 'planned' },
-      { name: 'Retourenmanagement', status: 'planned' },
-      { name: 'Stornierung & Gutschriften', status: 'active' },
-      { name: 'Zahlungsabgleich', status: 'planned' }
-    ]
-  },
-  {
-    title: 'Artikelverwaltung',
-    icon: '🏷️',
-    color: 'text-green-600',
-    bg: 'bg-green-50',
-    features: [
-      { name: 'Bestandsabgleich (Multi-Channel)', status: 'active' },
-      { name: 'Lagerverwaltung', status: 'planned' },
-      { name: 'Stücklisten & Sets', status: 'active' },
-      { name: 'Digitale Artikel', status: 'planned' },
-      { name: 'Bildspeicher', status: 'active' },
-      { name: 'Seriennummern', status: 'planned' },
-      { name: 'Preiskalkulation', status: 'active' }
-    ]
-  },
-  {
-    title: 'Automatisierung',
-    icon: '⚡',
-    color: 'text-purple-600',
-    bg: 'bg-purple-50',
-    features: [
-      { name: 'Automatische Rechnungsstellung', status: 'active' },
-      { name: 'Automatischer E-Mail Versand', status: 'active' },
-      { name: 'Regelbasierte Aktionen', status: 'active' },
-      { name: 'Zeitgesteuerte Aufgaben', status: 'planned' },
-      { name: 'Bestellstatus-Updates', status: 'active' },
-      { name: 'Export-Automatisierung', status: 'planned' }
-    ]
-  },
-  {
-    title: 'Finanzen & Buchhaltung',
-    icon: '💰',
-    color: 'text-orange-600',
-    bg: 'bg-orange-50',
-    features: [
-      { name: 'DATEV-Export', status: 'planned' },
-      { name: 'Umsatzberichte', status: 'active' },
-      { name: 'Lexoffice Schnittstelle', status: 'planned' },
-      { name: 'SevDesk Anbindung', status: 'planned' },
-      { name: 'OSS-Verfahren (One Stop Shop)', status: 'active' },
-      { name: 'Währungsumrechnung', status: 'active' }
-    ]
-  }
-]
+const modules = ref<any[]>([])
+
+const categoryConfig: Record<string, { icon: string, color: string, bg: string }> = {
+  'Auftragsabwicklung': { icon: '📦', color: 'text-blue-600', bg: 'bg-blue-50' },
+  'Artikelverwaltung': { icon: '🏷️', color: 'text-green-600', bg: 'bg-green-50' },
+  'Automatisierung': { icon: '⚡', color: 'text-purple-600', bg: 'bg-purple-50' },
+  'Finanzen & Buchhaltung': { icon: '💰', color: 'text-orange-600', bg: 'bg-orange-50' },
+  'Sonstiges': { icon: '🔧', color: 'text-gray-600', bg: 'bg-gray-50' }
+}
+
+const moduleCategories = computed(() => {
+    const grouped: Record<string, Feature[]> = {}
+    
+    modules.value.forEach(m => {
+        const cat = m.category || 'Sonstiges'
+        if (!grouped[cat]) grouped[cat] = []
+        grouped[cat].push({
+            name: m.name,
+            status: m.isPlanned ? 'planned' : 'active',
+            description: m.description,
+            price: m.price
+        })
+    })
+
+    return Object.keys(grouped).map(title => {
+        const config = categoryConfig[title] || categoryConfig['Sonstiges']
+        return {
+            title,
+            icon: config.icon,
+            color: config.color,
+            bg: config.bg,
+            features: grouped[title]
+        }
+    })
+})
+
+onMounted(async () => {
+    try {
+        const res = await axios.get('/api/public/modules')
+        modules.value = res.data
+    } catch (error) {
+        console.error('Failed to fetch modules', error)
+        // Fallback or empty state could be handled here
+    }
+})
 </script>
 
 <template>

@@ -102,6 +102,18 @@ const routes = [
         meta: { title: 'Vorlage bearbeiten', parent: '/settings' }
     },
     {
+        path: '/admin',
+        component: () => import('../layouts/AdminLayout.vue'),
+        meta: { requiresAuth: true, admin: true },
+        children: [
+            { path: '', component: () => import('../views/admin/AdminDashboard.vue'), meta: { title: 'Admin Dashboard' } },
+            { path: 'users', component: () => import('../views/admin/AdminUsers.vue'), meta: { title: 'Kundenverwaltung' } },
+            { path: 'modules', component: () => import('../views/admin/AdminModules.vue'), meta: { title: 'Module' } },
+            { path: 'settings', component: () => import('../views/admin/AdminSettings.vue'), meta: { title: 'Systemeinstellungen' } },
+            { path: 'content', component: () => import('../views/admin/AdminContent.vue'), meta: { title: 'CMS' } },
+        ]
+    },
+    {
         path: '/:pathMatch(.*)*',
         redirect: '/login'
     }

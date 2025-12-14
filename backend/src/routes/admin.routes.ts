@@ -1,0 +1,188 @@
+import { Router, Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+import { authenticateToken, requireAdmin } from '../middleware/auth';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+// Apply admin check to all routes
+router.use(authenticateToken, requireAdmin);
+
+// ==========================================
+// USER MANAGEMENT
+// ==========================================
+
+// GET /api/admin/users - List users with basic stats
+router.get('/users', async (req: Request, res: Response) => {
+    try {
+        const users = await prisma.user.findMany({
+            include: {
+                _count: {
+                    select: {
+                        orders: true,
+                        products: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // Calculate revenue for each user (expensive operation, maybe optimize later)
+        // For now, simpler list
+        const userList = users.map(u => ({
+            id: u.id,
+            email: u.email,
+            shopName: u.shopName,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            role: u.role,
+            isBlocked: u.isBlocked,
+            createdAt: u.createdAt,
+            orderCount: u._count.orders,
+            productCount: u._count.products,
+        }));
+
+        res.json(userList);
+    } catch (error) {
+        console.error('Admin Users Error:', error);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+// POST /api/admin/users/:id/block - Block/Unblock user
+router.post('/users/:id/block', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { isBlocked } = req.body;
+
+        const user = await prisma.user.update({
+            where: { id },
+            data: { isBlocked }
+        });
+
+        res.json({ message: `User ${isBlocked ? 'blocked' : 'unblocked'}`, user });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update user block status' });
+    }
+});
+
+
+// ==========================================
+// MODULE MANAGEMENT
+// ==========================================
+
+// GET /api/admin/modules
+router.get('/modules', async (req: Request, res: Response) => {
+    try {
+        const modules = await prisma.module.findMany({
+            orderBy: { name: 'asc' }
+        });
+        res.json(modules);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch modules' });
+    }
+});
+
+// POST /api/admin/modules - Create module
+router.post('/modules', async (req: Request, res: Response) => {
+    try {
+        const { key, name, description, price, isActive, isPlanned, category } = req.body;
+        const module = await prisma.module.create({
+            data: { key, name, description, price, isActive, isPlanned, category }
+        });
+        res.json(module);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to create module' });
+    }
+});
+
+// PUT /api/admin/modules/:id - Update module
+router.put('/modules/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name, description, price, isActive, isPlanned, category } = req.body;
+        const module = await prisma.module.update({
+            where: { id },
+            data: { name, description, price, isActive, isPlanned, category }
+        });
+        res.json(module);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update module' });
+    }
+});
+
+// DELETE /api/admin/modules/:id
+router.delete('/modules/:id', async (req: Request, res: Response) => {
+    try {
+        await prisma.module.delete({ where: { id: req.params.id } });
+        res.json({ message: 'Module deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete module' });
+    }
+});
+
+
+// ==========================================
+// SYSTEM SETTINGS (GLOBAL KEYS)
+// ==========================================
+
+router.get('/settings', async (req: Request, res: Response) => {
+    try {
+        const settings = await prisma.systemSetting.findMany();
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+});
+
+router.put('/settings', async (req: Request, res: Response) => {
+    try {
+        const { settings } = req.body; // Expect array of { key, value }
+
+        const updates = settings.map((s: any) =>
+            prisma.systemSetting.upsert({
+                where: { key: s.key },
+                update: { value: s.value },
+                create: { key: s.key, value: s.value }
+            })
+        );
+
+        await prisma.$transaction(updates);
+        res.json({ message: 'Settings updated' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update settings' });
+    }
+});
+
+
+// ==========================================
+// CONTENT MANAGEMENT (CMS)
+// ==========================================
+
+router.get('/content', async (req: Request, res: Response) => {
+    try {
+        const pages = await prisma.contentPage.findMany();
+        res.json(pages);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch content pages' });
+    }
+});
+
+router.put('/content/:slug', async (req: Request, res: Response) => {
+    try {
+        const { slug } = req.params;
+        const { title, content, isPublished } = req.body;
+
+        const page = await prisma.contentPage.upsert({
+            where: { slug },
+            update: { title, content, isPublished },
+            create: { slug, title, content, isPublished }
+        });
+        res.json(page);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to save content page' });
+    }
+});
+
+
+export default router;

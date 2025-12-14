@@ -1,11 +1,25 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 import PublicHeader from '../components/PublicHeader.vue'
 import PublicFooter from '../components/PublicFooter.vue'
 import BackToTop from '../components/BackToTop.vue'
 
-onMounted(() => {
+const cmsContent = ref('')
+const loading = ref(true)
+
+onMounted(async () => {
   window.scrollTo(0, 0)
+  try {
+    const res = await axios.get('/api/public/content/dpa')
+    if (res.data && res.data.content) {
+      cmsContent.value = res.data.content
+    }
+  } catch (e) {
+    console.log('Using default DPA')
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -16,6 +30,8 @@ onMounted(() => {
     <div class="flex-grow pt-32 pb-20 px-4 sm:px-6 lg:px-8">
       <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow p-4 sm:p-12 prose prose-blue prose-sm sm:prose-lg break-words overflow-hidden">
         
+        <div v-if="!loading && cmsContent" v-html="cmsContent"></div>
+        <div v-else>
         <h1>Vertrag zur Auftragsverarbeitung (AVV)</h1>
         <p>nach Art. 28 DSGVO</p>
 
@@ -157,6 +173,7 @@ onMounted(() => {
         </ul>
 
       </div>
+    </div>
     </div>
 
     <PublicFooter />
