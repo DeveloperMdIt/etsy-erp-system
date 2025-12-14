@@ -8,6 +8,7 @@ const loading = ref(true)
 // Predefined keys we expect to manage
 const knownKeys = [
     { key: 'ETSY_CLIENT_ID', label: 'Etsy Client ID (Global)', desc: 'Für die OAuth App Verbindung' },
+    { key: 'ETSY_CLIENT_SECRET', label: 'Etsy Client Secret', desc: 'Geheimschlüssel für OAuth' },
     { key: 'DHL_APP_ID', label: 'DHL App ID', desc: 'Für DHL Geschäftskunden API' },
     { key: 'DHL_APP_SECRET', label: 'DHL App Secret', desc: 'Geheimschlüssel' },
     { key: 'IMPRESSUM_ADDRESS', label: 'Impressum Adresse', desc: 'Wird in Emails/Footer angezeigt' },
