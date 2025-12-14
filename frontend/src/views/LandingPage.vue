@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+
 import PublicHeader from '../components/PublicHeader.vue'
 import PublicFooter from '../components/PublicFooter.vue'
 import BackToTop from '../components/BackToTop.vue'
