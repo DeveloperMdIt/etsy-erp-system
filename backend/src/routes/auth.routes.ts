@@ -145,16 +145,14 @@ router.post('/login', async (req: Request, res: Response) => {
                 lastName: user.lastName,
                 shopName: user.shopName,
                 role: user.role,
-                role: user.role,
                 tenantId: user.tenantId,
                 modules: user.userModules.map(um => um.module.name)
             }
-        }
         });
     } catch (error: any) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
-}
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Login failed' });
+    }
 });
 
 // GET /api/auth/me
