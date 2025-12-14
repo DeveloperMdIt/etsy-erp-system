@@ -183,6 +183,8 @@ import Logo from '../components/Logo.vue'
           &copy; 2025 Inventivy. Alle Rechte vorbehalten. 
           <span class="mx-2">|</span>
           <router-link to="/privacy" class="hover:text-white transition-colors">Datenschutz</router-link>
+          <span class="mx-2">|</span>
+          <router-link to="/terms" class="hover:text-white transition-colors">AGB</router-link>
         </p>
       </div>
     </footer>

@@ -14,6 +14,7 @@ import ShippingSettings from '../views/ShippingSettings.vue'
 import LandingPage from '../views/LandingPage.vue'
 import Pricing from '../views/Pricing.vue'
 import PrivacyPolicy from '../views/PrivacyPolicy.vue'
+import Terms from '../views/Terms.vue'
 
 const routes = [
     // Auth routes (public)
@@ -27,6 +28,8 @@ const routes = [
     { path: '/', component: LandingPage, meta: { public: true } },
     { path: '/pricing', component: Pricing, meta: { public: true } },
     { path: '/privacy', component: PrivacyPolicy, meta: { public: true } },
+    { path: '/terms', component: Terms, meta: { public: true } },
+    { path: '/agb', redirect: '/terms' },
 
     // Protected routes
     { path: '/dashboard', component: Dashboard, meta: { title: 'Dashboard' } },
