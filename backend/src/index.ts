@@ -30,6 +30,7 @@ import shippingMethodRoutes from './routes/shipping-method.routes'; // Import Sh
 // import dhlRoutes from './routes/dhl.routes'; // Does not exist, creating error
 import adminRoutes from './routes/admin.routes';
 import publicRoutes from './routes/public.routes';
+import subscriptionRoutes from './routes/subscription.routes';
 
 import { templatesRouter } from './routes/templates.routes';
 
@@ -64,6 +65,7 @@ app.use('/api/shipping-methods', shippingMethodRoutes);
 app.use('/api/automation', automationRoutes); // Register Automation Routes
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes); // Mount Admin Routes (was missing)
+app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/templates', templatesRouter);
 
 // Error handling middleware

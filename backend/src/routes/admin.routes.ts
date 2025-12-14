@@ -15,6 +15,7 @@ router.use(authenticateToken as any, requireAdmin as any);
 // GET /api/admin/users - List users with basic stats
 router.get('/users', async (req: Request, res: Response) => {
     try {
+        // Fetch all users
         const users = await prisma.user.findMany({
             include: {
                 _count: {
@@ -26,8 +27,20 @@ router.get('/users', async (req: Request, res: Response) => {
             orderBy: { createdAt: 'desc' }
         });
 
-        // Calculate revenue for each user (expensive operation, maybe optimize later)
-        // For now, simpler list
+        // Group order counts by tenantId
+        const orderCounts = await prisma.order.groupBy({
+            by: ['tenantId'],
+            _count: {
+                id: true
+            }
+        });
+
+        // Create a map for quick lookup: tenantId -> count
+        const orderCountMap = new Map();
+        orderCounts.forEach(item => {
+            orderCountMap.set(item.tenantId, item._count.id);
+        });
+
         const userList = users.map((u: any) => ({
             id: u.id,
             email: u.email,
@@ -37,7 +50,7 @@ router.get('/users', async (req: Request, res: Response) => {
             role: u.role,
             isBlocked: u.isBlocked,
             createdAt: u.createdAt,
-            orderCount: 0, // Order relation not directly on User
+            orderCount: orderCountMap.get(u.tenantId) || 0, // Get count from map
             productCount: u._count?.products || 0,
         }));
 

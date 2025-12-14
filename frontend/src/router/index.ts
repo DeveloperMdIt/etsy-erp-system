@@ -102,6 +102,12 @@ const routes = [
         meta: { title: 'Vorlage bearbeiten', parent: '/settings' }
     },
     {
+        path: '/subscription',
+        name: 'Subscription',
+        component: () => import('../views/Subscription.vue'),
+        meta: { requiresAuth: true, title: 'Mein Abo' }
+    },
+    {
         path: '/admin',
         component: () => import('../layouts/AdminLayout.vue'),
         meta: { requiresAuth: true, admin: true },
