@@ -39,24 +39,27 @@ onMounted(() => {
         (3) Die Darstellungen in der ANWENDUNG stellen ein konkretes Angebot an den Kunden dar zum Abschluss eines kostenpflichtigen Vertrags. Mit Speicherung der Rechnungsdaten in der ANWENDUNG nimmt der Kunde das Angebot an.
       </p>
 
-      <h2>§ 2 Besondere Bedingungen für die kostenfreie Testphase</h2>
+      <h2>§ 2 Besondere Bedingungen für die kostenfreie Testphase & Basis-Modell</h2>
       <p>
-        (1) Dem Kunden wird das Recht eingeräumt, die ANWENDUNG über einen Zeitraum von 14 Tagen zu testen. Berechtigt für diese Testphase sind ausschließlich Unternehmer im Sinne des § 14 BGB.
+        (1) Dem Kunden wird das Recht eingeräumt, die ANWENDUNG über einen Zeitraum von 30 Tagen zu testen. Berechtigt für diese Testphase sind ausschließlich Unternehmer im Sinne des § 14 BGB.
       </p>
       <p>
-        (2) Die Testphase wird vom Kunden gestartet, indem er sich unter www.inventivy.de registriert. Hierfür ist lediglich die Angabe einer validen E-Mail-Adresse sowie die Wahl eines sicheren Passworts erforderlich. Hierbei ist die Passwortrichtlinie in Anhang 1 zu beachten. Mit Registrierung beginnt die kostenfreie Testphase und endet automatisch nach 14 Tagen.
+        (2) Die Testphase wird vom Kunden gestartet, indem er sich unter www.inventivy.de registriert. Hierfür ist lediglich die Angabe einer validen E-Mail-Adresse sowie die Wahl eines sicheren Passworts erforderlich. Mit Registrierung beginnt die kostenfreie Testphase von 30 Tagen.
       </p>
       <p>
-        (3) In der Testphase ist der Kunde berechtigt, sämtliche Funktionen der ANWENDUNG kostenfrei zu testen.
+        (3) Sollte der Kunde nach Ablauf der 30 Tage noch nicht das Volumen von 20 Bestellungen pro Monat erreicht haben, verlängert sich die kostenfreie Phase automatisch so lange, bis dieses Volumen erstmals erreicht wird (Basis-Modell).
       </p>
       <p>
-        (4) Der Kunde ist nicht berechtigt, während der Testphase Produktivdaten als ANWENDUNGSDATEN einzugeben und/oder zu speichern. Zulässig sind lediglich Testdaten.
+        (4) In der Testphase ist der Kunde berechtigt, sämtliche Funktionen der ANWENDUNG kostenfrei zu testen.
       </p>
       <p>
-        (5) Der Kunde kann jederzeit während der Testphase durch Speicherung seiner Rechnungsdaten in der ANWENDUNG die Testphase abbrechen und sofort in den kostenpflichtigen Betrieb übergehen.
+        (5) Der Kunde ist nicht berechtigt, während der reinen Testphase (erste 30 Tage) Produktivdaten als ANWENDUNGSDATEN einzugeben, es sei denn, er beabsichtigt die fortlaufende Nutzung im Basis-Modell.
       </p>
       <p>
-        (6) Möchte der Kunde die Testphase abbrechen, kann er sein Konto selbst über „Benutzerkonto“ / „Konto löschen“ löschen und damit deaktivieren.
+        (6) Der Kunde kann jederzeit während der Testphase in einen kostenpflichtigen Tarif wechseln.
+      </p>
+      <p>
+        (7) Möchte der Kunde die Nutzung beenden, kann er sein Konto selbst über „Benutzerkonto“ / „Konto löschen“ löschen und damit deaktivieren.
       </p>
 
       <h2>§ 3 Bereitstellung von ANWENDUNG und Speicherplatz</h2>

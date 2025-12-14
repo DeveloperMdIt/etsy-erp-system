@@ -168,7 +168,7 @@ import Logo from '../components/Logo.vue'
           <span class="block text-blue-200">Starte heute kostenlos.</span>
         </h2>
         <p class="mt-4 text-lg leading-6 text-blue-100">
-          Keine Kreditkarte erforderlich. 14 Tage kostenlos testen.
+          Keine Kreditkarte erforderlich. 30 Tage kostenlos testen.
         </p>
         <router-link to="/register" class="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-inventivy-blue bg-white hover:bg-blue-50 sm:w-auto">
           Jetzt loslegen

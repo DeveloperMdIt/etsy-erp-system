@@ -29,7 +29,7 @@ const acceptEssential = () => {
         <p class="text-sm text-gray-600">
           Wir nutzen Cookies, um dir die bestmögliche Erfahrung auf unserer Website zu bieten. 
           Einige sind essenziell, andere helfen uns, unser Angebot zu verbessern.
-          <a href="#" class="underline text-inventivy-blue hover:text-blue-700">Datenschutzerklärung</a>
+          <router-link to="/privacy" class="underline text-inventivy-blue hover:text-blue-700">Datenschutzerklärung</router-link>
         </p>
       </div>
       <div class="flex gap-3 w-full md:w-auto">
