@@ -88,15 +88,19 @@ const moduleCategories: Category[] = [
     <div class="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden bg-gradient-to-b from-gray-50 to-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         
+        <!-- Headline: Full Width -->
+        <div class="text-center max-w-5xl mx-auto mb-12 lg:mb-16">
+            <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-6xl md:text-7xl break-words leading-tight">
+                <span class="block">Deine Warenwirtschaft.</span>
+                <span class="block text-inventivy-blue">Flexibel wie dein Business.</span>
+            </h1>
+        </div>
+
         <div class="lg:grid lg:grid-cols-12 lg:gap-16 items-center">
             
-            <!-- Left Column: Text -->
-            <div class="lg:col-span-6 text-center lg:text-left mb-16 lg:mb-0">
-                <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl mb-6 leading-tight">
-                    <span class="block">Deine Warenwirtschaft.</span>
-                    <span class="block text-inventivy-blue">Flexibel wie dein Business.</span>
-                </h1>
-                <p class="mt-4 text-lg text-gray-500 max-w-lg mx-auto lg:mx-0">
+            <!-- Left Column: Text & Buttons -->
+            <div class="lg:col-span-5 text-center lg:text-left mb-12 lg:mb-0">
+                <p class="text-lg sm:text-xl text-gray-500 max-w-lg mx-auto lg:mx-0 leading-relaxed">
                     Starte mit dem Kernsystem und buche Module einfach dazu, wenn du sie brauchst.
                     Professionelle Funktionen für E-Commerce – ohne Ballast, ohne versteckte Kosten.
                 </p>
@@ -111,8 +115,9 @@ const moduleCategories: Category[] = [
             </div>
 
             <!-- Right Column: Mockup -->
-            <div class="lg:col-span-6 relative">
-                 <div class="relative rounded-xl shadow-2xl border border-gray-200 bg-white transform rotate-1 hover:rotate-0 transition-transform duration-500">
+            <div class="lg:col-span-7 relative flex justify-center lg:justify-end">
+                 <!-- Added max-w to control size -->
+                 <div class="relative w-full max-w-2xl rounded-xl shadow-2xl border border-gray-200 bg-white transition-transform duration-500">
                     <!-- Dashboard Mockup Header -->
                     <div class="h-10 bg-gray-50 border-b flex items-center px-4 gap-2 rounded-t-xl">
                         <div class="w-3 h-3 rounded-full bg-red-400"></div>
@@ -122,7 +127,7 @@ const moduleCategories: Category[] = [
                     </div>
                     
                     <!-- Dashboard Content -->
-                    <div class="p-6 bg-gray-50 min-h-[400px]">
+                    <div class="p-4 sm:p-6 bg-gray-50 min-h-[350px] sm:min-h-[400px]">
                         <div class="flex justify-between items-center mb-6">
                             <div class="h-6 w-32 bg-gray-800 rounded"></div>
                             <div class="h-8 w-8 bg-white rounded-full border"></div>
@@ -132,7 +137,7 @@ const moduleCategories: Category[] = [
                         <div class="grid grid-cols-2 gap-4 mb-6">
                              <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
                                  <div class="text-xs text-gray-400 uppercase font-semibold mb-1">Umsatz heute</div>
-                                 <div class="text-2xl font-bold text-gray-900">452,50 €</div>
+                                 <div class="text-2xl font-bold text-gray-900 truncate">452,50 €</div>
                                  <div class="text-xs text-green-500 mt-1">▲ +12% vs. gestern</div>
                              </div>
                              <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
@@ -183,7 +188,7 @@ const moduleCategories: Category[] = [
                         </div>
                         
                         <!-- Floating Badge -->
-                        <div class="absolute -right-6 top-10 bg-white p-3 rounded-lg shadow-xl border border-gray-100 animate-bounce delay-1000 hidden lg:block">
+                        <div class="absolute -right-6 top-10 bg-white p-3 rounded-lg shadow-xl border border-gray-100 animate-bounce delay-1000 hidden sm:block">
                             <div class="flex items-center space-x-3">
                                 <div class="bg-green-100 p-2 rounded-full">
                                     <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
