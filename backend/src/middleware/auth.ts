@@ -24,7 +24,8 @@ export const authenticateToken = (
 
     if (!token) {
         console.log('Auth Middleware: No token provided');
-        return res.status(401).json({ error: 'Access token required' });
+        res.status(401).json({ error: 'Access token required' });
+        return;
     }
 
     const jwtSecret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -44,7 +45,7 @@ export const authenticateToken = (
         next();
     } catch (error) {
         console.error('Auth Middleware: Verification failed', error);
-        return res.status(401).json({ error: 'Invalid or expired token' }); // Changed to 401 to match user report observation
+        res.status(401).json({ error: 'Invalid or expired token' });
     }
 };
 
@@ -57,11 +58,13 @@ export const requireAdmin = (
     next: NextFunction
 ) => {
     if (!req.user) {
-        return res.status(401).json({ error: 'Authentication required' });
+        res.status(401).json({ error: 'Authentication required' });
+        return;
     }
 
     if (req.user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Admin access required' });
+        res.status(403).json({ error: 'Admin access required' });
+        return;
     }
 
     next();

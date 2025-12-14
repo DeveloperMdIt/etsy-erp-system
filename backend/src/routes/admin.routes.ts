@@ -6,7 +6,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // Apply admin check to all routes
-router.use(authenticateToken, requireAdmin);
+router.use(authenticateToken as any, requireAdmin as any);
 
 // ==========================================
 // USER MANAGEMENT
@@ -29,7 +29,7 @@ router.get('/users', async (req: Request, res: Response) => {
 
         // Calculate revenue for each user (expensive operation, maybe optimize later)
         // For now, simpler list
-        const userList = users.map(u => ({
+        const userList = users.map((u: any) => ({
             id: u.id,
             email: u.email,
             shopName: u.shopName,
@@ -38,8 +38,8 @@ router.get('/users', async (req: Request, res: Response) => {
             role: u.role,
             isBlocked: u.isBlocked,
             createdAt: u.createdAt,
-            orderCount: u._count.orders,
-            productCount: u._count.products,
+            orderCount: u._count?.orders || 0,
+            productCount: u._count?.products || 0,
         }));
 
         res.json(userList);
