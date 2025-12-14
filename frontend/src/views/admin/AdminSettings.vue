@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { useNotifications } from '../../composables/useNotifications'
+
+const { showSuccess, showError } = useNotifications()
 
 const settings = ref<any[]>([])
 const loading = ref(true)
@@ -42,9 +45,9 @@ const saveSettings = async () => {
         }))
         
         await axios.put('/api/admin/settings', { settings: payload })
-        alert('Einstellungen gespeichert')
+        showSuccess('Einstellungen gespeichert')
     } catch (error) {
-        alert('Fehler beim Speichern')
+        showError('Fehler beim Speichern')
     }
 }
 

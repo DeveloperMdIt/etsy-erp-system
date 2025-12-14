@@ -9,10 +9,19 @@ import { rateLimitedGet } from '../utils/etsy-rate-limiter';
 const router = Router();
 
 // Keys from user provided image/env
-const ETSY_KEY = process.env.ETSY_API_KEY || 'zm740uejm9qblnvioql0vayz';
-const ETSY_SECRET = process.env.ETSY_API_SECRET || 'pzyf6gxz4z';
-const REDIRECT_URI = 'http://localhost:3001/api/etsy/callback';
-const FRONTEND_URL = 'http://localhost:5174/etsy-connect';
+const REDIRECT_URI = process.env.VITE_APP_URL ? `${process.env.VITE_APP_URL}/api/etsy/callback` : 'https://inventivy.de/api/etsy/callback'; // Use env or prod default
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://inventivy.de/settings/channels'; // Redirect back to settings
+
+// Helper to get keys from DB
+async function getEtsyKeys() {
+    const clientIdSetting = await prisma.systemSetting.findUnique({ where: { key: 'ETSY_CLIENT_ID' } });
+    const clientSecretSetting = await prisma.systemSetting.findUnique({ where: { key: 'ETSY_CLIENT_SECRET' } });
+
+    return {
+        key: clientIdSetting?.value || process.env.ETSY_API_KEY || 'zm740uejm9qblnvioql0vayz',
+        secret: clientSecretSetting?.value || process.env.ETSY_API_SECRET || 'pzyf6gxz4z'
+    };
+}
 
 // 1. Status Check
 router.get('/status', authenticateToken as any, async (req: any, res: Response) => {
@@ -56,6 +65,8 @@ router.get('/connect', authenticateToken as any, (req: any, res: Response) => {
         'favorites_r'
     ].join(' ');
 
+    const { key: ETSY_KEY } = await getEtsyKeys();
+
     const authUrl = `https://www.etsy.com/oauth/connect?` +
         `response_type=code` +
         `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
@@ -87,6 +98,8 @@ router.get('/callback', async (req: Request, res: Response) => {
         console.log('🔵 OAuth Callback - Code received:', code);
 
         // Exchange code for token
+        const { key: ETSY_KEY } = await getEtsyKeys();
+
         const tokenResponse = await axios.post('https://api.etsy.com/v3/public/oauth/token', {
             grant_type: 'authorization_code',
             client_id: ETSY_KEY,
@@ -117,6 +130,7 @@ router.get('/callback', async (req: Request, res: Response) => {
         let shopId = null;
         let shopName = 'Verbundener Shop';
 
+        const { key: ETSY_KEY } = await getEtsyKeys();
         try {
             const shopResp = await rateLimitedGet(`https://api.etsy.com/v3/application/users/${userIdEtsy}/shops`, {
                 headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
@@ -150,6 +164,7 @@ router.get('/callback', async (req: Request, res: Response) => {
         if (!shopId) {
             console.log('🔵 Fallback: Trying /application/shops/{userIdEtsy} ...');
             try {
+                const { key: ETSY_KEY } = await getEtsyKeys();
                 const r = await rateLimitedGet(`https://api.etsy.com/v3/application/shops/${userIdEtsy}`, {
                     headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
                 });
@@ -170,6 +185,7 @@ router.get('/callback', async (req: Request, res: Response) => {
 
                 if (searchName) {
                     console.log(`🔵 Fallback: Searching for Shop Name '${searchName}'...`);
+                    const { key: ETSY_KEY } = await getEtsyKeys();
                     const r = await axios.get(`https://openapi.etsy.com/v3/application/shops?shop_name=${encodeURIComponent(searchName)}`, {
                         headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
                     });
@@ -197,6 +213,7 @@ router.get('/callback', async (req: Request, res: Response) => {
         if (!shopId) {
             console.log('🔵 Fallback: Searching for DekoWeltenDE...');
             try {
+                const { key: ETSY_KEY } = await getEtsyKeys();
                 const r = await axios.get(`https://openapi.etsy.com/v3/application/shops?shop_name=DekoWeltenDE`, {
                     headers: { 'x-api-key': ETSY_KEY, 'Authorization': `Bearer ${access_token}` }
                 });
