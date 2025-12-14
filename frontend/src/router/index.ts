@@ -13,6 +13,7 @@ import EtsyConnect from '../views/EtsyConnect.vue'
 import ShippingSettings from '../views/ShippingSettings.vue'
 import LandingPage from '../views/LandingPage.vue'
 import Pricing from '../views/Pricing.vue'
+import PrivacyPolicy from '../views/PrivacyPolicy.vue'
 
 const routes = [
     // Auth routes (public)
@@ -25,6 +26,7 @@ const routes = [
     // Public Landing Page (Root)
     { path: '/', component: LandingPage, meta: { public: true } },
     { path: '/pricing', component: Pricing, meta: { public: true } },
+    { path: '/privacy', component: PrivacyPolicy, meta: { public: true } },
 
     // Protected routes
     { path: '/dashboard', component: Dashboard, meta: { title: 'Dashboard' } },

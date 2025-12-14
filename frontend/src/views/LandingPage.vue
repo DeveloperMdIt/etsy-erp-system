@@ -180,7 +180,9 @@ import Logo from '../components/Logo.vue'
     <footer class="bg-gray-800">
       <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <p class="text-center text-base text-gray-400">
-          &copy; 2025 Inventivy. Alle Rechte vorbehalten.
+          &copy; 2025 Inventivy. Alle Rechte vorbehalten. 
+          <span class="mx-2">|</span>
+          <router-link to="/privacy" class="hover:text-white transition-colors">Datenschutz</router-link>
         </p>
       </div>
     </footer>
