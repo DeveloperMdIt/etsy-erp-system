@@ -52,15 +52,11 @@ interface ShippingLabelResponse {
 }
 
 export class DHLParcelService {
-    private apiKey: string;
-    private apiSecret: string;
     private environment: 'sandbox' | 'production';
     private baseUrl: string;
     private tokenCache: Map<string, { token: DHLAuthToken; expiry: Date }> = new Map();
 
     constructor() {
-        this.apiKey = process.env.DHL_API_KEY || '';
-        this.apiSecret = process.env.DHL_API_SECRET || '';
         this.environment = (process.env.DHL_API_ENVIRONMENT as 'sandbox' | 'production') || 'sandbox';
 
         this.baseUrl = this.environment === 'sandbox'
@@ -72,11 +68,28 @@ export class DHLParcelService {
         }
     }
 
+    async getAppCredentials() {
+        // Fetch from DB or Env
+        const idSetting = await prisma.systemSetting.findUnique({ where: { key: 'DHL_APP_ID' } });
+        const secretSetting = await prisma.systemSetting.findUnique({ where: { key: 'DHL_APP_SECRET' } });
+
+        const apiKey = idSetting?.value || process.env.DHL_API_KEY || '';
+        const apiSecret = secretSetting?.value || process.env.DHL_API_SECRET || '';
+
+        return { apiKey, apiSecret };
+    }
+
     /**
      * Authenticate with DHL API using OAuth2.0 Password Grant
      * Combines: Your App credentials + Customer's GKP credentials
      */
     async authenticate(config: DHLConfig): Promise<DHLAuthToken> {
+        const { apiKey, apiSecret } = await this.getAppCredentials();
+
+        if (!apiKey || !apiSecret) {
+            throw new Error('System-Fehler: DHL App Credentials nicht konfiguriert (Admin Einstellungen).');
+        }
+
         try {
             const response = await axios.post(
                 `${this.baseUrl}/parcel/de/account/auth/ropc/v1/token`,
@@ -84,8 +97,8 @@ export class DHLParcelService {
                     grant_type: 'password',
                     username: config.gkpUsername,
                     password: config.gkpPassword,
-                    client_id: this.apiKey,
-                    client_secret: this.apiSecret
+                    client_id: apiKey,
+                    client_secret: apiSecret
                 }),
                 {
                     headers: {
