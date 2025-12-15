@@ -41,7 +41,7 @@ model User {
   settings  UserSettings?
   products  Product[]
   labelProfiles LabelProfile[]
-  shippingMethods ShippingMethod[]
+  shippingProfiles ShippingProfile[]
   automationRules AutomationRule[]
   documentTemplates DocumentTemplate[]
   userModules       UserModule[]
@@ -499,7 +499,7 @@ model AutomationRule {
   @@map("automation_rules")
 }
 
-model ShippingMethod {
+model ShippingProfile {
   id              String   @id @default(uuid())
   tenantId        String
   name            String   // Display Name e.g. "DHL Paket", "Warenpost International"
@@ -518,7 +518,7 @@ model ShippingMethod {
 
   @@index([tenantId])
   @@index([userId])
-  @@map("shipping_methods")
+  @@map("shipping_profiles")
 }
 
 model DocumentTemplate {
