@@ -4,7 +4,7 @@ import axios from 'axios'
 import PublicHeader from '../components/PublicHeader.vue'
 import PublicFooter from '../components/PublicFooter.vue'
 import BackToTop from '../components/BackToTop.vue'
-import { CheckIcon } from '@heroicons/vue/24/solid'
+import { StarIcon } from '@heroicons/vue/24/solid'
 
 const plans = ref<any[]>([])
 const loading = ref(true)
@@ -133,14 +133,11 @@ const formatPrice = (price: number) => {
                         + {{ formatPrice(plan.pricePerExtraOrder) }} € pro weiterer Bestellung
                     </div>
 
-                    <ul class="mt-6 space-y-4">
-                        <li class="flex items-start">
-                             <CheckIcon class="h-5 w-5 text-green-500 flex-shrink-0 mr-2" />
-                            <span class="text-gray-600"><strong>Inkl. {{ plan.includedOrders }} Bestellungen</strong></span>
-                        </li>
-                        <li v-for="(feature, fIdx) in plan.features" :key="fIdx" class="flex items-start">
-                            <CheckIcon class="h-5 w-5 text-green-500 flex-shrink-0 mr-2" />
-                            <span class="text-gray-600">{{ feature }}</span>
+                    <ul class="mt-6 space-y-3">
+                        <li v-for="(feature, idx) in plan.features" :key="idx" class="flex items-start">
+                             <!-- Premium Bullet (Star/Sparkle) -->
+                             <StarIcon class="flex-shrink-0 h-5 w-5 text-inventivy-blue" aria-hidden="true" />
+                            <span class="ml-2 text-sm text-gray-600 font-medium">{{ feature }}</span>
                         </li>
                     </ul>
                 </div>
