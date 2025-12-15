@@ -8,7 +8,8 @@ import {
   Cog6ToothIcon, 
   DocumentTextIcon, 
   ArrowRightOnRectangleIcon,
-  EnvelopeIcon
+  EnvelopeIcon,
+  RectangleStackIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -18,6 +19,7 @@ const navigation = [
   { name: 'Übersicht', href: '/admin', icon: Squares2X2Icon },
   { name: 'Kunden', href: '/admin/users', icon: UsersIcon },
   { name: 'Module', href: '/admin/modules', icon: PuzzlePieceIcon },
+  { name: 'Tarife & Pakete', href: '/admin/subscription-plans', icon: RectangleStackIcon },
   { name: 'Inhalte (CMS)', href: '/admin/content', icon: DocumentTextIcon },
   { name: 'E-Mails', href: '/admin/emails', icon: EnvelopeIcon },
   { name: 'System', href: '/admin/settings', icon: Cog6ToothIcon },

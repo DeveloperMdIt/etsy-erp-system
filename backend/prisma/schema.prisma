@@ -558,3 +558,27 @@ model DocumentTemplate {
   @@index([type])
   @@map("document_templates")
 }
+
+model SubscriptionPlan {
+  id                 String   @id @default(uuid())
+  name               String   // e.g. "Starter", "Pro"
+  description        String?
+  price              Float    @default(0.0) // Monthly price
+  interval           String   @default("MONTHLY") // MONTHLY, YEARLY
+  
+  // Limits & Quotas
+  includedOrders     Int      @default(0)   // Number of orders included
+  pricePerExtraOrder Float    @default(0.0) // Price per additional order
+  
+  // Features (JSON list of strings)
+  features           String?  // e.g. ["Prioritized Support", "Unlimited Automation"]
+  
+  // Display Helpers
+  isPopular          Boolean  @default(false)
+  isActive           Boolean  @default(true)
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("subscription_plans")
+}

@@ -42,6 +42,7 @@ import publicRoutes from './routes/public.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 
 import { templatesRouter } from './routes/templates.routes';
+import subscriptionPlansRoutes from './routes/subscription-plans.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/setup', setupRoutes);
@@ -58,8 +59,9 @@ app.use('/api/shipping-profiles', shippingProfileRoutes);
 app.use('/api/etsy', etsyRoutes);
 app.use('/api/automation', automationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/admin', adminRoutes); // Mount Admin Routes (was missing)
-app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/admin', adminRoutes); // Mount Admin Routes
+app.use('/api/subscription', subscriptionRoutes); // User-facing subscription logic
+app.use('/api/subscription-plans', subscriptionPlansRoutes); // Admin-facing plans CRUD
 app.use('/api/public', publicRoutes);
 app.use('/api/templates', templatesRouter);
 
