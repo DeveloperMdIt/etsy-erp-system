@@ -25,10 +25,15 @@ import labelRoutes from './routes/label.routes';
 import automationRoutes from './routes/automation.routes'; // Import Automation
 import dashboardRoutes from './routes/dashboard.routes';   // Import Dashboard
 
-import etsyRoutes from './routes/etsy.routes';           // Import Etsy (was missing from some previous view)
+import etsyRoutes from './routes/etsy.routes';           // Import Etsy
 import shippingProfileRoutes from './routes/shipping-profile.routes';
+import shippingMethodRoutes from './routes/shipping-method.routes'; // Import Shipping Methods
+// import dhlRoutes from './routes/dhl.routes'; 
+import adminRoutes from './routes/admin.routes';
+import publicRoutes from './routes/public.routes';
+import subscriptionRoutes from './routes/subscription.routes';
 
-// ...
+import { templatesRouter } from './routes/templates.routes';
 
 app.use('/api/labels', labelRoutes);
 app.use('/api/shipping-methods', shippingMethodRoutes);

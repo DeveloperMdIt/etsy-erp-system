@@ -160,7 +160,7 @@ const stats = ref({
     packagesSent: 0
 })
 
-const recentOrders = ref([])
+const recentOrders = ref<any[]>([])
 const modules = ref<string[]>([])
 const loading = ref(true)
 

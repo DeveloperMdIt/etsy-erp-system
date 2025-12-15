@@ -34,7 +34,7 @@ const register = async () => {
     loading.value = true
     error.value = ''
     
-    const response = await axios.post('/api/auth/register', {
+    await axios.post('/api/auth/register', {
       email: email.value,
       password: password.value,
       firstName: firstName.value || undefined,
