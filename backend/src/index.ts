@@ -26,42 +26,13 @@ import automationRoutes from './routes/automation.routes'; // Import Automation
 import dashboardRoutes from './routes/dashboard.routes';   // Import Dashboard
 
 import etsyRoutes from './routes/etsy.routes';           // Import Etsy (was missing from some previous view)
-import shippingMethodRoutes from './routes/shipping-method.routes'; // Import Shipping Methods
-// import dhlRoutes from './routes/dhl.routes'; // Does not exist, creating error
-import adminRoutes from './routes/admin.routes';
-import publicRoutes from './routes/public.routes';
-import subscriptionRoutes from './routes/subscription.routes';
+import shippingProfileRoutes from './routes/shipping-profile.routes';
 
-import { templatesRouter } from './routes/templates.routes';
+// ...
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(cookieParser());
-
-// Debug Middleware: Log every request
-app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(`[DEBUG] ${req.method} ${req.url}`);
-    next();
-});
-
-// Serve static files (logos, labels)
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-app.use('/api/auth', authRoutes);
-app.use('/api/setup', setupRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/import', importRoutes);
-app.use('/api/shipping', shippingRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/etsy', etsyRoutes);
-app.use('/api/logs', logsRoutes);
-app.use('/api/debug', debugRoutes);
-// app.use('/api/dhl', dhlRoutes); // Mount DHL routes
 app.use('/api/labels', labelRoutes);
 app.use('/api/shipping-methods', shippingMethodRoutes);
+app.use('/api/shipping-profiles', shippingProfileRoutes);
 app.use('/api/automation', automationRoutes); // Register Automation Routes
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes); // Mount Admin Routes (was missing)

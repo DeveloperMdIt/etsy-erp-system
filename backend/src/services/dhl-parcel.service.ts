@@ -238,6 +238,66 @@ export class DHLParcelService {
             info: 'These are DHL sandbox test credentials. Use for testing only.'
         };
     }
+    /**
+     * Create Internetmarke (OneClickFor via Post & Parcel API)
+     * Note: Detailed implementation depends on specific API endpoint for Internetmarke REST.
+     * Assuming it flows through similar 'orders' endpoint or specific 'internetmarke' endpoint.
+     * For now, we will assume standard OneClickFor logic or P&P integration.
+     */
+    async createInternetmarke(userId: string, request: ShippingLabelRequest): Promise<ShippingLabelResponse> {
+        try {
+            const token = await this.getValidToken(userId);
+
+            // Fetch specific endpoint for Internetmarke if different, or use generic
+            // For Post & Parcel Germany, stamps might be under /post/de/shipping/v1/orders
+            // We'll use a hypothetical endpoint based on the suite structure.
+
+            const response = await axios.post(
+                `${this.baseUrl}/post/de/shipping/v1/orders`,
+                {
+                    product: request.productCode, // e.g. 1020
+                    voucherLayout: 'ADDRESS_ZONE', // or PDF format
+                    sender: request.sender ? {
+                        name1: request.sender.name,
+                        addressStreet: request.sender.street,
+                        addressHouse: request.sender.houseNumber,
+                        postalCode: request.sender.postalCode,
+                        city: request.sender.city,
+                        country: request.sender.country || 'DEU'
+                    } : undefined,
+                    recipient: {
+                        name1: request.recipient.name,
+                        addressStreet: request.recipient.street,
+                        addressHouse: request.recipient.houseNumber,
+                        postalCode: request.recipient.postalCode,
+                        city: request.recipient.city,
+                        country: request.recipient.country || 'DEU'
+                    }
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.de.deutschepost.shipping-v1+json' // Typical header for Post API
+                    }
+                }
+            );
+
+            // Adjust response parsing based on actual Internetmarke API
+            const item = response.data.items ? response.data.items[0] : response.data;
+
+            console.log('✅ Internetmarke created:', item.orderId);
+
+            return {
+                trackingNumber: item.orderId || 'NO-TRACKING', // Stamps often have no tracking unless Prio
+                labelUrl: item.label?.url || '',
+                labelData: item.label?.b64 || ''
+            };
+        } catch (error: any) {
+            console.error('❌ Failed to create Internetmarke:', error.response?.data || error.message);
+            throw new Error(`Internetmarke-Fehler: ${error.response?.data?.detail || error.message}`);
+        }
+    }
 }
 
 export default new DHLParcelService();

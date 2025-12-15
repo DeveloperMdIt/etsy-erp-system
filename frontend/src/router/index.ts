@@ -58,6 +58,11 @@ const routes = [
         component: ShippingSettings,
         meta: { title: 'Versandwege', parent: '/settings' }
     },
+    {
+        path: '/settings/shipping-profiles',
+        component: () => import('../views/settings/ShippingProfiles.vue'),
+        meta: { title: 'Versandprofile', parent: '/settings' }
+    },
     // Nested Settings Pages (Billbee Style)
     {
         path: '/settings/profile',
