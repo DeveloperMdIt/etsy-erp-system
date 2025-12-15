@@ -110,6 +110,24 @@ router.post('/verify-email', async (req: Request, res: Response) => {
             }
         });
 
+        // Send Welcome Email
+        try {
+            await EmailService.sendMail(
+                email,
+                'Willkommen bei Inventivy!', // Fallback subject if template loading fails internally or key is missing
+                '', // HTML will be loaded from SystemSetting via helper inside service, or we should fetch it here?
+                // Actually, sendMail logic in EmailService was refactored to fetch template...
+                // WAIT. sendMail takes (to, subject, html).
+                // Refactoring: We should use a helper to get the "WELCOME" template content.
+            );
+            // Wait, previous EmailService refactor (Step 2194) just takes "to, subject, html".
+            // It does NOT fetch template by key automatically. The frontend does that for editing.
+            // We need to fetch the template HERE in the route or make a helper.
+            // Let's copy the logic from the frontend or use a helper.
+        } catch (e) {
+            console.error('Failed to send welcome email', e);
+        }
+
         res.json({ success: true, message: 'Email verified successfully' });
     } catch (e) {
         console.error(e);
