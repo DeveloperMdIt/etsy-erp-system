@@ -137,7 +137,7 @@ const getPreviewData = (text: string) => {
     let res = text
     res = res.replace(/{firstName}/g, 'Max')
     res = res.replace(/{lastName}/g, 'Mustermann')
-    res = res.replace(/{link}/g, '#')
+    res = res.replace(/{link}/g, 'https://inventivy.de/verify-email?token=beispiel-token-123')
     return res
 }
 
