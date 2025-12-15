@@ -15,7 +15,8 @@ const formData = ref({
     pricePerExtraOrder: 0,
     features: '', // Text area, split by newline
     isActive: true,
-    isPopular: false
+    isPopular: false,
+    pricingTiers: [] as any[]
 })
 
 const fetchPlans = async () => {
@@ -30,25 +31,47 @@ const fetchPlans = async () => {
 const openModal = (plan: any = null) => {
     if (plan) {
         editingPlan.value = plan
+        // Ensure tiers is array (it might come as Json object/array from backend)
+        let tiers = plan.pricingTiers || []
+        if (typeof tiers === 'string') {
+             try { tiers = JSON.parse(tiers) } catch(e) {}
+        }
+        
         formData.value = { 
             ...plan,
-            features: Array.isArray(plan.features) ? plan.features.join('\n') : plan.features
+            features: Array.isArray(plan.features) ? plan.features.join('\n') : plan.features,
+            pricingTiers: tiers
         }
     } else {
         editingPlan.value = null
         formData.value = { 
             name: '', description: '', price: 0, interval: 'MONTHLY', 
             includedOrders: 0, pricePerExtraOrder: 0, features: '', 
-            isActive: true, isPopular: false 
+            isActive: true, isPopular: false,
+            pricingTiers: []
         }
     }
     isModalOpen.value = true
+}
+
+const addTier = () => {
+    formData.value.pricingTiers.push({ from: 0, to: null, price: 0 })
+}
+
+const removeTier = (index: number) => {
+    formData.value.pricingTiers.splice(index, 1)
 }
 
 const savePlan = async () => {
     try {
         const payload = {
             ...formData.value,
+             // Clean up tiers
+            pricingTiers: formData.value.pricingTiers.map((t: any) => ({
+                from: Number(t.from),
+                to: t.to === '' || t.to === null ? null : Number(t.to),
+                price: Number(t.price)
+            })),
             features: formData.value.features.split('\n').filter(f => f.trim() !== '')
         }
 
@@ -191,6 +214,25 @@ onMounted(fetchPlans)
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Features (Eine pro Zeile)</label>
                         <textarea v-model="formData.features" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"></textarea>
+                    </div>
+
+                    <!-- Pricing Tiers Editor -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Staffelpreise (Pricing Tiers)</label>
+                        <div v-for="(tier, index) in formData.pricingTiers" :key="index" class="flex items-center space-x-2 mb-2">
+                             <input v-model.number="tier.from" placeholder="Von" type="number" class="w-20 rounded-md border-gray-300 shadow-sm sm:text-sm border p-2">
+                             <span>-</span>
+                             <input v-model.number="tier.to" placeholder="Bis (leer=unendlich)" type="number" class="w-20 rounded-md border-gray-300 shadow-sm sm:text-sm border p-2">
+                             <span>bei</span>
+                             <input v-model.number="tier.price" placeholder="Preis" type="number" step="0.01" class="w-24 rounded-md border-gray-300 shadow-sm sm:text-sm border p-2">
+                             <button @click="removeTier(index)" class="text-red-500 hover:text-red-700">
+                                 <TrashIcon class="h-5 w-5" />
+                             </button>
+                        </div>
+                        <button @click="addTier" type="button" class="mt-2 text-sm text-indigo-600 hover:text-indigo-900 font-medium">
+                            + Staffel hinzufügen
+                        </button>
+                         <p class="text-xs text-gray-400 mt-1">Definiere ab welcher Bestellmenge welcher Preis gilt. "Bis" leer lassen für "ab X bis unendlich".</p>
                     </div>
 
                     <div class="flex items-center space-x-4 pt-2">

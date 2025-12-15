@@ -568,7 +568,8 @@ model SubscriptionPlan {
   
   // Limits & Quotas
   includedOrders     Int      @default(0)   // Number of orders included
-  pricePerExtraOrder Float    @default(0.0) // Price per additional order
+  pricePerExtraOrder Float    @default(0.0) // Fallback price per additional order
+  pricingTiers       Json?    // e.g. [{"from": 21, "to": 100, "price": 0.25}, {"from": 101, "to": null, "price": 0.20}]
   
   // Features (JSON list of strings)
   features           String?  // e.g. ["Prioritized Support", "Unlimited Automation"]

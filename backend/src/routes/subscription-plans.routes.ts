@@ -68,6 +68,15 @@ router.post('/', authenticateToken, requireAdmin, async (req: Request, res: Resp
                 includedOrders: parseInt(includedOrders),
                 pricePerExtraOrder: parseFloat(pricePerExtraOrder),
                 features: JSON.stringify(features || []),
+                pricingTiers: pricingTiers || undefined, // Parse from body if needed, or assume object if express.json handles it? If it's sent as JSON from frontend, express body has it as object. Prisma Json expects object/array or null. AND features is string? Wait features was stringified manually in original code.
+                // Original code: features: JSON.stringify(features || [])
+                // Features was likely sent as array from frontend.
+                // pricingTiers will be sent as array.
+                // Prisma Json field: can be passed as object/array directly if Prisma client supports it, but earlier features was stringified.
+                // Looking at schema: features String? (so manual stringify needed), pricingTiers Json? (so object/array needed - NO stringify unless HTTP raw).
+                // Correction: features in schema is `String?` (see step 2796). pricingTiers is `Json?`.
+                // So features MUST be stringified. pricingTiers MUST be passed as object/array.
+
                 isPopular: isPopular || false,
                 isActive: isActive !== undefined ? isActive : true
             }
@@ -99,6 +108,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: Request, res: Re
                 includedOrders: parseInt(includedOrders),
                 pricePerExtraOrder: parseFloat(pricePerExtraOrder),
                 features: JSON.stringify(features || []),
+                pricingTiers: pricingTiers ? pricingTiers : undefined, // Json field expects object
                 isPopular,
                 isActive
             }
