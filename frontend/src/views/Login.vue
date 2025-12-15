@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { useNotifications } from '../composables/useNotifications'
 import Logo from '../components/Logo.vue'
@@ -13,6 +13,12 @@ const password = ref('')
 const error = ref('')
 const loading = ref(false)
 const showPassword = ref(false)
+const route = useRoute()
+
+// Check for registration success
+if (route.query.registered === 'true') {
+  showSuccess('Registrierung erfolgreich! Bitte bestätige deine Email-Adresse um dich einzuloggen.')
+}
 
 const login = async () => {
   if (!email.value || !password.value) {

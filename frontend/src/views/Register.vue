@@ -42,15 +42,11 @@ const register = async () => {
       shopName: shopName.value || undefined,
     })
 
-    // Store token and user
-    localStorage.setItem('authToken', response.data.token)
-    localStorage.setItem('user', JSON.stringify(response.data.user))
+    // Do not store token/user (backend requires verification first)
+    // localStorage.setItem('authToken', response.data.token) ...
 
-    // Notify App to update user state
-    window.dispatchEvent(new Event('user-login'))
-
-    // Redirect to dashboard
-    router.push('/')
+    // Redirect to login with success message
+    router.push({ path: '/login', query: { registered: 'true' } })
   } catch (err: any) {
     error.value = err.response?.data?.error || 'Registrierung fehlgeschlagen'
   } finally {
