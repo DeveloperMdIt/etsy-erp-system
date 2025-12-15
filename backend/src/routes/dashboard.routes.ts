@@ -40,25 +40,53 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
         };
 
         // 2. Action Items / Stats
-        // Count open paid orders
+
+        // Open Orders
         const openOrdersCount = await prisma.order.count({
             where: {
-                tenantId, // Use tenantId
-                status: 'OPEN', // Use enum value 'OPEN' directly or string if safe. 'financialStatus' does not exist on Order in schema shown!
-                // Wait, schema shows `status OrderStatus @default(OPEN)`. 
-                // It does NOT show financialStatus or fulfillmentStatus.
-                // It seems checking existing code or OrderStatus enum is key.
-                // OrderStatus enum: OPEN, IN_PROGRESS, SHIPPED, CANCELLED.
-                // My previous code used financialStatus='PAID'. Ideally we want "open and paid".
-                // But schema only has `status`.
-                // Let's rely on `status: 'OPEN'` for now as "Too Do".
-                // If I need paid status, I need to check if schema is missing fields or if it's implicit.
-                // Schema shows `shippingCost`, `totalPrice`, etc. No `financialStatus`.
-                // So I will just use `status: 'OPEN'`.
+                tenantId,
+                status: 'OPEN'
             }
         });
 
-        const totalOrdersCount = await prisma.order.count({ where: { tenantId } });
+        // Products Count
+        const productsCount = await prisma.product.count({
+            where: { tenantId }
+        });
+
+        // Packages Sent (Status SHIPPED)
+        const packagesSent = await prisma.order.count({
+            where: {
+                tenantId,
+                status: 'SHIPPED'
+            }
+        });
+
+        // Revenue Today
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const revenueTodayAgg = await prisma.order.aggregate({
+            where: {
+                tenantId,
+                createdAt: { gte: startOfDay },
+                status: { not: 'CANCELLED' }
+            },
+            _sum: {
+                totalPrice: true
+            }
+        });
+        const revenueToday = revenueTodayAgg._sum.totalPrice || 0;
+
+        // Recent Orders
+        const recentOrders = await prisma.order.findMany({
+            where: { tenantId },
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+            include: {
+                customer: true // Include customer to show name
+            }
+        });
 
         // 3. Revenue (Last 30 Days)
         const thirtyDaysAgo = new Date();
@@ -71,27 +99,13 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
                 createdAt: {
                     gte: thirtyDaysAgo
                 },
-                // financialStatus: 'PAID' // Removed as it doesn't exist
                 status: {
-                    not: 'CANCELLED' // Count everything not cancelled? Or just SHIPPED/OPEN?
-                    // Let's assume all non-cancelled orders count towards revenue for now.
+                    not: 'CANCELLED'
                 }
             },
             _sum: {
-                totalPrice: true // Correct field name
+                totalPrice: true
             }
-        });
-
-        // 4. Recent Errors
-        const recentErrors = await prisma.activityLog.findMany({ // Correct model name
-            where: {
-                tenantId, // Use tenantId for logs? Or userId? Schema has both.
-                type: 'ERROR'
-            },
-            orderBy: {
-                createdAt: 'desc'
-            },
-            take: 5
         });
 
         // Process revenue data
@@ -117,10 +131,12 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
             setupStatus,
             stats: {
                 openOrders: openOrdersCount,
-                totalOrders: totalOrdersCount
+                revenueToday: revenueToday,
+                productsCount: productsCount,
+                packagesSent: packagesSent
             },
-            revenue: chartData,
-            recentErrors
+            recentOrders: recentOrders, // Top level recent orders
+            revenue: chartData
         });
 
     } catch (error) {
