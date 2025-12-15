@@ -139,7 +139,7 @@ onMounted(fetchPlans)
                     
                     <div class="mt-4 flex items-baseline">
                         <span class="text-3xl font-extrabold text-gray-900">{{ plan.price.toFixed(2) }} €</span>
-                        <span class="ml-1 text-base font-medium text-gray-500">/ {{ plan.interval === 'MONTHLY' ? 'Monat' : 'Jahr' }}</span>
+                        <span class="ml-1 text-base font-medium text-gray-500">/ {{ plan.interval === 'DAILY' ? 'Tag' : (plan.interval === 'MONTHLY' ? 'Monat' : 'Jahr') }}</span>
                     </div>
                     
                     <div class="mt-4 border-t border-gray-100 pt-4 space-y-2">
@@ -185,6 +185,7 @@ onMounted(fetchPlans)
                          <div>
                             <label class="block text-sm font-medium text-gray-700">Intervall</label>
                             <select v-model="formData.interval" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                                <option value="DAILY">Täglich</option>
                                 <option value="MONTHLY">Monatlich</option>
                                 <option value="YEARLY">Jährlich</option>
                             </select>
@@ -212,8 +213,9 @@ onMounted(fetchPlans)
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Features (Eine pro Zeile)</label>
-                        <textarea v-model="formData.features" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"></textarea>
+                        <label class="block text-sm font-medium text-gray-700">Features</label>
+                        <p class="text-xs text-gray-500 mb-1">Schreibe jedes Feature in eine neue Zeile. Diese werden mit einem Haken auf der Preisseite angezeigt.</p>
+                        <textarea v-model="formData.features" rows="5" placeholder="Priorisierter Support&#10;Unbegrenzte Automatisierung&#10;..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"></textarea>
                     </div>
 
                     <!-- Pricing Tiers Editor -->

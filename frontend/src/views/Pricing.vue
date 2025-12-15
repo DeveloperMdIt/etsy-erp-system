@@ -117,7 +117,7 @@ const formatPrice = (price: number) => {
                     
                     <div class="mt-6 flex items-baseline">
                         <span class="text-4xl font-extrabold text-gray-900">{{ formatPrice(plan.price) }} €</span>
-                        <span class="ml-1 text-xl font-medium text-gray-500">/ {{ plan.interval === 'YEARLY' ? 'Jahr' : 'Monat' }}</span>
+                        <span class="ml-1 text-xl font-medium text-gray-500">/ {{ plan.interval === 'DAILY' ? 'Tag' : (plan.interval === 'YEARLY' ? 'Jahr' : 'Monat') }}</span>
                     </div>
                     
                     <!-- Overage Pricing Display -->
