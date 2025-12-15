@@ -44,10 +44,19 @@ import subscriptionRoutes from './routes/subscription.routes';
 import { templatesRouter } from './routes/templates.routes';
 
 app.use('/api/auth', authRoutes);
+app.use('/api/setup', setupRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/import', importRoutes);
+app.use('/api/shipping', shippingRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/logs', logsRoutes);
+app.use('/api/debug', debugRoutes);
 app.use('/api/labels', labelRoutes);
 app.use('/api/shipping-profiles', shippingProfileRoutes);
-app.use('/api/shipping-profiles', shippingProfileRoutes);
-app.use('/api/automation', automationRoutes); // Register Automation Routes
+app.use('/api/etsy', etsyRoutes);
+app.use('/api/automation', automationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes); // Mount Admin Routes (was missing)
 app.use('/api/subscription', subscriptionRoutes);

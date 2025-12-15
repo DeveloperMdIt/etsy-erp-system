@@ -65,7 +65,7 @@
                         <div class="ml-5 w-0 flex-1">
                             <dl>
                                 <dt class="text-sm font-medium text-gray-500 truncate">Umsatz heute</dt>
-                                <dd class="text-lg font-medium text-gray-900">{{ stats.revenueToday.toFixed(2) }} €</dd>
+                                <dd class="text-lg font-medium text-gray-900">{{ (stats.revenueToday || 0).toFixed(2) }} €</dd>
                             </dl>
                         </div>
                     </div>
