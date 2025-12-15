@@ -8,7 +8,8 @@ const prisma = new PrismaClient();
 // Get all profiles for tenant
 router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
-        const userId = req.user!.tenantId; // Use tenantId as owner
+        const userId = req.user!.id;
+        const tenantId = req.user!.tenantId;
         const profiles = await prisma.shippingProfile.findMany({
             where: { userId },
             include: { _count: { select: { products: true } } } // Include count of linked products
@@ -23,12 +24,14 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
 // Create profile
 router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
-        const userId = req.user!.tenantId;
+        const userId = req.user!.id;
+        const tenantId = req.user!.tenantId;
         const { name, provider, productCode, billingNumber, baseWeight, length, width, height } = req.body;
 
         const profile = await prisma.shippingProfile.create({
             data: {
                 userId,
+                tenantId,
                 name,
                 provider, // 'DHL' or 'INTERNETMARKE'
                 productCode,
