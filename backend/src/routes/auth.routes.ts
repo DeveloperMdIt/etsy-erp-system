@@ -248,25 +248,31 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user - SIMPLE FETCH ONLY
+    // Find user
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      include: {
+        userModules: {
+          where: { isActive: true },
+          include: { module: true }
+        }
+      }
     });
 
     if (!user) {
-      console.log('DEBUG LOGIN: User not found');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    console.log('DEBUG LOGIN: User found', user.id);
+
+    // Check verification
+    /*if (!user.isVerified) {
+       return res.status(403).json({ error: 'Please verify your email address first.' });
+    }*/
 
     const isValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isValid) {
-      console.log('DEBUG LOGIN: Invalid password');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
-    console.log('DEBUG LOGIN: Password valid. Generating token...');
 
     // Generate JWT
     const token = jwt.sign({
@@ -276,7 +282,20 @@ router.post('/login', async (req: Request, res: Response) => {
       role: user.role
     }, JWT_SECRET, { expiresIn: '7d' });
 
-    console.log('DEBUG LOGIN: Token generated. Sending response.');
+    // Log successful login (Non-blocking)
+    try {
+      await ActivityLogService.log(
+        LogType.SUCCESS,
+        LogAction.LOGIN,
+        `User ${user.email} logged in`,
+        user.id,
+        user.tenantId
+      );
+    } catch (logError) {
+      console.error('Activity logging failed (login proceeded):', logError);
+    }
+
+    console.log('Login successful');
 
     res.json({
       token,
@@ -288,7 +307,7 @@ router.post('/login', async (req: Request, res: Response) => {
         shopName: user.shopName,
         role: user.role,
         tenantId: user.tenantId,
-        modules: [] // Empty for now
+        modules: user.userModules.map((um: any) => um.module.name)
       }
     });
 
