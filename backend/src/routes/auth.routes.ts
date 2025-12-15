@@ -7,8 +7,6 @@ import { ActivityLogService, LogType, LogAction } from '../services/activity-log
 import { EmailService } from '../services/email.service';
 import crypto from 'crypto';
 
-const router = Router();
-import prisma from '../utils/prisma';
 
 const router = Router();
 // const prisma = new PrismaClient(); // Removed local instance
