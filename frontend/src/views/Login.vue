@@ -49,6 +49,13 @@ const login = async () => {
     router.push('/')
   } catch (err: any) {
     const msg = err.response?.data?.error || 'Login fehlgeschlagen'
+    const details = err.response?.data?.details || ''
+    const stack = err.response?.data?.stack || ''
+    
+    if (details) {
+        alert(`LOGIN ERROR:\n${msg}\n\nDETAILS:\n${details}\n\nSTACK:\n${stack.substring(0, 200)}...`)
+    }
+
     error.value = msg
     showError(msg)
   } finally {
