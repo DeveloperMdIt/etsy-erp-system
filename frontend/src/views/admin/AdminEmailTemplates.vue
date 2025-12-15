@@ -23,7 +23,66 @@ const templates: EmailTemplate[] = [
         subjectKey: 'SYSTEM_EMAIL_WELCOME_SUBJECT',
         contentKey: 'SYSTEM_EMAIL_WELCOME_CONTENT',
         defaultSubject: 'Willkommen bei Inventivy!',
-        defaultContent: '<h1>Willkommen!</h1><p>Vielen Dank für Ihre Registrierung.</p>'
+        defaultContent: `<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Willkommen bei Inventivy</title>
+</head>
+<body style="margin:0; padding:0; background:#f6f7fb; font-family: Arial, sans-serif; color:#111827;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f6f7fb;">
+    <tr>
+      <td align="center" style="padding:28px 14px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px; width:100%; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(17,24,39,0.08);">
+          <tr>
+            <td style="background:#111827; padding:22px 24px;">
+              <img src="https://inventivy.de/logo.png" alt="Inventivy" width="150" style="display:block; border:0; max-width:100%; height:auto; margin-bottom:8px;" />
+              <div style="font-size:13px; color:#e5e7eb;">Willkommen bei Inventivy</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px;">
+              <h1 style="margin:0 0 14px 0; font-size:22px; color:#111827;">Willkommen!</h1>
+              <p style="margin:0 0 14px 0; font-size:15px; line-height:1.6; color:#374151;">
+                Sehr geehrte(r) <strong>{firstName} {lastName}</strong>,
+              </p>
+              <p style="margin:0 0 14px 0; font-size:15px; line-height:1.6; color:#374151;">
+                wir freuen uns sehr, Sie bei <strong>Inventivy</strong> begrüßen zu dürfen.
+                Vielen Dank für Ihre Registrierung und das Vertrauen in unser System.
+              </p>
+              <p style="margin:0 0 14px 0; font-size:15px; line-height:1.6; color:#374151;">
+                Inventivy unterstützt Sie dabei, Abläufe zu vereinfachen und wertvolle Zeit im Alltag zu sparen.
+                Nutzen Sie die gewonnenen Freiräume für das, was Ihnen wirklich wichtig ist.
+              </p>
+              <p style="margin:0 0 14px 0; font-size:15px; line-height:1.6; color:#374151;">
+                Sollten Sie Fragen, Wünsche oder Anregungen haben, stehen wir Ihnen jederzeit gerne zur Verfügung.
+              </p>
+              <p style="margin:18px 0 0 0; font-size:15px; line-height:1.6; color:#374151;">
+                Wir wünschen Ihnen viel Erfolg und Freude bei der Nutzung von Inventivy.
+              </p>
+              <p style="margin:12px 0 0 0; font-size:15px; line-height:1.6; color:#374151;">
+                Ihr Team von <strong>Inventivy</strong>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 24px; background:#f9fafb; border-top:1px solid #e5e7eb;">
+              <p style="margin:0; font-size:12px; line-height:1.6; color:#6b7280;">
+                Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht direkt auf diese Nachricht.
+              </p>
+            </td>
+          </tr>
+        </table>
+        <div style="height:14px;"></div>
+        <div style="font-size:12px; color:#9ca3af; max-width:600px; text-align:center;">
+          © Inventivy – Alle Rechte vorbehalten
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
     },
     {
         key: 'VERIFY',
