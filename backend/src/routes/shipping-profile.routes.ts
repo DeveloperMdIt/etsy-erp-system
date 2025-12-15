@@ -34,9 +34,9 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
                 productCode,
                 billingNumber,
                 baseWeight: parseFloat(baseWeight) || 0,
-                length: parseFloat(length) || null,
-                width: parseFloat(width) || null,
-                height: parseFloat(height) || null
+                length: parseFloat(length) || 0,
+                width: parseFloat(width) || 0,
+                height: parseFloat(height) || 0
             }
         });
         res.json(profile);
@@ -61,9 +61,9 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
                 productCode,
                 billingNumber,
                 baseWeight: parseFloat(baseWeight) || 0,
-                length: parseFloat(length) || null,
-                width: parseFloat(width) || null,
-                height: parseFloat(height) || null
+                length: parseFloat(length) || 0,
+                width: parseFloat(width) || 0,
+                height: parseFloat(height) || 0
             }
         });
 
