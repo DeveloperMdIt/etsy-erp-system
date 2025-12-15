@@ -53,16 +53,17 @@ export const authenticateToken = (
  * Middleware to check if user has admin role
  */
 export const requireAdmin = (
-    req: AuthRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ) => {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
         res.status(401).json({ error: 'Authentication required' });
         return;
     }
 
-    if (req.user.role !== 'ADMIN') {
+    if (authReq.user.role !== 'ADMIN') {
         res.status(403).json({ error: 'Admin access required' });
         return;
     }
