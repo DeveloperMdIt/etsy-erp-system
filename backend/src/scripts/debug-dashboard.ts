@@ -22,7 +22,7 @@ async function testDashboardLogic() {
         console.log('Settings found:', !!settings);
 
         console.log('Checking Shipping Methods...');
-        const shippingMethodsCount = await prisma.shippingMethod.count({
+        const shippingMethodsCount = await prisma.shippingProfile.count({
             where: { userId }
         });
         console.log('Shipping Methods count:', shippingMethodsCount);

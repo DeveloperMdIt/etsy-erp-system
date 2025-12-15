@@ -299,6 +299,9 @@ model Product {
   components        product_components[] @relation("product_components_parentProductIdToproducts")
   variationChildren product_variations[] @relation("product_variations_childProductIdToproducts")
   variations        product_variations[] @relation("product_variations_productIdToproducts")
+  
+  shippingProfileId String?
+  shippingProfile   ShippingProfile? @relation(fields: [shippingProfileId], references: [id])
 
   @@unique([userId, sku])
   @@index([userId])
@@ -510,11 +513,19 @@ model ShippingProfile {
   printerName     String?  // Optional: override printer for this method
   
   isActive        Boolean  @default(true)
+  
+  // Dimensions and Weight
+  baseWeight      Float    @default(0) // kg
+  length          Float    @default(0) // cm
+  width           Float    @default(0) // cm
+  height          Float    @default(0) // cm
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products        Product[] 
 
   @@index([tenantId])
   @@index([userId])

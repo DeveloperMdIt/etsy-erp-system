@@ -19,7 +19,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
         });
 
         // Check if we have any shipping methods
-        const shippingMethodsCount = await prisma.shippingMethod.count({
+        const shippingMethodsCount = await prisma.shippingProfile.count({
             where: { userId }
         });
 
