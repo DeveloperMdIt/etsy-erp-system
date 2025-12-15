@@ -57,7 +57,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: Request, res: Resp
             name, description, price, interval,
             includedOrders, pricePerExtraOrder,
             features, isPopular, isActive,
-            pricingTiers
+            pricingTiers, buttonText
         } = req.body;
 
         const plan = await prisma.subscriptionPlan.create({
@@ -78,8 +78,11 @@ router.post('/', authenticateToken, requireAdmin, async (req: Request, res: Resp
                 // Correction: features in schema is `String?` (see step 2796). pricingTiers is `Json?`.
                 // So features MUST be stringified. pricingTiers MUST be passed as object/array.
 
+                // So features MUST be stringified. pricingTiers MUST be passed as object/array.
+
                 isPopular: isPopular || false,
-                isActive: isActive !== undefined ? isActive : true
+                isActive: isActive !== undefined ? isActive : true,
+                buttonText
             }
         });
 
@@ -111,8 +114,10 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: Request, res: Re
                 pricePerExtraOrder: parseFloat(pricePerExtraOrder),
                 features: JSON.stringify(features || []),
                 pricingTiers: pricingTiers ? pricingTiers : undefined, // Json field expects object
+                pricingTiers: pricingTiers ? pricingTiers : undefined, // Json field expects object
                 isPopular,
-                isActive
+                isActive,
+                buttonText
             }
         });
 

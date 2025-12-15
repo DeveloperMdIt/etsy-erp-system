@@ -577,6 +577,7 @@ model SubscriptionPlan {
   // Display Helpers
   isPopular          Boolean  @default(false)
   isActive           Boolean  @default(true)
+  buttonText         String?  // Custom button label e.g. "Jetzt starten"
   
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

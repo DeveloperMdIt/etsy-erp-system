@@ -16,7 +16,8 @@ const formData = ref({
     features: '', // Text area, split by newline
     isActive: true,
     isPopular: false,
-    pricingTiers: [] as any[]
+    pricingTiers: [] as any[],
+    buttonText: ''
 })
 
 const fetchPlans = async () => {
@@ -48,7 +49,8 @@ const openModal = (plan: any = null) => {
             name: '', description: '', price: 0, interval: 'MONTHLY', 
             includedOrders: 0, pricePerExtraOrder: 0, features: '', 
             isActive: true, isPopular: false,
-            pricingTiers: []
+            pricingTiers: [],
+            buttonText: ''
         }
     }
     isModalOpen.value = true
@@ -192,9 +194,14 @@ onMounted(fetchPlans)
                         </div>
                     </div>
 
-                     <div>
+                    <div>
                         <label class="block text-sm font-medium text-gray-700">Beschreibung</label>
                         <input v-model="formData.description" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Button-Text (optional)</label>
+                        <input v-model="formData.buttonText" placeholder="z.B. Kostenlos starten" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
                     </div>
 
                     <div class="grid grid-cols-3 gap-4">
