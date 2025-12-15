@@ -8,7 +8,10 @@ import { EmailService } from '../services/email.service';
 import crypto from 'crypto';
 
 const router = Router();
-const prisma = new PrismaClient();
+import prisma from '../utils/prisma';
+
+const router = Router();
+// const prisma = new PrismaClient(); // Removed local instance
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const SALT_ROUNDS = 10;
