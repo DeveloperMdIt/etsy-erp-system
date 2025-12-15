@@ -65,19 +65,72 @@ router.post('/register', async (req: Request, res: Response) => {
         const verificationLink = `${process.env.FRONTEND_URL || 'https://inventivy.de'}/verify-email?token=${verificationToken}&email=${email}`;
 
         try {
-            await EmailService.sendMail(
-                email,
-                'Bitte bestätige deine Email',
-                `
-                <h1>Willkommen, ${firstName || 'Benutzer'}!</h1>
-                <p>Vielen Dank für deine Registrierung bei Inventivy.</p>
-                <p>Bitte klicke auf den folgenden Link, um deinen Account zu aktivieren:</p>
-                <a href="${verificationLink}" style="padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px;">Email bestätigen</a>
-                <br><br>
-                <p>Oder kopiere diesen Link in deinen Browser:</p>
-                <p>${verificationLink}</p>
-                `
-            );
+            const subjectSetting = await prisma.systemSetting.findUnique({ where: { key: 'SYSTEM_EMAIL_VERIFY_SUBJECT' } });
+            const contentSetting = await prisma.systemSetting.findUnique({ where: { key: 'SYSTEM_EMAIL_VERIFY_CONTENT' } });
+
+            let subject = subjectSetting?.value || 'E-Mail bestätigen – Inventivy';
+            let content = contentSetting?.value || `<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>E-Mail bestätigen – Inventivy</title>
+</head>
+<body style="margin:0; padding:0; background:#f6f7fb; font-family: Arial, sans-serif; color:#111827;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f6f7fb;">
+    <tr>
+      <td align="center" style="padding:28px 14px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px; width:100%; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(17,24,39,0.08);">
+          <tr>
+            <td style="background:#111827; padding:22px 24px;">
+              <img src="https://inventivy.de/logo.png" alt="Inventivy" width="150" style="display:block; border:0; max-width:100%; height:auto; margin-bottom:8px;" />
+              <div style="font-size:13px; color:#e5e7eb;">E-Mail-Bestätigung</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px;">
+              <h1 style="margin:0 0 12px 0; font-size:22px; color:#111827;">Bitte bestätige deine E-Mail-Adresse</h1>
+              <p style="margin:0 0 14px 0; font-size:15px; line-height:1.6; color:#374151;">
+                Hallo <strong style="color:#111827;">{firstName} {lastName}</strong>,
+              </p>
+              <p style="margin:0 0 18px 0; font-size:15px; line-height:1.6; color:#374151;">
+                bitte bestätige deine Anmeldung bei <strong style="color:#111827;">Inventivy</strong>, damit wir dein Konto aktivieren können.
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px 0;">
+                <tr>
+                  <td bgcolor="#f97316" style="border-radius:10px;">
+                    <a href="{link}" style="display:inline-block; padding:12px 18px; font-size:15px; font-weight:700; color:#ffffff; text-decoration:none; border-radius:10px;">E-Mail-Adresse bestätigen</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 10px 0; font-size:13px; line-height:1.6; color:#6b7280;">
+                Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
+              </p>
+              <p style="margin:0; font-size:13px; line-height:1.6; word-break:break-word;">
+                <a href="{link}" style="color:#2563eb; text-decoration:underline;">{link}</a>
+              </p>
+              <hr style="border:none; border-top:1px solid #e5e7eb; margin:22px 0;" />
+              <p style="margin:0; font-size:14px; line-height:1.6; color:#374151;">
+                Vielen Dank, dass du dich für <strong style="color:#111827;">Inventivy</strong> entschieden hast.
+              </p>
+              <p style="margin:10px 0 0 0; font-size:14px; line-height:1.6; color:#374151;">
+                Dein Team von Inventivy
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+            content = content
+                .replace(/{firstName}/g, firstName || '')
+                .replace(/{lastName}/g, lastName || '')
+                .replace(/{link}/g, verificationLink);
+
+            await EmailService.sendMail(email, subject, content);
         } catch (emailError) {
             console.error('Failed to send verification email:', emailError);
         }
