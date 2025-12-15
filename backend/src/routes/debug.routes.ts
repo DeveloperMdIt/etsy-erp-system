@@ -194,4 +194,67 @@ router.get('/test-shop-api', authenticateToken, async (req: any, res: Response) 
     }
 });
 
+// List all registered routes
+router.get('/routes', authenticateToken, (req: Request, res: Response) => {
+    const listRoutes = (stack: any[], parentPath: string = ''): any[] => {
+        const routes: any[] = [];
+        stack.forEach((layer) => {
+            if (layer.route) {
+                const path = layer.route.path;
+                const methods = Object.keys(layer.route.methods).join(', ').toUpperCase();
+                routes.push({ path: parentPath + path, methods });
+            } else if (layer.name === 'router' && layer.handle.stack) {
+                // It's a router
+                const regexp = layer.regexp.source;
+                let path = '';
+                // Simple regex parsing to find path prefix
+                // Express regex: /^\/api\/auth\/?(?=\/|$)/i
+                if (regexp.includes('^\\/')) {
+                    path = regexp.replace('^\\/', '/').replace(/\\/g, '').replace('/?(?=/|$)/i', '');
+                    // clean up more if needed, usually sufficient
+                    // Actually better to use the mount path map if available, but express doesn't expose it easily on stack
+                    // This is a rough estimation
+                }
+
+                // Better approach: we know where we mounted router. 
+                // But from inside `router` we don't know the parent path.
+                // We'll just return what we find. 
+                // For this debug purpose, we just want to see if subscription-plans is there.
+
+                routes.push(...listRoutes(layer.handle.stack, parentPath + ' -> ROUTER '));
+            }
+        });
+        return routes;
+    };
+
+    const routes: any[] = [];
+    // We need access to the main app to see all routes. 
+    // Using req.app._router.stack
+    if (req.app && req.app._router) {
+        req.app._router.stack.forEach((middleware: any) => {
+            if (middleware.route) { // routes registered directly on the app
+                routes.push({
+                    path: middleware.route.path,
+                    method: Object.keys(middleware.route.methods).join(', ').toUpperCase()
+                });
+            } else if (middleware.name === 'router') { // router middleware 
+                // middleware.regexp puts the path in a regex
+                // middleware.handle.stack contain the routes
+                routes.push({
+                    prefix: middleware.regexp.toString(),
+                    name: middleware.name,
+                    // keys: middleware.keys 
+                });
+            }
+        });
+    }
+
+    res.json({
+        message: 'This is a rough debug view. Check server logs for better output.',
+        rawStackLength: req.app._router.stack.length,
+        routes
+    });
+});
+
 export default router;
+
