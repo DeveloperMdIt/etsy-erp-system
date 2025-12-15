@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticateToken } from '../middleware/auth';
@@ -36,7 +37,7 @@ router.post('/register', async (req: Request, res: Response) => {
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
     // Create user and default settings transaction
-    const user = await prisma.$transaction(async (tx) => {
+    const user = await prisma.$transaction(async (tx: any) => {
       const newUser = await tx.user.create({
         data: {
           email,
@@ -298,7 +299,7 @@ router.post('/login', async (req: Request, res: Response) => {
         shopName: user.shopName,
         role: user.role,
         tenantId: user.tenantId,
-        modules: user.userModules.map(um => um.module.name)
+        modules: user.userModules.map((um: any) => um.module.name)
       }
     });
   } catch (error: any) {
@@ -347,7 +348,7 @@ router.get('/me', async (req: Request, res: Response) => {
     // Transform response to include simple modules list
     const userWithModules = {
       ...user,
-      modules: user.userModules.map(um => um.module.name),
+      modules: user.userModules.map((um: any) => um.module.name),
       userModules: undefined // Remove the complex object
     };
 
