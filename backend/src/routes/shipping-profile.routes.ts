@@ -52,7 +52,7 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
 // Update profile
 router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
-        const userId = req.user!.tenantId;
+        const userId = req.user!.id;
         const { id } = req.params;
         const { name, provider, productCode, billingNumber, baseWeight, length, width, height } = req.body;
 
@@ -84,7 +84,7 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
 // Delete profile
 router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
-        const userId = req.user!.tenantId;
+        const userId = req.user!.id;
         const { id } = req.params;
 
         // Optional: Check if products are linked?
