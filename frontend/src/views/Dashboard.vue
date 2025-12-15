@@ -149,7 +149,6 @@ import {
     TruckIcon, 
     ArrowPathIcon,
     ExclamationTriangleIcon,
-    CheckCircleIcon,
     PlusCircleIcon
 } from '@heroicons/vue/24/outline'
 
