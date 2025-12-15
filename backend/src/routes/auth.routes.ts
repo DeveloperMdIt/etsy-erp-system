@@ -111,19 +111,67 @@ router.post('/verify-email', async (req: Request, res: Response) => {
         });
 
         // Send Welcome Email
+        // Send Welcome Email
         try {
-            await EmailService.sendMail(
-                email,
-                'Willkommen bei Inventivy!', // Fallback subject if template loading fails internally or key is missing
-                '', // HTML will be loaded from SystemSetting via helper inside service, or we should fetch it here?
-                // Actually, sendMail logic in EmailService was refactored to fetch template...
-                // WAIT. sendMail takes (to, subject, html).
-                // Refactoring: We should use a helper to get the "WELCOME" template content.
-            );
-            // Wait, previous EmailService refactor (Step 2194) just takes "to, subject, html".
-            // It does NOT fetch template by key automatically. The frontend does that for editing.
-            // We need to fetch the template HERE in the route or make a helper.
-            // Let's copy the logic from the frontend or use a helper.
+            // Fetch Template
+            const subjectSetting = await prisma.systemSetting.findUnique({ where: { key: 'SYSTEM_EMAIL_WELCOME_SUBJECT' } });
+            const contentSetting = await prisma.systemSetting.findUnique({ where: { key: 'SYSTEM_EMAIL_WELCOME_CONTENT' } });
+
+            let subject = subjectSetting?.value || 'Willkommen bei Inventivy!';
+
+            // Default Content if not in DB (copy of the new default)
+            let content = contentSetting?.value || `<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Willkommen bei Inventivy</title>
+</head>
+<body style="margin:0; padding:0; background:#f6f7fb; font-family: Arial, sans-serif; color:#111827;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f6f7fb;">
+    <tr>
+      <td align="center" style="padding:28px 14px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px; width:100%; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(17,24,39,0.08);">
+          <tr>
+            <td style="background:#111827; padding:22px 24px;">
+              <img src="https://inventivy.de/logo.png" alt="Inventivy" width="150" style="display:block; border:0; max-width:100%; height:auto; margin-bottom:8px;" />
+              <div style="font-size:13px; color:#e5e7eb;">Willkommen bei Inventivy</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px;">
+              <h1 style="margin:0 0 14px 0; font-size:22px; color:#111827;">Willkommen!</h1>
+              <p style="margin:0 0 14px 0; font-size:15px; line-height:1.6; color:#374151;">
+                Sehr geehrte(r) <strong>{firstName} {lastName}</strong>,
+              </p>
+              <p style="margin:0 0 14px 0; font-size:15px; line-height:1.6; color:#374151;">
+                wir freuen uns sehr, Sie bei <strong>Inventivy</strong> begrüßen zu dürfen.
+                Vielen Dank für Ihre Registrierung und das Vertrauen in unser System.
+              </p>
+              <p style="margin:18px 0 0 0; font-size:15px; line-height:1.6; color:#374151;">
+                Wir wünschen Ihnen viel Erfolg und Freude bei der Nutzung von Inventivy.
+              </p>
+              <p style="margin:12px 0 0 0; font-size:15px; line-height:1.6; color:#374151;">
+                Ihr Team von <strong>Inventivy</strong>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+            // Replace Variables
+            const firstName = user.firstName || 'Kunde';
+            const lastName = user.lastName || '';
+
+            subject = subject.replace(/{firstName}/g, firstName).replace(/{lastName}/g, lastName);
+            content = content.replace(/{firstName}/g, firstName).replace(/{lastName}/g, lastName);
+
+            await EmailService.sendMail(email, subject, content);
+            console.log(`Welcome email sent to ${email}`);
         } catch (e) {
             console.error('Failed to send welcome email', e);
         }
