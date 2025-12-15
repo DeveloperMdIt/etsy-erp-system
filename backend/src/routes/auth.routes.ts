@@ -241,39 +241,34 @@ router.post('/verify-email', async (req: Request, res: Response) => {
 // POST /api/auth/login
 router.post('/login', async (req: Request, res: Response) => {
   try {
+    console.log('DEBUG LOGIN START: ', req.body.email);
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user
+    // Find user - SIMPLE FETCH ONLY
     const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        userModules: {
-          where: { isActive: true },
-          include: { module: true }
-        }
-      }
+      where: { email }
     });
+
     if (!user) {
+      console.log('DEBUG LOGIN: User not found');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
-    // Check verification
-    if (!user.isVerified) {
-      // Optional: Allow resend verification email here?
-      return res.status(403).json({ error: 'Please verify your email address first.' });
-    }
+    console.log('DEBUG LOGIN: User found', user.id);
 
     const isValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isValid) {
+      console.log('DEBUG LOGIN: Invalid password');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Generate JWT with more info
+    console.log('DEBUG LOGIN: Password valid. Generating token...');
+
+    // Generate JWT
     const token = jwt.sign({
       userId: user.id,
       email: user.email,
@@ -281,17 +276,11 @@ router.post('/login', async (req: Request, res: Response) => {
       role: user.role
     }, JWT_SECRET, { expiresIn: '7d' });
 
-    // Log successful login
-    await ActivityLogService.log(
-      LogType.SUCCESS,
-      LogAction.LOGIN,
-      `User ${user.email} logged in`,
-      user.id,
-      user.tenantId
-    );
+    console.log('DEBUG LOGIN: Token generated. Sending response.');
 
     res.json({
-      token, user: {
+      token,
+      user: {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
@@ -299,13 +288,14 @@ router.post('/login', async (req: Request, res: Response) => {
         shopName: user.shopName,
         role: user.role,
         tenantId: user.tenantId,
-        modules: user.userModules.map((um: any) => um.module.name)
+        modules: [] // Empty for now
       }
     });
+
   } catch (error: any) {
-    console.error('Login error:', error);
+    console.error('CRITICAL LOGIN ERROR:', error);
     res.status(500).json({
-      error: 'Login failed',
+      error: 'Login crashed',
       details: error.message,
       stack: error.stack
     });
