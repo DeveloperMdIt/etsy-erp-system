@@ -44,7 +44,8 @@ const isBooked = (moduleId: string) => {
 }
 
 const bookModule = async (module: Module) => {
-    if (!confirm(`Möchtest du das Modul "${module.name}" für ${module.price}€ buchen?`)) return
+    const formattedPrice = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(module.price)
+    if (!confirm(`Möchtest du das Modul "${module.name}" für ${formattedPrice} buchen?`)) return
 
     try {
         await axios.post('/api/subscription/book', { moduleId: module.id })
@@ -88,7 +89,7 @@ onMounted(fetchModules)
               </div>
 
               <div class="mt-4 w-full pt-4 border-t border-gray-100 flex items-center justify-between">
-                  <span class="text-2xl font-bold text-gray-900">{{ module.price }} € <span class="text-sm font-normal text-gray-500">/ Monat</span></span>
+                  <span class="text-2xl font-bold text-gray-900">{{ new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(module.price) }} <span class="text-sm font-normal text-gray-500">/ Monat</span></span>
                   
                   <button 
                       v-if="!isBooked(module.id) && !module.isPlanned"

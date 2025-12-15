@@ -34,6 +34,7 @@ import subscriptionRoutes from './routes/subscription.routes';
 
 import { templatesRouter } from './routes/templates.routes';
 
+app.use('/api/auth', authRoutes);
 app.use('/api/labels', labelRoutes);
 app.use('/api/shipping-profiles', shippingProfileRoutes);
 app.use('/api/shipping-profiles', shippingProfileRoutes);
