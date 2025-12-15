@@ -56,7 +56,8 @@ router.post('/', authenticateToken, requireAdmin, async (req: Request, res: Resp
         const {
             name, description, price, interval,
             includedOrders, pricePerExtraOrder,
-            features, isPopular, isActive
+            features, isPopular, isActive,
+            pricingTiers
         } = req.body;
 
         const plan = await prisma.subscriptionPlan.create({
@@ -95,7 +96,8 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: Request, res: Re
         const {
             name, description, price, interval,
             includedOrders, pricePerExtraOrder,
-            features, isPopular, isActive
+            features, isPopular, isActive,
+            pricingTiers
         } = req.body;
 
         const plan = await prisma.subscriptionPlan.update({
