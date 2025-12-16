@@ -97,7 +97,24 @@ export class DHLParcelService {
             throw new Error('DHL App Credentials fehlen. Bitte hinterlegen Sie diese in den Einstellungen oder nutzen Sie den Sandbox-Modus.');
         }
 
-        const isProduction = !!(customAppId || process.env.DHL_API_ENVIRONMENT === 'production');
+        // 3. Determine Environment Logic
+        // IF we have specific credentials (custom passed OR found in DB/System), 
+        // AND they are NOT explicitly known to be Sandbox defaults (optional check),
+        // THEN we assume Production intent, unless env var explicitly forces 'sandbox'.
+
+        let isProduction = false;
+
+        if (customAppId) {
+            isProduction = true; // Manual override = Prod intent
+        } else if (process.env.DHL_API_ENVIRONMENT === 'production') {
+            isProduction = true;
+        } else if (apiKey && apiKey !== process.env.DHL_API_KEY) {
+            // The key came from DB (User or System) and is NOT the default env key (if any). Assume Prod.
+            // Even if process.env.DHL_API_KEY is undefined, apiKey will be something if found in DB.
+            // If apiKey came from process.env.DHL_API_KEY, this condition is false (Sandbox).
+            isProduction = true;
+        }
+
         const baseUrl = this.getBaseUrl(isProduction);
 
         try {
@@ -154,7 +171,16 @@ export class DHLParcelService {
     async createLabel(userId: string, request: ShippingLabelRequest): Promise<ShippingLabelResponse> {
         const settings = await prisma.userSettings.findUnique({ where: { userId } });
 
-        const isProduction = !!(settings?.dhlAppId || process.env.DHL_API_ENVIRONMENT === 'production');
+        // Determine Environment Logic (same as authenticate)
+        let { apiKey } = await this.getAppCredentials(userId);
+
+        let isProduction = false;
+        if (settings?.dhlAppId || process.env.DHL_API_ENVIRONMENT === 'production') {
+            isProduction = true;
+        } else if (apiKey && apiKey !== process.env.DHL_API_KEY) {
+            isProduction = true;
+        }
+
         const baseUrl = this.getBaseUrl(isProduction);
 
         const token = await this.getValidToken(userId, settings?.dhlAppId || undefined, settings?.dhlAppSecret || undefined);
@@ -237,7 +263,15 @@ export class DHLParcelService {
         try {
             const settings = await prisma.userSettings.findUnique({ where: { userId } });
 
-            const isProduction = !!(settings?.dhlAppId || process.env.DHL_API_ENVIRONMENT === 'production');
+            let { apiKey } = await this.getAppCredentials(userId);
+
+            let isProduction = false;
+            if (settings?.dhlAppId || process.env.DHL_API_ENVIRONMENT === 'production') {
+                isProduction = true;
+            } else if (apiKey && apiKey !== process.env.DHL_API_KEY) {
+                isProduction = true;
+            }
+
             const baseUrl = this.getBaseUrl(isProduction);
 
             const token = await this.getValidToken(userId, settings?.dhlAppId || undefined, settings?.dhlAppSecret || undefined);
