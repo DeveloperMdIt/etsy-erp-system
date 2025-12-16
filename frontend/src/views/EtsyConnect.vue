@@ -121,6 +121,43 @@
         </div>
       </div>
     </div>
+
+    <!-- Success Modal -->
+    <div v-if="showSuccessModal" class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+      <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div>
+              <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              </div>
+              <div class="mt-3 text-center sm:mt-5">
+                <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">Verbindung erfolgreich!</h3>
+                <div class="mt-2">
+                  <p class="text-sm text-gray-500">
+                    Ihr Etsy-Shop "<strong>{{ shopName }}</strong>" wurde erfolgreich verbunden.
+                  </p>
+                  <p class="mt-2 text-sm text-gray-500">
+                    Wir empfehlen, jetzt einmalig Ihre Produkte und Bestellungen zu importieren.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+              <button type="button" @click="closeSuccessModal(); triggerSync('orders')" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2">
+                Jetzt Synchronisieren
+              </button>
+              <button type="button" @click="closeSuccessModal" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
+                Später
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -146,11 +183,13 @@ onMounted(async () => {
   await checkStatus();
   
   if (route.query.success) {
+      showSuccessModal.value = true;
+      // Clear URL
+      window.history.replaceState({}, document.title, window.location.pathname);
       // Wait a bit for tokens to be saved, then reload status
       setTimeout(async () => {
           await checkStatus();
       }, 500);
-      window.history.replaceState({}, document.title, window.location.pathname);
   } else if (route.query.error) {
       const error = route.query.error;
       const details = route.query.details ? JSON.parse(decodeURIComponent(route.query.details as string)) : '';
@@ -205,6 +244,13 @@ const disconnectEtsy = async () => {
     } catch (e) {
         console.error('Disconnect failed', e);
     }
+};
+
+// Success Modal
+const showSuccessModal = ref(false);
+
+const closeSuccessModal = () => {
+    showSuccessModal.value = false;
 };
 
 const triggerSync = async (type: 'orders' | 'products') => {
