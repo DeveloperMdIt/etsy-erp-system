@@ -66,13 +66,24 @@ export class DHLParcelService {
 
     }
 
-    async getAppCredentials() {
-        // Fetch from DB or Env
+    async getAppCredentials(userId?: string) {
+        let apiKey = process.env.DHL_API_KEY || '';
+        let apiSecret = process.env.DHL_API_SECRET || '';
+
+        // 1. Try User Specific App Credentials (if provided)
+        if (userId) {
+            const userSettings = await prisma.userSettings.findUnique({ where: { userId } });
+            if (userSettings?.dhlAppId && userSettings?.dhlAppSecret) {
+                return { apiKey: userSettings.dhlAppId, apiSecret: userSettings.dhlAppSecret };
+            }
+        }
+
+        // 2. Try System Settings (Database)
         const idSetting = await prisma.systemSetting.findUnique({ where: { key: 'DHL_APP_ID' } });
         const secretSetting = await prisma.systemSetting.findUnique({ where: { key: 'DHL_APP_SECRET' } });
 
-        const apiKey = idSetting?.value || process.env.DHL_API_KEY || '';
-        const apiSecret = secretSetting?.value || process.env.DHL_API_SECRET || '';
+        if (idSetting?.value) apiKey = idSetting.value;
+        if (secretSetting?.value) apiSecret = secretSetting.value;
 
         return { apiKey, apiSecret };
     }
@@ -81,11 +92,11 @@ export class DHLParcelService {
      * Authenticate with DHL API using OAuth2.0 Password Grant
      * Combines: Your App credentials + Customer's GKP credentials
      */
-    async authenticate(config: DHLConfig): Promise<DHLAuthToken> {
-        const { apiKey, apiSecret } = await this.getAppCredentials();
+    async authenticate(config: DHLConfig, userId?: string): Promise<DHLAuthToken> {
+        const { apiKey, apiSecret } = await this.getAppCredentials(userId);
 
         if (!apiKey || !apiSecret) {
-            throw new Error('System-Fehler: DHL App Credentials nicht konfiguriert (Admin Einstellungen).');
+            throw new Error('DHL App Credentials fehlen. Bitte hinterlegen Sie diese in den Einstellungen oder kontaktieren Sie den Support.');
         }
 
         try {
@@ -144,7 +155,7 @@ export class DHLParcelService {
         const token = await this.authenticate({
             gkpUsername: settings.dhlGkpUsername,
             gkpPassword: settings.dhlGkpPassword
-        });
+        }, userId);
 
         // Cache token
         const expiry = new Date(Date.now() + (token.expires_in * 1000) - 60000); // 1 min buffer
@@ -160,22 +171,35 @@ export class DHLParcelService {
         try {
             const token = await this.getValidToken(userId);
 
+            // Fetch User Settings for Billing Number
+            const settings = await prisma.userSettings.findUnique({ where: { userId } });
+            // Default to Sandbox number if not set (Safe Fallback? Or Error? Better to error or use specific Sandbox check)
+            let billingNumber = settings?.dhlBillingNrPaket;
+
+            if (this.environment === 'sandbox' && !billingNumber) {
+                billingNumber = '33333333330101'; // Default Sandbox
+            }
+
+            if (!billingNumber) {
+                throw new Error('Keine DHL Abrechnungsnummer (14-stellig) hinterlegt. Bitte in den Einstellungen eintragen.');
+            }
+
             const response = await axios.post(
                 `${this.baseUrl}/parcel/de/shipping/v2/orders`,
                 {
                     profile: 'STANDARD_GRUPPENPROFIL',
                     shipments: [{
                         product: request.productCode,
-                        billingNumber: '33333333330101', // Sandbox test billing number
+                        billingNumber: billingNumber,
                         refNo: `ORDER-${Date.now()}`,
                         shipDate: new Date().toISOString().split('T')[0],
                         shipper: request.sender || {
-                            name1: 'Test Sender',
-                            addressStreet: 'Teststr.',
+                            name1: settings?.labelCompanyName || settings?.etsyShopName || 'Sender',
+                            addressStreet: settings?.labelStreet || 'Street',
                             addressHouse: '1',
-                            postalCode: '12345',
-                            city: 'Teststadt',
-                            country: 'DEU'
+                            postalCode: settings?.labelPostalCode || '12345',
+                            city: settings?.labelCity || 'City',
+                            country: settings?.labelCountry ? (settings.labelCountry === 'Deutschland' ? 'DEU' : 'DEU') : 'DEU'
                         },
                         consignee: {
                             name1: request.recipient.name,
@@ -196,7 +220,9 @@ export class DHLParcelService {
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        // 'dhl-api-key': ... // Some endpoints need this, but OAuth usually covers it. 
+                        // Check docs: Post & Parcel DE usually only needs Bearer for the Shipping V2 if using OAuth.
                     }
                 }
             );

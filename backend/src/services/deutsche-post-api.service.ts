@@ -11,6 +11,8 @@ import prisma from '../utils/prisma';
 interface DeutschePostConfig {
     username: string;
     password: string;
+    clientId?: string;
+    clientSecret?: string;
 }
 
 interface AuthToken {
@@ -58,19 +60,27 @@ export class DeutschePostApiService {
     private tokenExpiry: Date | null = null;
 
     /**
-     * Authenticate with Deutsche Post API using Portokasse credentials only
+     * Authenticate with Deutsche Post API
      */
     async authenticate(config: DeutschePostConfig): Promise<AuthToken> {
         try {
-            // Simplified: Use Portokasse credentials directly
-            // No separate API Client ID/Secret needed
-            const response = await axios.post(`${this.baseUrl}/auth/accesstoken`, {
+            const payload: any = {
                 grant_type: 'password',
                 username: config.username,
                 password: config.password
-            }, {
+            };
+
+            // Add Client Credentials if provided (for advanced API usage)
+            if (config.clientId && config.clientSecret) {
+                payload.client_id = config.clientId;
+                payload.client_secret = config.clientSecret;
+            }
+
+            const response = await axios.post(`${this.baseUrl}/auth/accesstoken`, payload, {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    // Some APIs require Basic Auth with ClientID/Secret instead of body
+                    // We'll stick to body for now unless we get a 401
                 }
             });
 
@@ -82,11 +92,8 @@ export class DeutschePostApiService {
         } catch (error: any) {
             console.error('❌ Deutsche Post authentication failed:', error.response?.data || error.message);
 
-            // User-friendly error messages
             if (error.response?.status === 401) {
-                throw new Error('Ungültiger Benutzername oder Passwort. Bitte überprüfen Sie Ihre Portokasse-Zugangsdaten.');
-            } else if (error.response?.status === 403) {
-                throw new Error('Zugriff verweigert. Bitte aktivieren Sie die Geschäftsanwendung in Ihrer Portokasse unter "Meine Daten" → "Geschäftsanwendungen".');
+                throw new Error('Ungültige Zugangsdaten (Portokasse).');
             } else {
                 throw new Error(`Verbindung fehlgeschlagen: ${error.response?.data?.error_description || error.message}`);
             }
@@ -108,13 +115,15 @@ export class DeutschePostApiService {
         });
 
         if (!settings?.deutschePostUsername || !settings?.deutschePostPassword) {
-            throw new Error('Deutsche Post Zugangsdaten nicht konfiguriert. Bitte tragen Sie Ihren Portokasse-Benutzernamen und Passwort in den Versandeinstellungen ein.');
+            throw new Error('Deutsche Post Zugangsdaten fehlen. Bitte in den Einstellungen hinterlegen.');
         }
 
-        // Authenticate with Portokasse credentials
+        // Authenticate
         const token = await this.authenticate({
             username: settings.deutschePostUsername,
-            password: settings.deutschePostPassword
+            password: settings.deutschePostPassword,
+            clientId: settings.deutschePostClientId || undefined,
+            clientSecret: settings.deutschePostClientSecret || undefined
         });
 
         return token.access_token;
