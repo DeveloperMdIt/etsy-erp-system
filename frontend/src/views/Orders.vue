@@ -508,7 +508,7 @@ onMounted(fetchOrders)
                       <!-- Print Button if Label Exists -->
                       <div v-if="order.shippingLabels && order.shippingLabels.length > 0" class="mt-1">
                           <button 
-                            @click.stop="printLabel(order.shippingLabels[0]?.id)" 
+                            @click.stop="printLabel(order.shippingLabels[0]?.id || '')" 
                             :disabled="printingLabel === order.shippingLabels[0]?.id"
                             class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-0.5 rounded border border-gray-300 flex items-center"
                             title="Label erneut drucken"
