@@ -49,18 +49,22 @@ const upload = multer({
 // ============================================================================
 
 // POST /api/shipping/dhl/test - Test DHL Paket connection
-router.post('/dhl/test', async (req: Request, res: Response) => {
+router.post('/dhl/test', authenticateToken, async (req: Request, res: Response) => {
     try {
-        const { gkpUsername, gkpPassword } = req.body;
+        const { gkpUsername, gkpPassword, appId, appSecret } = req.body;
 
         if (!gkpUsername || !gkpPassword) {
             return res.status(400).json({ error: 'GKP Benutzername und Passwort erforderlich' });
         }
 
-        const result = await dhlParcelService.testConnection({
-            gkpUsername,
-            gkpPassword
-        });
+        const userId = (req as AuthRequest).user?.userId;
+
+        const result = await dhlParcelService.testConnection(
+            { gkpUsername, gkpPassword },
+            userId,
+            appId,
+            appSecret
+        );
 
         res.json(result);
     } catch (error: any) {
@@ -131,9 +135,6 @@ router.post('/dhl/create-label', authenticateToken, async (req: Request, res: Re
         const userId = (req as AuthRequest).user?.userId;
         if (userId && labelPath) {
             // Update DB with path
-            // We need to find the just created label. 
-            // Ideally dhlService returns the ID or we query by tracking.
-            // For now query by tracking as it's unique enough (shipmentNumber)
             await prisma.shippingLabel.updateMany({
                 where: { trackingNumber: result.shipmentNumber },
                 data: { labelPath }
@@ -488,4 +489,3 @@ router.post('/print', authenticateToken, async (req: Request, res: Response) => 
 });
 
 export default router;
-

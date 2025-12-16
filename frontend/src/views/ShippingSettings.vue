@@ -261,6 +261,25 @@
                       <input v-model="setupData.dhlGkpPassword" type="password" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                     </div>
 
+                    <!-- Advanced Toggle -->
+                    <div class="pt-2">
+                        <button type="button" @click="showAdvanced = !showAdvanced" class="text-xs text-blue-600 hover:text-blue-800 flex items-center underline">
+                            <span class="mr-1">{{ showAdvanced ? '▼' : '▶' }}</span> Erweiterte Einstellungen (Produktionsmodus / Eigene App ID)
+                        </button>
+                        
+                        <div v-if="showAdvanced" class="mt-3 p-3 bg-gray-50 rounded border border-gray-200 text-sm">
+                            <p class="mb-2 text-xs text-gray-600">Falls Sie eigene DHL Developer App Credentials haben:</p>
+                            <div class="mb-2">
+                                <label class="block text-xs font-medium mb-1">App ID (Client ID)</label>
+                                <input v-model="setupData.dhlAppId" type="text" class="w-full border rounded px-2 py-1 text-xs" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium mb-1">App Secret (Client Secret)</label>
+                                <input v-model="setupData.dhlAppSecret" type="password" class="w-full border rounded px-2 py-1 text-xs" />
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Test Result -->
                     <div v-if="testResult" :class="testResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'" class="p-4 rounded-md text-sm mt-4">
                         <div class="font-bold">{{ testResult.success ? 'Verbindung erfolgreich' : 'Verbindung fehlgeschlagen' }}</div>
@@ -354,6 +373,7 @@ const testing = ref(false);
 const saving = ref(false);
 const testResult = ref<any>(null);
 const printers = ref<Array<{name: string}>>([]);
+const showAdvanced = ref(false);
 
 const notifications = inject<any>('notifications');
 
@@ -412,13 +432,16 @@ async function loadPrinters() {
 
 function openSetup(provider: 'dhl' | 'deutschepost') {
     currentSetup.value = provider;
-    testResult.value = null;
-    
+    showModal.value = true;
+    showAdvanced.value = false;
+
     // Pre-fill with existing if editing
     if (provider === 'dhl') {
         setupData.value = {
             dhlGkpUsername: settings.value.dhlGkpUsername,
-            dhlGkpPassword: settings.value.dhlGkpPassword
+            dhlGkpPassword: settings.value.dhlGkpPassword,
+            dhlAppId: settings.value.dhlAppId,
+            dhlAppSecret: settings.value.dhlAppSecret
         };
     } else {
         setupData.value = {
@@ -444,7 +467,9 @@ async function testConnection() {
         if (currentSetup.value === 'dhl') {
             const res = await axios.post(`${API_URL}/api/shipping/dhl/test`, {
                 gkpUsername: setupData.value.dhlGkpUsername,
-                gkpPassword: setupData.value.dhlGkpPassword
+                gkpPassword: setupData.value.dhlGkpPassword,
+                appId: setupData.value.dhlAppId,
+                appSecret: setupData.value.dhlAppSecret
             });
             if (res.data.success) {
                 testResult.value = { success: true };
@@ -477,6 +502,8 @@ async function saveProvider() {
         if (currentSetup.value === 'dhl') {
             settings.value.dhlGkpUsername = setupData.value.dhlGkpUsername;
             settings.value.dhlGkpPassword = setupData.value.dhlGkpPassword;
+            settings.value.dhlAppId = setupData.value.dhlAppId;
+            settings.value.dhlAppSecret = setupData.value.dhlAppSecret;
             settings.value.dhlEnabled = true; // Auto-enable
         } else if (currentSetup.value === 'deutschepost') {
              settings.value.deutschePostUsername = setupData.value.deutschePostUsername;
