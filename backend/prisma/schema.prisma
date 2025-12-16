@@ -589,6 +589,7 @@ model SubscriptionPlan {
   
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  users              User[]
 
   @@map("subscription_plans")
 }
