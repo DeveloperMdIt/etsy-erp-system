@@ -10,7 +10,8 @@ const router = Router();
 
 // Keys from user provided image/env
 const REDIRECT_URI = process.env.VITE_APP_URL ? `${process.env.VITE_APP_URL}/api/etsy/callback` : 'https://inventivy.de/api/etsy/callback'; // Use env or prod default
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://inventivy.de/settings/channels'; // Redirect back to settings
+const FRONTEND_BASE = process.env.FRONTEND_URL || 'https://inventivy.de';
+const FRONTEND_URL = `${FRONTEND_BASE.replace(/\/$/, '')}/settings/channels`; // Ensure no double slash and append path
 
 // Helper to get keys from DB
 async function getEtsyKeys() {
