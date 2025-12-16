@@ -520,6 +520,7 @@ onMounted(fetchOrders)
                     </div>
                     <div v-else @click.stop>
                       <button 
+                        v-if="order.status !== 'CANCELLED'"
                         @click="openLabelModal(order)" 
                         class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-medium"
                       >
