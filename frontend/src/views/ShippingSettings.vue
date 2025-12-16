@@ -1,707 +1,537 @@
 <template>
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">Versandeinstellungen</h1>
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-2xl font-bold text-gray-900">Versandeinstellungen</h1>
+    </div>
 
     <!-- Tabs -->
-    <div class="border-b border-gray-200 mb-6">
+    <div class="border-b border-gray-200 mb-8">
       <nav class="-mb-px flex space-x-8">
         <button
-          @click="activeTab = 'dhl'"
+          @click="activeTab = 'providers'"
           :class="[
-            activeTab === 'dhl'
+            activeTab === 'providers'
               ? 'border-blue-500 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
             'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
           ]"
         >
-          DHL Paket
+          Versandwege
         </button>
         <button
-          @click="activeTab = 'deutschepost'"
+          @click="activeTab = 'general'"
           :class="[
-            activeTab === 'deutschepost'
+            activeTab === 'general'
               ? 'border-blue-500 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
             'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
           ]"
         >
-          Deutsche Post
+          Drucker & Layout
         </button>
       </nav>
     </div>
 
-    <!-- DHL Paket Tab -->
-    <div v-if="activeTab === 'dhl'" class="space-y-8">
-      <!-- GKP Connection -->
-      <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">Geschäftskundenportal (GKP)</h2>
+    <!-- PROVIDERS TAB -->
+    <div v-if="activeTab === 'providers'" class="space-y-6">
+      
+      <!-- Provider List -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <p class="text-sm text-blue-800">
-            ℹ️ <strong>Einfache Einrichtung:</strong> Tragen Sie Ihre DHL Geschäftskundenportal-Zugangsdaten ein.
-            <br/>
-            <a href="https://www.dhl.de/de/geschaeftskunden.html" target="_blank" class="underline">
-              Noch kein GKP-Konto? Hier registrieren →
-            </a>
-          </p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              GKP Benutzername *
-            </label>
-            <input
-              v-model="settings.dhlGkpUsername"
-              type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Ihr GKP Benutzername"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              GKP Passwort *
-            </label>
-            <div class="relative">
-              <input
-                v-model="settings.dhlGkpPassword"
-                :type="showDhlPassword ? 'text' : 'password'"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
-                placeholder="Ihr GKP Passwort"
-              />
-              <button 
-                type="button"
-                @click="showDhlPassword = !showDhlPassword"
-                class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
-              >
-                <svg v-if="!showDhlPassword" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 flex items-center space-x-4">
-          <button
-            @click="testDHLConnection"
-            :disabled="testingDHL || !settings.dhlGkpUsername || !settings.dhlGkpPassword"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {{ testingDHL ? 'Teste...' : 'Verbindung testen' }}
-          </button>
-
-          <div v-if="dhlConnectionStatus" class="flex-1">
-            <div v-if="dhlConnectionStatus.success" class="bg-green-50 border border-green-200 rounded-lg p-3">
-              <p class="text-green-800 text-sm font-medium">✓ Verbindung erfolgreich!</p>
-              <p class="text-green-700 text-xs mt-1">
-                Sie können jetzt DHL Paket Labels erstellen.
-              </p>
-            </div>
-            <div v-else class="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p class="text-red-800 text-sm font-medium">✗ Verbindung fehlgeschlagen</p>
-              <p class="text-red-700 text-xs mt-1">{{ dhlConnectionStatus.error }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
-          <div class="flex">
-            <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-              </svg>
-            </div>
-            <div class="ml-3">
-              <h3 class="text-sm font-bold text-yellow-800">Sandbox-Test</h3>
-              <div class="mt-2 text-sm text-yellow-700">
-                <p class="font-semibold mb-2">Zum Testen können Sie diese Sandbox-Zugangsdaten verwenden:</p>
-                <div class="bg-white rounded p-3 border border-yellow-200">
-                  <p class="font-mono"><strong>Benutzername:</strong> <span class="text-blue-600 font-bold">user-valid</span></p>
-                  <p class="font-mono"><strong>Passwort:</strong> <span class="text-blue-600 font-bold">SandboxPasswort2023!</span></p>
+        <!-- DHL Card -->
+        <div class="bg-white border rounded-lg shadow-sm overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-yellow-400 rounded-lg flex items-center justify-center font-bold text-red-600 text-xl">DHL</div>
+                <div>
+                  <h3 class="text-lg font-medium text-gray-900">DHL Paket</h3>
+                  <p class="text-sm text-gray-500">Geschäftskundenversand V3</p>
                 </div>
-                <p class="mt-2 text-xs italic">Diese Zugangsdaten funktionieren nur in der Sandbox-Umgebung zum Testen.</p>
+              </div>
+              <span v-if="isDhlConfigured" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Aktiv
+              </span>
+              <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                Nicht eingerichtet
+              </span>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-6">
+              Verbinden Sie Ihr DHL Geschäftskundenportal (GKP) um Labels zu erstellen und Sendungen zu verwalten.
+            </p>
+
+            <div class="flex space-x-3">
+              <button 
+                v-if="!isDhlConfigured"
+                @click="openSetup('dhl')"
+                class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+              >
+                Einrichten
+              </button>
+              <template v-else>
+                 <button 
+                  @click="openSetup('dhl')"
+                  class="flex-1 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-50"
+                >
+                  Bearbeiten
+                </button>
+                <button 
+                  @click="disconnectProvider('dhl')"
+                  class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-md text-sm font-medium"
+                >
+                  Trennen
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deutsche Post Card -->
+        <div class="bg-white border rounded-lg shadow-sm overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-yellow-400 rounded-lg flex items-center justify-center font-bold text-black text-xl">DP</div>
+                <div>
+                  <h3 class="text-lg font-medium text-gray-900">Deutsche Post</h3>
+                  <p class="text-sm text-gray-500">Internetmarke / Portokasse</p>
+                </div>
+              </div>
+              <span v-if="isDpConfigured" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Aktiv
+              </span>
+              <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                Nicht eingerichtet
+              </span>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-6">
+              Verbinden Sie Ihre Portokasse für Briefprodukte, Warenpost und Einschreiben.
+            </p>
+
+            <div class="flex space-x-3">
+               <button 
+                v-if="!isDpConfigured"
+                @click="openSetup('deutschepost')"
+                class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+              >
+                Einrichten
+              </button>
+              <template v-else>
+                 <button 
+                  @click="openSetup('deutschepost')"
+                  class="flex-1 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-50"
+                >
+                  Bearbeiten
+                </button>
+                <button 
+                  @click="disconnectProvider('deutschepost')"
+                  class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-md text-sm font-medium"
+                >
+                  Trennen
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- GENERAL SETTINGS TAB -->
+    <div v-if="activeTab === 'general'" class="max-w-4xl space-y-8">
+      
+      <!-- Logo Settings -->
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Label Branding</h2>
+        <div class="grid grid-cols-1 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Firmenlogo (für DHL Label)</label>
+              <div class="flex items-center space-x-4">
+                 <div v-if="settings.labelLogoPath" class="h-16 w-16 border rounded flex items-center justify-center overflow-hidden bg-gray-50">
+                    <img :src="getLogoUrl()" class="max-h-full max-w-full" />
+                 </div>
+                 <input
+                  type="file"
+                  @change="uploadLogo"
+                  accept="image/png,image/jpeg"
+                  class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+            </div>
+             <!-- Address fields for label -->
+             <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                   <label class="block text-sm font-medium text-gray-700">Firmenname</label>
+                   <input v-model="settings.labelCompanyName" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                </div>
+                 <div class="col-span-2">
+                   <label class="block text-sm font-medium text-gray-700">Straße & Nr.</label>
+                   <input v-model="settings.labelStreet" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                </div>
+                <div>
+                   <label class="block text-sm font-medium text-gray-700">PLZ</label>
+                   <input v-model="settings.labelPostalCode" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                </div>
+                 <div>
+                   <label class="block text-sm font-medium text-gray-700">Stadt</label>
+                   <input v-model="settings.labelCity" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                </div>
+             </div>
+        </div>
+      </div>
+      
+      <!-- Printer Settings -->
+      <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-medium text-gray-900">Druckerzuordnung</h2>
+            <button @click="loadPrinters" class="text-sm text-blue-600 hover:text-blue-500">Liste aktualisieren</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Standard Drucker</label>
+              <select v-model="settings.defaultPrinter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
+                <option value="">Keiner gewählt</option>
+                <option v-for="p in printers" :key="p.name" :value="p.name">{{ p.name }}</option>
+              </select>
+            </div>
+             <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">DHL Paket Drucker</label>
+              <select v-model="settings.printerDHL" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
+                 <option value="">Wie Standard</option>
+                 <option v-for="p in printers" :key="p.name" :value="p.name">{{ p.name }}</option>
+              </select>
+            </div>
+             <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Deutsche Post Drucker</label>
+              <select v-model="settings.printerDeutschePost" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
+                  <option value="">Wie Standard</option>
+                 <option v-for="p in printers" :key="p.name" :value="p.name">{{ p.name }}</option>
+              </select>
+            </div>
+        </div>
+
+        <div class="mt-6">
+            <label class="flex items-center">
+                <input v-model="settings.autoPrintEnabled" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                <span class="ml-2 text-sm text-gray-900">Labels nach Erstellung automatisch drucken</span>
+            </label>
+        </div>
+      </div>
+
+       <div class="flex justify-end">
+          <button @click="saveGeneralSettings" :disabled="saving" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50">
+             {{ saving ? 'Speichern...' : 'Einstellungen speichern' }}
+          </button>
+       </div>
+
+    </div>
+
+    <!-- SETUP MODAL -->
+    <div v-if="showModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeModal"></div>
+
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+          
+          <!-- Header -->
+          <div class="sm:flex sm:items-start mb-6">
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+              <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                {{ currentSetup === 'dhl' ? 'DHL Paket verbinden' : 'Deutsche Post verbinden' }}
+              </h3>
+              <div class="mt-2">
+                 <!-- DHL Content -->
+                 <div v-if="currentSetup === 'dhl'" class="space-y-4">
+                    <div class="bg-blue-50 p-4 rounded-md text-sm text-blue-800">
+                      Bitte geben Sie Ihre Zugangsdaten für das DHL Geschäftskundenportal (GKP) ein.
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">GKP Benutzername</label>
+                      <input v-model="setupData.dhlGkpUsername" type="text" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">GKP Passwort</label>
+                      <input v-model="setupData.dhlGkpPassword" type="password" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+
+                    <!-- Test Result -->
+                    <div v-if="testResult" :class="testResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'" class="p-4 rounded-md text-sm mt-4">
+                        <div class="font-bold">{{ testResult.success ? 'Verbindung erfolgreich' : 'Verbindung fehlgeschlagen' }}</div>
+                        <div v-if="!testResult.success" class="mt-1">{{ testResult.error }}</div>
+                        <div v-else class="mt-1">Zugangsdaten sind gültig.</div>
+                    </div>
+                 </div>
+
+                 <!-- DP Content -->
+                 <div v-if="currentSetup === 'deutschepost'" class="space-y-4">
+                     <div class="bg-blue-50 p-4 rounded-md text-sm text-blue-800">
+                      Nutzen Sie Ihre Portokasse Zugangsdaten.
+                    </div>
+                     <div>
+                      <label class="block text-sm font-medium text-gray-700">Portokasse E-Mail / User</label>
+                      <input v-model="setupData.deutschePostUsername" type="text" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Passwort</label>
+                      <input v-model="setupData.deutschePostPassword" type="password" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                     <!-- Test Result -->
+                    <div v-if="testResult" :class="testResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'" class="p-4 rounded-md text-sm mt-4">
+                        <div class="font-bold">{{ testResult.success ? 'Verbindung erfolgreich' : 'Verbindung fehlgeschlagen' }}</div>
+                        <div v-if="!testResult.success" class="mt-1">{{ testResult.error }}</div>
+                         <div v-else class="mt-1">
+                             Zugangsdaten gültig. Wallet: {{ (testResult.balance / 100).toFixed(2) }} €
+                         </div>
+                    </div>
+
+                    <div v-if="testResult?.success" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-4">
+                      <p class="text-sm text-yellow-700">
+                        <strong>Wichtig:</strong> Bitte geben Sie in der Portokasse unter "Meine Daten" -> "Geschäftsanwendungen" diese Applikation frei.
+                      </p>
+                    </div>
+                 </div>
+
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="mt-4">
-          <label class="flex items-center">
-            <input
-              v-model="settings.dhlEnabled"
-              type="checkbox"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <span class="ml-2 text-sm text-gray-700">DHL Paket Integration aktivieren</span>
-          </label>
-        </div>
-
-        <div class="mt-4">
-          <label class="flex items-center">
-            <input
-              v-model="settings.etsySyncEnabled"
-              type="checkbox"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <span class="ml-2 text-sm text-gray-700">
-              Tracking automatisch an Etsy senden
-              <span class="text-gray-500">(Bei IP-Sperre deaktivieren)</span>
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Printer Settings for DHL -->
-      <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">Druckereinstellungen</h2>
-
-        <div class="mb-4">
-          <button
-            @click="loadPrinters"
-            class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-          >
-            Drucker aktualisieren
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              DHL Paket Drucker
-            </label>
-            <select
-              v-model="settings.printerDHL"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <!-- Footer Actions -->
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse -mx-6 -mb-4 mt-6">
+            
+            <!-- Step 1: Check Connection -->
+            <button 
+                v-if="!testResult?.success"
+                @click="testConnection" 
+                :disabled="testing"
+                type="button" 
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
             >
-              <option value="">Standard-Drucker verwenden</option>
-              <option v-for="printer in printers" :key="printer.name" :value="printer.name">
-                {{ printer.name }}
-              </option>
-            </select>
+              {{ testing ? 'Verbinde...' : 'Verbindung prüfen' }}
+            </button>
+
+            <!-- Step 2: Save -->
+             <button 
+                v-else
+                @click="saveProvider" 
+                :disabled="saving"
+                type="button" 
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+            >
+              {{ saving ? 'Speichern...' : 'Verbindung speichern' }}
+            </button>
+
+            <button 
+                @click="closeModal" 
+                type="button" 
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Abbrechen
+            </button>
           </div>
         </div>
-
-        <div class="mt-4">
-          <label class="flex items-center">
-            <input
-              v-model="settings.autoPrintEnabled"
-              type="checkbox"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <span class="ml-2 text-sm text-gray-700">
-              Label nach Erstellung automatisch drucken
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Save Button -->
-      <div class="flex justify-end">
-        <button
-          @click="saveSettings"
-          :disabled="saving"
-          class="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400"
-        >
-          {{ saving ? 'Speichern...' : 'Einstellungen speichern' }}
-        </button>
       </div>
     </div>
 
-    <!-- Deutsche Post Tab -->
-    <div v-if="activeTab === 'deutschepost'" class="space-y-8">
-      <!-- API Connection -->
-      <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">Portokasse-Verbindung</h2>
-        
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <p class="text-sm text-blue-800">
-            ℹ️ <strong>Einfache Einrichtung:</strong> Tragen Sie nur Ihren Portokasse-Benutzernamen und Passwort ein.
-            <br/>
-            <a href="https://portokasse.deutschepost.de" target="_blank" class="underline">
-              Noch kein Portokasse-Konto? Hier registrieren →
-            </a>
-          </p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Portokasse Benutzername *
-            </label>
-            <input
-              v-model="settings.deutschePostUsername"
-              type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Ihr Portokasse Benutzername"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Portokasse Passwort *
-            </label>
-            <div class="relative">
-              <input
-                v-model="settings.deutschePostPassword"
-                :type="showDpPassword ? 'text' : 'password'"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
-                placeholder="Ihr Portokasse Passwort"
-              />
-              <button 
-                type="button"
-                @click="showDpPassword = !showDpPassword"
-                class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
-              >
-                <svg v-if="!showDpPassword" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 flex items-center space-x-4">
-          <button
-            @click="testConnection"
-            :disabled="testing || !settings.deutschePostUsername || !settings.deutschePostPassword"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {{ testing ? 'Teste...' : 'Verbindung testen' }}
-          </button>
-
-          <div v-if="connectionStatus" class="flex-1">
-            <div v-if="connectionStatus.success" class="bg-green-50 border border-green-200 rounded-lg p-3">
-              <p class="text-green-800 text-sm font-medium">✓ Verbindung erfolgreich!</p>
-              <p class="text-green-700 text-xs mt-1">
-                Bitte aktivieren Sie jetzt die Geschäftsanwendung in Ihrer Portokasse unter 
-                <strong>"Meine Daten" → "Geschäftsanwendungen"</strong>
-              </p>
-            </div>
-            <div v-else class="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p class="text-red-800 text-sm font-medium">✗ Verbindung fehlgeschlagen</p>
-              <p class="text-red-700 text-xs mt-1">{{ connectionStatus.error }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p class="text-sm font-medium text-yellow-800 mb-2">⚠️ Wichtig: Geschäftsanwendung freigeben</p>
-          <p class="text-xs text-yellow-700">
-            Nach dem ersten Verbindungstest müssen Sie in Ihrer Portokasse unter 
-            <strong>"Meine Daten" → "Geschäftsanwendungen"</strong> diese Anwendung freigeben.
-            Ohne diese Freigabe funktioniert die Label-Erstellung nicht.
-          </p>
-        </div>
-
-        <div class="mt-4">
-          <label class="flex items-center">
-            <input
-              v-model="settings.deutschePostEnabled"
-              type="checkbox"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <span class="ml-2 text-sm text-gray-700">Integration aktivieren</span>
-          </label>
-        </div>
-
-        <div class="mt-4">
-          <label class="flex items-center">
-            <input
-              v-model="settings.etsySyncEnabled"
-              type="checkbox"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <span class="ml-2 text-sm text-gray-700">
-              Tracking automatisch an Etsy senden
-              <span class="text-gray-500">(Bei IP-Sperre deaktivieren)</span>
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Label Layout -->
-      <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">Label-Layout</h2>
-
-        <!-- Label Size -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Label-Größe
-          </label>
-          <div class="flex space-x-4">
-            <label v-for="size in labelSizes" :key="size.value" class="flex items-center">
-              <input
-                v-model="settings.labelSizePreset"
-                type="radio"
-                :value="size.value"
-                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-              />
-              <span class="ml-2 text-sm text-gray-700">{{ size.label }}</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Custom Size -->
-        <div v-if="settings.labelSizePreset === 'CUSTOM'" class="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Breite (mm)
-            </label>
-            <input
-              v-model.number="settings.labelCustomWidth"
-              type="number"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Höhe (mm)
-            </label>
-            <input
-              v-model.number="settings.labelCustomHeight"
-              type="number"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <!-- Logo Upload -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-             Firmenlogo
-          </label>
-          <input
-            type="file"
-            @change="uploadLogo"
-            accept="image/png,image/jpeg,image/jpg"
-            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-          />
-          <p class="mt-1 text-xs text-gray-500">PNG oder JPG, max. 2MB</p>
-          
-          <div v-if="settings.labelLogoPath" class="mt-2">
-            <img :src="getLogoUrl()" alt="Logo" class="h-20 border border-gray-300 rounded" />
-          </div>
-        </div>
-
-        <!-- Company Info -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Firmenname
-            </label>
-            <input
-              v-model="settings.labelCompanyName"
-              type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Straße + Hausnummer
-            </label>
-            <input
-              v-model="settings.labelStreet"
-              type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              PLZ
-            </label>
-            <input
-              v-model="settings.labelPostalCode"
-              type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Stadt
-            </label>
-            <input
-              v-model="settings.labelCity"
-              type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Land
-            </label>
-            <input
-              v-model="settings.labelCountry"
-              type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Telefon (optional)
-            </label>
-            <input
-              v-model="settings.labelPhone"
-              type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Printer Settings -->
-      <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">Druckereinstellungen</h2>
-
-        <div class="mb-4">
-          <button
-            @click="loadPrinters"
-            class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-          >
-            Drucker aktualisieren
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Standard-Drucker
-            </label>
-            <select
-              v-model="settings.defaultPrinter"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Bitte wählen...</option>
-              <option v-for="printer in printers" :key="printer.name" :value="printer.name">
-                {{ printer.name }} {{ printer.isDefault ? '(Standard)' : '' }}
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Deutsche Post Drucker
-            </label>
-            <select
-              v-model="settings.printerDeutschePost"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Standard-Drucker verwenden</option>
-              <option v-for="printer in printers" :key="printer.name" :value="printer.name">
-                {{ printer.name }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="mt-4">
-          <label class="flex items-center">
-            <input
-              v-model="settings.autoPrintEnabled"
-              type="checkbox"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <span class="ml-2 text-sm text-gray-700">
-              Label nach Erstellung automatisch drucken
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Save Button -->
-      <div class="flex justify-end">
-        <button
-          @click="saveSettings"
-          :disabled="saving"
-          class="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400"
-        >
-          {{ saving ? 'Speichern...' : 'Einstellungen speichern' }}
-        </button>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, inject } from 'vue';
 import axios from 'axios';
-import { useNotifications } from '../composables/useNotifications';
 
-const { showSuccess, showError } = useNotifications();
+// --- State ---
+const activeTab = ref('providers');
+const showModal = ref(false);
+const currentSetup = ref<'dhl' | 'deutschepost' | null>(null);
+const testing = ref(false);
+const saving = ref(false);
+const testResult = ref<any>(null);
+const printers = ref<Array<{name: string}>>([]);
 
-const activeTab = ref('dhl');
-const showDhlPassword = ref(false);
-const showDpPassword = ref(false);
-const settings = ref({
-  // DHL Paket (GKP)
-  dhlGkpUsername: '',
-  dhlGkpPassword: '',
-  dhlEnabled: false,
-  
-  // Deutsche Post
-  deutschePostUsername: '',
-  deutschePostPassword: '',
-  deutschePostClientId: '',
-  deutschePostClientSecret: '',
-  deutschePostEnabled: false,
-  
-  // Shared
-  etsySyncEnabled: true,
-  labelLogoPath: '',
-  labelCompanyName: '',
-  labelStreet: '',
-  labelPostalCode: '',
-  labelCity: '',
-  labelCountry: 'Deutschland',
-  labelPhone: '',
-  labelSizePreset: 'A5',
-  labelCustomWidth: null as number | null,
-  labelCustomHeight: null as number | null,
-  defaultPrinter: '',
-  printerDeutschePost: '',
-  printerDHL: '',
-  autoPrintEnabled: true
+const notifications = inject<any>('notifications');
+
+// The main settings object backed by DB
+const settings = ref<any>({
+    dhlGkpUsername: '',
+    dhlGkpPassword: '',
+    dhlEnabled: false,
+    deutschePostUsername: '',
+    deutschePostPassword: '',
+    deutschePostEnabled: false,
+    labelLogoPath: '',
+    labelCompanyName: '',
+    labelStreet: '',
+    labelPostalCode: '',
+    labelCity: '',
+    defaultPrinter: '',
+    printerDHL: '',
+    printerDeutschePost: '',
+    autoPrintEnabled: false
 });
 
-const labelSizes = [
-  { value: 'A5', label: 'DIN A5' },
-  { value: 'A6', label: 'DIN A6' },
-  { value: '4x6', label: '4x6"' },
-  { value: '4x4', label: '4x4"' },
-  { value: 'CUSTOM', label: 'Custom' }
-];
+// Temporary data for the modal inputs
+const setupData = ref<any>({});
 
-const printers = ref<Array<{ name: string; isDefault: boolean }>>([]);
-const testing = ref(false);
-const testingDHL = ref(false);
-const saving = ref(false);
-const connectionStatus = ref<{ success: boolean; balance?: number; error?: string } | null>(null);
-const dhlConnectionStatus = ref<{ success: boolean; error?: string } | null>(null);
+const API_URL = import.meta.env.VITE_API_URL || '';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// --- Computed ---
+const isDhlConfigured = computed(() => !!settings.value.dhlGkpUsername && settings.value.dhlEnabled);
+const isDpConfigured = computed(() => !!settings.value.deutschePostUsername && settings.value.deutschePostEnabled);
+
+// --- Methods ---
 
 onMounted(async () => {
-  await loadSettings();
-  await loadPrinters();
+    await fetchSettings();
+    await loadPrinters();
 });
 
-async function loadSettings() {
-  try {
-    const response = await axios.get(`${API_URL}/api/settings`);
-    
-    Object.assign(settings.value, response.data);
-  } catch (error) {
-    console.error('Failed to load settings:', error);
-  }
+async function fetchSettings() {
+    try {
+        const res = await axios.get(`${API_URL}/api/settings`);
+        Object.assign(settings.value, res.data);
+    } catch (e) {
+        console.error("Failed to load settings", e);
+    }
 }
 
 async function loadPrinters() {
-  try {
-    const response = await axios.get(`${API_URL}/api/shipping/printers`);
+    try {
+        const res = await axios.get(`${API_URL}/api/shipping/printers`);
+        printers.value = res.data.printers || [];
+    } catch (e) {
+        console.error("Failed to load printers", e);
+    }
+}
+
+function openSetup(provider: 'dhl' | 'deutschepost') {
+    currentSetup.value = provider;
+    testResult.value = null;
     
-    printers.value = response.data.printers;
-  } catch (error) {
-    console.error('Failed to load printers:', error);
-  }
+    // Pre-fill with existing if editing
+    if (provider === 'dhl') {
+        setupData.value = {
+            dhlGkpUsername: settings.value.dhlGkpUsername,
+            dhlGkpPassword: settings.value.dhlGkpPassword
+        };
+    } else {
+        setupData.value = {
+            deutschePostUsername: settings.value.deutschePostUsername,
+            deutschePostPassword: settings.value.deutschePostPassword
+        };
+    }
+    showModal.value = true;
 }
 
+function closeModal() {
+    showModal.value = false;
+    currentSetup.value = null;
+    setupData.value = {};
+    testResult.value = null;
+}
+
+// 1. Test Connection
 async function testConnection() {
-  testing.value = true;
-  connectionStatus.value = null;
-
-  try {
-    const response = await axios.post(
-      `${API_URL}/api/shipping/deutsche-post/test`,
-      {
-        username: settings.value.deutschePostUsername,
-        password: settings.value.deutschePostPassword,
-        clientId: settings.value.deutschePostClientId,
-        clientSecret: settings.value.deutschePostClientSecret
-      },
-      {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      }
-    );
-
-    connectionStatus.value = response.data;
-  } catch (error: any) {
-    connectionStatus.value = {
-      success: false,
-      error: error.response?.data?.error || 'Verbindung fehlgeschlagen'
-    };
-  } finally {
-    testing.value = false;
-  }
-}
-
-async function testDHLConnection() {
-  testingDHL.value = true;
-  dhlConnectionStatus.value = null;
-
-  try {
-    const response = await axios.post(
-      `${API_URL}/api/shipping/dhl/test`,
-      {
-        gkpUsername: settings.value.dhlGkpUsername,
-        gkpPassword: settings.value.dhlGkpPassword
-      },
-      {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      }
-    );
-
-    dhlConnectionStatus.value = response.data;
-  } catch (error: any) {
-    dhlConnectionStatus.value = {
-      success: false,
-      error: error.response?.data?.error || 'Verbindung fehlgeschlagen'
-    };
-  } finally {
-    testingDHL.value = false;
-  }
-}
-
-async function uploadLogo(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append('logo', file);
-
-  try {
-    const response = await axios.post(
-      `${API_URL}/api/shipping/logo/upload`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+    testing.value = true;
+    testResult.value = null;
+    try {
+        if (currentSetup.value === 'dhl') {
+            const res = await axios.post(`${API_URL}/api/shipping/dhl/test`, {
+                gkpUsername: setupData.value.dhlGkpUsername,
+                gkpPassword: setupData.value.dhlGkpPassword
+            });
+            if (res.data.success) {
+                testResult.value = { success: true };
+            } else {
+                testResult.value = { success: false, error: res.data.error || 'Unbekannter Fehler' };
+            }
+        } else if (currentSetup.value === 'deutschepost') {
+            const res = await axios.post(`${API_URL}/api/shipping/deutsche-post/test`, {
+                username: setupData.value.deutschePostUsername,
+                password: setupData.value.deutschePostPassword
+            });
+             if (res.data.success) {
+                testResult.value = { success: true, balance: res.data.balance };
+            } else {
+                testResult.value = { success: false, error: res.data.error || 'Unbekannter Fehler' };
+            }
         }
-      }
-    );
-
-    settings.value.labelLogoPath = response.data.logoPath;
-    showSuccess('Logo erfolgreich hochgeladen!');
-  } catch (error) {
-    console.error('Logo upload failed:', error);
-    showError('Logo-Upload fehlgeschlagen');
-  }
+    } catch (e: any) {
+        testResult.value = { success: false, error: e.response?.data?.error || e.message };
+    } finally {
+        testing.value = false;
+    }
 }
+
+// 2. Save Provider
+async function saveProvider() {
+    saving.value = true;
+    try {
+        // Merge setup data into main settings
+        if (currentSetup.value === 'dhl') {
+            settings.value.dhlGkpUsername = setupData.value.dhlGkpUsername;
+            settings.value.dhlGkpPassword = setupData.value.dhlGkpPassword;
+            settings.value.dhlEnabled = true; // Auto-enable
+        } else if (currentSetup.value === 'deutschepost') {
+             settings.value.deutschePostUsername = setupData.value.deutschePostUsername;
+             settings.value.deutschePostPassword = setupData.value.deutschePostPassword;
+             settings.value.deutschePostEnabled = true; // Auto-enable
+        }
+
+        // Persist to DB
+        await axios.put(`${API_URL}/api/settings`, settings.value);
+        
+        notifySuccess('Einstellungen gespeichert');
+        closeModal();
+    } catch (e) {
+        console.error(e);
+        notifyError('Fehler beim Speichern');
+    } finally {
+        saving.value = false;
+    }
+}
+
+// 3. Disconnect
+async function disconnectProvider(provider: 'dhl' | 'deutschepost') {
+    if(!confirm('Möchten Sie diesen Versandweg wirklich entfernen?')) return;
+    
+    try {
+        if (provider === 'dhl') {
+            settings.value.dhlGkpUsername = '';
+            settings.value.dhlGkpPassword = '';
+            settings.value.dhlEnabled = false;
+        } else {
+            settings.value.deutschePostUsername = '';
+            settings.value.deutschePostPassword = '';
+            settings.value.deutschePostEnabled = false;
+        }
+        await axios.put(`${API_URL}/api/settings`, settings.value);
+        notifySuccess('Versandweg entfernt');
+    } catch(e) {
+        notifyError('Fehler beim Löschen');
+    }
+}
+
+// 4. Save General Settings
+async function saveGeneralSettings() {
+    saving.value = true;
+    try {
+        await axios.put(`${API_URL}/api/settings`, settings.value);
+        notifySuccess('Gespeichert');
+    } catch (e) {
+         notifyError('Fehler beim Speichern');
+    } finally {
+        saving.value = false;
+    }
+}
+
+// --- Helpers ---
 
 function getLogoUrl() {
   if (settings.value.labelLogoPath) {
@@ -711,24 +541,33 @@ function getLogoUrl() {
   return '';
 }
 
-async function saveSettings() {
-  saving.value = true;
+async function uploadLogo(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('logo', file);
 
   try {
-    await axios.put(
-      `${API_URL}/api/settings`,
-      settings.value,
-      {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('authToken')}` }
-      }
+    const response = await axios.post(
+      `${API_URL}/api/shipping/logo/upload`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
     );
-
-    showSuccess('Einstellungen erfolgreich gespeichert!');
+    settings.value.labelLogoPath = response.data.logoPath;
+    // Auto-save settings to link logo
+    await saveGeneralSettings();
   } catch (error) {
-    console.error('Failed to save settings:', error);
-    showError('Speichern fehlgeschlagen');
-  } finally {
-    saving.value = false;
+    notifyError('Logo Upload fehlgeschlagen');
   }
 }
+
+function notifySuccess(msg: string) {
+    if(notifications?.value?.show) notifications.value.show('success', 'Erfolgreich', msg);
+}
+function notifyError(msg: string) {
+    if(notifications?.value?.show) notifications.value.show('error', 'Fehler', msg);
+}
+
 </script>

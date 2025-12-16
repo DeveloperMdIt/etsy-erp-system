@@ -233,9 +233,17 @@ export class DeutschePostApiService {
     async testConnection(config: DeutschePostConfig): Promise<{ success: boolean; balance?: number; error?: string }> {
         try {
             // Try to authenticate with Portokasse credentials
-            await this.authenticate(config);
+            const token = await this.authenticate(config);
 
-            return { success: true };
+            // Try to fetch balance with new token to verify full access
+            const response = await axios.get(`${this.baseUrl}/wallet`, {
+                headers: {
+                    'Authorization': `Bearer ${token.access_token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            return { success: true, balance: response.data.balance || 0 };
         } catch (error: any) {
             return { success: false, error: error.message };
         }

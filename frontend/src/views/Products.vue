@@ -44,7 +44,7 @@ const syncing = ref(false)
 const handleSync = async () => {
   try {
     syncing.value = true
-    if (notifications && notifications.show) notifications.show('info', 'Sync Gestartet', 'Lade Produktdaten von Etsy...')
+    if (notifications?.value?.show) notifications.value.show('info', 'Sync Gestartet', 'Lade Produktdaten von Etsy...')
     
     // Trigger Background Sync
     await axios.post('/api/etsy/sync-products')
@@ -54,13 +54,13 @@ const handleSync = async () => {
     setTimeout(async () => {
       await fetchProducts()
       syncing.value = false
-      if (notifications && notifications.show) notifications.show('success', 'Fertig', 'Produktliste aktualisiert')
+      if (notifications?.value?.show) notifications.value.show('success', 'Fertig', 'Produktliste aktualisiert')
     }, 2500)
 
   } catch (err: any) {
     syncing.value = false
     console.error('Sync ERROR:', err)
-    if (notifications && notifications.show) notifications.show('error', 'Fehler', 'Synchronisation fehlgeschlagen')
+    if (notifications?.value?.show) notifications.value.show('error', 'Fehler', 'Synchronisation fehlgeschlagen')
   }
 }
 
@@ -81,7 +81,7 @@ const fetchProducts = async () => {
   } catch (err: any) {
     error.value = err.message
     if (notifications && notifications.show) {
-        notifications.show('error', 'Fehler', 'Produkte konnten nicht geladen werden')
+        notifications.value.show('error', 'Fehler', 'Produkte konnten nicht geladen werden')
     }
   } finally {
     loading.value = false
@@ -99,7 +99,7 @@ const openEditModalNew = async (product: Product) => {
     editingProduct.value = res.data
     showProductForm.value = true
   } catch (err: any) {
-    if (notifications && notifications.show) notifications.show('error', 'Fehler', 'Produkt konnte nicht geladen werden')
+    if (notifications?.value?.show) notifications.value.show('error', 'Fehler', 'Produkt konnte nicht geladen werden')
   }
 }
 
@@ -111,18 +111,18 @@ const handleProductSave = async (productData: any) => {
     if (editingProduct.value?.id) {
       // Update
       await axios.put(`/api/products/${editingProduct.value.id}`, productData)
-      if (notifications && notifications.show) notifications.show('success', 'Erfolgreich', 'Produkt wurde aktualisiert')
+      if (notifications?.value?.show) notifications.value.show('success', 'Erfolgreich', 'Produkt wurde aktualisiert')
     } else {
       // Create
       await axios.post('/api/products', { ...productData, tenantId })
-      if (notifications && notifications.show) notifications.show('success', 'Erfolgreich', 'Produkt wurde erstellt')
+      if (notifications?.value?.show) notifications.value.show('success', 'Erfolgreich', 'Produkt wurde erstellt')
     }
     
     showProductForm.value = false
     editingProduct.value = null
     await fetchProducts()
   } catch (err: any) {
-    if (notifications && notifications.show) notifications.show('error', 'Fehler', err.response?.data?.error || 'Speichern fehlgeschlagen')
+    if (notifications?.value?.show) notifications.value.show('error', 'Fehler', err.response?.data?.error || 'Speichern fehlgeschlagen')
   } finally {
     saving.value = false
   }
@@ -154,13 +154,13 @@ const deleteProduct = async (productId: string) => {
   try {
     const url = isHardDelete ? `/api/products/${productId}?force=true` : `/api/products/${productId}`
     await axios.delete(url)
-    if (notifications && notifications.show) notifications.show('success', 'Erfolgreich', isHardDelete ? 'Produkt wurde endgültig gelöscht' : 'Produkt wurde deaktiviert')
+    if (notifications?.value?.show) notifications.value.show('success', 'Erfolgreich', isHardDelete ? 'Produkt wurde endgültig gelöscht' : 'Produkt wurde deaktiviert')
     await fetchProducts()
     if (selectedProduct.value?.id === productId) {
       selectedProduct.value = null
     }
   } catch (err: any) {
-    if (notifications && notifications.show) notifications.show('error', 'Fehler', err.response?.data?.message || 'Produkt konnte nicht gelöscht werden')
+    if (notifications?.value?.show) notifications.value.show('error', 'Fehler', err.response?.data?.message || 'Produkt konnte nicht gelöscht werden')
   }
 }
 
@@ -191,12 +191,12 @@ const saveProduct = async () => {
     }
 
     await axios.patch(`/api/products/${editingProduct.value.id}`, payload)
-    if (notifications && notifications.show) notifications.show('success', 'Erfolgreich', 'Produkt wurde aktualisiert')
+    if (notifications?.value?.show) notifications.value.show('success', 'Erfolgreich', 'Produkt wurde aktualisiert')
     editingProduct.value = null
     await fetchProducts()
   } catch (err: any) {
     console.error(err)
-    if (notifications && notifications.show) notifications.show('error', 'Fehler', err.response?.data?.error || 'Produkt konnte nicht gespeichert werden')
+    if (notifications?.value?.show) notifications.value.show('error', 'Fehler', err.response?.data?.error || 'Produkt konnte nicht gespeichert werden')
   } finally {
     saving.value = false
   }
@@ -207,10 +207,10 @@ const toggleProductStatus = async (product: Product) => {
     await axios.patch(`/api/products/${product.id}`, {
       isActive: !product.isActive
     })
-    if (notifications && notifications.show) notifications.show('success', 'Erfolgreich', `Produkt ist jetzt ${!product.isActive ? 'aktiv' : 'inaktiv'}`)
+    if (notifications?.value?.show) notifications.value.show('success', 'Erfolgreich', `Produkt ist jetzt ${!product.isActive ? 'aktiv' : 'inaktiv'}`)
     await fetchProducts()
   } catch (err: any) {
-    if (notifications && notifications.show) notifications.show('error', 'Fehler', 'Status konnte nicht geändert werden')
+    if (notifications?.value?.show) notifications.value.show('error', 'Fehler', 'Status konnte nicht geändert werden')
   }
 }
 
