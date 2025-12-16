@@ -100,7 +100,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: Request, res: Re
             name, description, price, interval,
             includedOrders, pricePerExtraOrder,
             features, isPopular, isActive,
-            pricingTiers
+            pricingTiers, buttonText
         } = req.body;
 
         const plan = await prisma.subscriptionPlan.update({
@@ -113,7 +113,6 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: Request, res: Re
                 includedOrders: parseInt(includedOrders),
                 pricePerExtraOrder: parseFloat(pricePerExtraOrder),
                 features: JSON.stringify(features || []),
-                pricingTiers: pricingTiers ? pricingTiers : undefined, // Json field expects object
                 pricingTiers: pricingTiers ? pricingTiers : undefined, // Json field expects object
                 isPopular,
                 isActive,

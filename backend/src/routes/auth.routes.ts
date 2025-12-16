@@ -320,11 +320,11 @@ router.post('/login', async (req: Request, res: Response) => {
         shopName: user.shopName,
         role: user.role,
         tenantId: user.tenantId,
-        tenantId: user.tenantId,
         modules: user.userModules.map((um: any) => um.module.name),
-        subscriptionStatus: user.subscriptionStatus,
-        subscriptionPlanId: user.subscriptionPlanId,
-        trialEndsAt: user.trialEndsAt
+        // Force cast/access for properties that might be missing in older generated types
+        subscriptionStatus: (user as any).subscriptionStatus,
+        subscriptionPlanId: (user as any).subscriptionPlanId,
+        trialEndsAt: (user as any).trialEndsAt
       }
     });
 
@@ -382,7 +382,7 @@ router.get('/me', async (req: Request, res: Response) => {
       ...user,
       modules: user.userModules.map((um: any) => um.module.name),
       userModules: undefined, // Remove the complex object
-      subscriptionPlan: user.subscriptionPlan // Ensure plan is passed
+      subscriptionPlan: (user as any).subscriptionPlan // Ensure plan is passed
     };
 
     res.json({ user: userWithModules });

@@ -17,6 +17,11 @@ export class PrintingService {
      * Get list of available printers
      */
     async getAvailablePrinters(): Promise<Printer[]> {
+        if (process.platform !== 'win32') {
+            console.warn('⚠️ Printing is only supported on Windows. Returning empty list.');
+            return [];
+        }
+
         try {
             const command = 'powershell -NoProfile -Command "Get-Printer | Select-Object Name, Default | ConvertTo-Json"';
 
@@ -50,6 +55,12 @@ export class PrintingService {
      * Print PDF to specified printer
      */
     async printPDF(pdfPath: string, printerName?: string): Promise<boolean> {
+        if (process.platform !== 'win32') {
+            console.warn('⚠️ Printing is only supported on Windows. Skipping print job.');
+            // Return true to avoid errors in frontend
+            return true;
+        }
+
         try {
             if (!fs.existsSync(pdfPath)) {
                 throw new Error(`PDF file not found: ${pdfPath}`);
