@@ -39,6 +39,30 @@ const viewMode = ref<'grid' | 'list'>('grid')
 const sortOrder = ref<'asc' | 'desc'>('asc')
 const filterStatus = ref<'active' | 'inactive' | 'all'>('active')
 const saving = ref(false)
+const syncing = ref(false)
+
+const handleSync = async () => {
+  try {
+    syncing.value = true
+    if (notifications && notifications.show) notifications.show('info', 'Sync Gestartet', 'Lade Produktdaten von Etsy...')
+    
+    // Trigger Background Sync
+    await axios.post('/api/etsy/sync-products')
+    
+    // Wait a moment for backend to process some items (simple UX hack)
+    // Ideally we would poll status, but for now 2s delay + refresh is better than nothing
+    setTimeout(async () => {
+      await fetchProducts()
+      syncing.value = false
+      if (notifications && notifications.show) notifications.show('success', 'Fertig', 'Produktliste aktualisiert')
+    }, 2500)
+
+  } catch (err: any) {
+    syncing.value = false
+    console.error('Sync ERROR:', err)
+    if (notifications && notifications.show) notifications.show('error', 'Fehler', 'Synchronisation fehlgeschlagen')
+  }
+}
 
 // Inject notification and confirm dialog
 const notifications: any = inject('notifications')
@@ -283,11 +307,22 @@ onMounted(fetchProducts)
             </svg>
             Neues Produkt
           </button>
-          <button @click="fetchProducts" type="button" class="btn-secondary inline-flex items-center">
-             <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button 
+            @click="handleSync" 
+            :disabled="loading || syncing"
+            type="button" 
+            class="btn-secondary inline-flex items-center"
+          >
+             <svg 
+               class="h-5 w-5 mr-2 text-gray-500" 
+               :class="{ 'animate-spin': syncing }" 
+               fill="none" 
+               stroke="currentColor" 
+               viewBox="0 0 24 24"
+             >
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Aktualisieren
+            {{ syncing ? 'Etsy Sync...' : 'Aktualisieren' }}
           </button>
         </div>
       </div>
