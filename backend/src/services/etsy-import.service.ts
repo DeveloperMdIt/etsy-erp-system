@@ -21,6 +21,9 @@ export class EtsyImportService {
             ImportStatusService.start(tenantId, orders.length, 'Processing API Orders...');
             console.log(`[Import] Processing ${orders.length} orders from API...`);
 
+            // Sort orders (Oldest First) to ensure correct Order Number chronology
+            orders.sort((a, b) => (a.created_timestamp || 0) - (b.created_timestamp || 0));
+
             // Process each receipt
             for (const receipt of orders) {
                 try {
