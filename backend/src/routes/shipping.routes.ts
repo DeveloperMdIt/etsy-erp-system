@@ -115,6 +115,44 @@ router.post('/dhl/create-label', authenticateToken, async (req: Request, res: Re
         const { shippingMethodId } = req.body;
         const result = await dhlService.createLabel(validation.data, tenantId);
 
+        // --- ENHIANCED: Save File & Auto-Print ---
+        let labelPath: string | undefined;
+
+        if (result.labelData) {
+            const labelDir = path.join(process.cwd(), 'uploads', 'labels');
+            if (!fs.existsSync(labelDir)) {
+                fs.mkdirSync(labelDir, { recursive: true });
+            }
+
+            labelPath = path.join(labelDir, `dhl-${result.shipmentNumber}.pdf`);
+            fs.writeFileSync(labelPath, Buffer.from(result.labelData, 'base64')); // write b64 to file
+        }
+
+        const userId = (req as AuthRequest).user?.userId;
+        if (userId && labelPath) {
+            // Update DB with path
+            // We need to find the just created label. 
+            // Ideally dhlService returns the ID or we query by tracking.
+            // For now query by tracking as it's unique enough (shipmentNumber)
+            await prisma.shippingLabel.updateMany({
+                where: { trackingNumber: result.shipmentNumber },
+                data: { labelPath }
+            });
+
+            // Auto Print
+            const settings = await prisma.userSettings.findUnique({ where: { userId } });
+            if (settings?.autoPrintEnabled) {
+                const printerName = settings.printerDHL || settings.defaultPrinter;
+                try {
+                    console.log(`[AutoPrint] Printing DHL Label ${result.shipmentNumber} to ${printerName || 'Default'}`);
+                    await printingService.printPDF(labelPath, printerName || undefined);
+                } catch (e) {
+                    console.error('[AutoPrint] Failed:', e);
+                }
+            }
+        }
+        // ----------------------------------------
+
         // Log success
         await ActivityLogService.log(
             LogType.SUCCESS,
@@ -125,23 +163,31 @@ router.post('/dhl/create-label', authenticateToken, async (req: Request, res: Re
             { orderId: validation.data.orderId, shipmentNumber: result.shipmentNumber }
         );
 
-        res.json(result);
+        res.json({ ...result, labelPath }); // Return path too if needed
     } catch (error: any) {
         console.error('Shipping error:', error);
+
+        let errorDetails = error.message;
+        try {
+            // Try to parse if it is JSON string from our service
+            const parsed = JSON.parse(error.message);
+            if (parsed.detail) errorDetails = parsed.detail;
+            if (parsed.title) errorDetails = `${parsed.title}: ${parsed.detail}`;
+        } catch (e) { }
 
         // Log error
         await ActivityLogService.log(
             LogType.ERROR,
             LogAction.SHIPPING_LABEL_CREATE_FAILED,
-            `DHL Label Fehler: ${error.message}`,
+            `DHL Label Fehler: ${errorDetails}`,
             req.user?.id,
             req.user?.tenantId,
-            { error: error.message, stack: error.stack }
+            { error: errorDetails }
         );
 
         res.status(500).json({
             error: 'Shipping label creation failed',
-            message: error.message
+            message: errorDetails
         });
     }
 });
@@ -393,6 +439,50 @@ router.post('/logo/upload', authenticateToken, upload.single('logo'), async (req
         });
     } catch (error: any) {
         console.error('Logo upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST /api/shipping/print
+ * Manually trigger print for a label
+ */
+router.post('/print', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const { shippingLabelId, printerName: overridePrinter } = req.body;
+        const userId = (req as AuthRequest).user?.userId;
+
+        if (!shippingLabelId) return res.status(400).json({ error: 'Shipping Label ID required' });
+
+        const label = await prisma.shippingLabel.findUnique({
+            where: { id: shippingLabelId }
+        });
+
+        if (!label || !label.labelPath) {
+            return res.status(404).json({ error: 'Label not found or file missing on server' });
+        }
+
+        if (!fs.existsSync(label.labelPath)) {
+            return res.status(404).json({ error: 'Label file not found on disk' });
+        }
+
+        const settings = await prisma.userSettings.findUnique({ where: { userId } });
+        // Use override, or specific printer for provider, or default
+        let printer = overridePrinter;
+        if (!printer && settings) {
+            if (label.provider.toString().includes('DHL')) printer = settings.printerDHL;
+            else if (label.provider.toString().includes('DEUTSCHE_POST')) printer = settings.printerDeutschePost;
+
+            if (!printer) printer = settings.defaultPrinter;
+        }
+
+        console.log(`[ManualPrint] Printing label ${shippingLabelId} to ${printer || 'Default'}`);
+        await printingService.printPDF(label.labelPath, printer || undefined);
+
+        res.json({ success: true, message: 'Print job started' });
+
+    } catch (error: any) {
+        console.error('Print error:', error);
         res.status(500).json({ error: error.message });
     }
 });

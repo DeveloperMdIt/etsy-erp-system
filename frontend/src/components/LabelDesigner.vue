@@ -152,7 +152,7 @@ const generatePreview = async () => {
     }
 
     try {
-        const token = localStorage.getItem('token')
+        const token = sessionStorage.getItem('authToken')
         const response = await fetch('/api/labels/preview', {
             method: 'POST',
             headers: { 

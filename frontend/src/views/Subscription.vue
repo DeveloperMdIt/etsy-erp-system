@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import axios from 'axios'
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { useNotifications } from '../composables/useNotifications'
 
 interface Module {
   id: string
@@ -24,6 +25,9 @@ const availableModules = ref<Module[]>([])
 const myModules = ref<UserModule[]>([])
 const loading = ref(true)
 
+const confirmDialog = inject('confirmDialog') as any
+const { showSuccess, showError } = useNotifications()
+
 const fetchModules = async () => {
     try {
         const [resAll, resMine] = await Promise.all([
@@ -45,14 +49,23 @@ const isBooked = (moduleId: string) => {
 
 const bookModule = async (module: Module) => {
     const formattedPrice = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(module.price)
-    if (!confirm(`Möchtest du das Modul "${module.name}" für ${formattedPrice} buchen?`)) return
+    
+    const confirmed = await confirmDialog.value.show({
+        title: 'Modul buchen',
+        message: `Möchtest du das Modul "${module.name}" für ${formattedPrice} buchen?`,
+        confirmText: 'Kostenpflichtig buchen',
+        cancelText: 'Abbrechen',
+        type: 'info'
+    })
+
+    if (!confirmed) return
 
     try {
         await axios.post('/api/subscription/book', { moduleId: module.id })
-        alert('Modul erfolgreich gebucht! 🎉')
+        showSuccess('Erfolg', 'Modul erfolgreich gebucht! 🎉')
         fetchModules() // Refresh
     } catch (error: any) {
-        alert('Fehler beim Buchen: ' + (error.response?.data?.error || 'Unbekannt'))
+        showError('Fehler', 'Fehler beim Buchen: ' + (error.response?.data?.error || 'Unbekannt'))
     }
 }
 

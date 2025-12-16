@@ -36,7 +36,25 @@ interface Order {
   trackingNumber?: string
   shippedAt?: string
   items: OrderItem[]
+  shippingLabels: { id: string; trackingNumber: string; provider: string }[]
   createdAt: string
+}
+
+// ... existing refs ...
+
+const printingLabel = ref<string | null>(null)
+
+const printLabel = async (labelId: string) => {
+    if (!labelId) return
+    printingLabel.value = labelId
+    try {
+        await axios.post('/api/shipping/print', { shippingLabelId: labelId })
+        alert('Druckauftrag gesendet! 🖨️')
+    } catch (error: any) {
+        alert('Fehler beim Drucken: ' + (error.response?.data?.error || error.message))
+    } finally {
+        printingLabel.value = null
+    }
 }
 
 const orders = ref<Order[]>([])
@@ -105,7 +123,7 @@ const selectedShippingMethodId = ref<string>('')
 
 const fetchShippingMethods = async () => {
     try {
-        const res = await axios.get('/api/shipping-methods')
+        const res = await axios.get('/api/shipping-profiles')
         shippingMethods.value = res.data.filter((m: any) => m.isActive)
     } catch (e) {
         console.error('Error fetching shipping methods', e)
@@ -486,6 +504,19 @@ onMounted(fetchOrders)
                     <div v-if="order.trackingNumber">
                       <div class="font-medium">{{ order.shippingProvider }}</div>
                       <div class="text-xs">{{ order.trackingNumber }}</div>
+                      
+                      <!-- Print Button if Label Exists -->
+                      <div v-if="order.shippingLabels && order.shippingLabels.length > 0" class="mt-1">
+                          <button 
+                            @click.stop="printLabel(order.shippingLabels[0].id)" 
+                            :disabled="printingLabel === order.shippingLabels[0].id"
+                            class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-0.5 rounded border border-gray-300 flex items-center"
+                            title="Label erneut drucken"
+                          >
+                             <span v-if="printingLabel === order.shippingLabels[0].id" class="mr-1 animate-spin">⌛</span>
+                             <span v-else class="mr-1">🖨️</span> Drucken
+                          </button>
+                      </div>
                     </div>
                     <div v-else @click.stop>
                       <button 

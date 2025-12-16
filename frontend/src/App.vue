@@ -17,14 +17,14 @@ const isMenuOpen = ref(false)
 provide('notifications', notificationsRef)
 provide('confirmDialog', confirmDialogRef)
 
-const isAuthenticated = ref(!!localStorage.getItem('authToken'))
+const isAuthenticated = ref(!!sessionStorage.getItem('authToken'))
 
-const currentUser = ref(JSON.parse(localStorage.getItem('user') || 'null'))
+const currentUser = ref(JSON.parse(sessionStorage.getItem('user') || 'null'))
 
 const updateCurrentUser = () => {
-  const userStr = localStorage.getItem('user')
+  const userStr = sessionStorage.getItem('user')
   currentUser.value = userStr ? JSON.parse(userStr) : null
-  isAuthenticated.value = !!localStorage.getItem('authToken')
+  isAuthenticated.value = !!sessionStorage.getItem('authToken')
 }
 
 // Watch for route changes to update auth state (fallback)
@@ -48,8 +48,8 @@ const isAdminRoute = computed(() => {
 })
 
 const logout = () => {
-  localStorage.removeItem('authToken')
-  localStorage.removeItem('user')
+  sessionStorage.removeItem('authToken')
+  sessionStorage.removeItem('user')
   isAuthenticated.value = false
   currentUser.value = null
   router.push('/login')

@@ -60,7 +60,7 @@ const currentProducts = computed(() => {
 const fetchMethods = async () => {
     try {
         loading.value = true
-        const response = await axios.get('/api/shipping-methods')
+        const response = await axios.get('/api/shipping-profiles')
         methods.value = response.data
     } catch (error) {
         console.error('Error fetching shipping methods:', error)
@@ -107,10 +107,10 @@ const saveMethod = async () => {
         }
 
         if (isEditing.value && editedItem.value.id) {
-            await axios.put(`/api/shipping-methods/${editedItem.value.id}`, editedItem.value)
+            await axios.put(`/api/shipping-profiles/${editedItem.value.id}`, editedItem.value)
             showSuccess('Versandart aktualisiert')
         } else {
-            await axios.post('/api/shipping-methods', editedItem.value)
+            await axios.post('/api/shipping-profiles', editedItem.value)
             showSuccess('Versandart angelegt')
         }
         showModal.value = false
@@ -123,7 +123,7 @@ const saveMethod = async () => {
 const deleteMethod = async (id: string) => {
     if (!confirm('Wirklich löschen?')) return
     try {
-        await axios.delete(`/api/shipping-methods/${id}`)
+        await axios.delete(`/api/shipping-profiles/${id}`)
         showSuccess('Versandart gelöscht')
         fetchMethods()
     } catch (error: any) {

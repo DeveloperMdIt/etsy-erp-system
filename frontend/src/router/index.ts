@@ -154,7 +154,7 @@ const router = createRouter({
 
 // Simple navigation guard - just auth check
 router.beforeEach((to, _from, next) => {
-    const token = localStorage.getItem('authToken')
+    const token = sessionStorage.getItem('authToken')
     const isPublicRoute = to.meta.public
 
     if (!isPublicRoute && !token) {
@@ -173,7 +173,7 @@ router.beforeEach((to, _from, next) => {
     // Module Enforcement
     if (to.meta.requiresModule) {
         try {
-            const userStr = localStorage.getItem('user')
+            const userStr = sessionStorage.getItem('user')
             if (userStr) {
                 const user = JSON.parse(userStr)
                 // If user has no modules array (legacy session), we might want to let them pass or force reload.

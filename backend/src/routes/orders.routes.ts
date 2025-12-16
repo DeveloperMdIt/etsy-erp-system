@@ -82,7 +82,8 @@ router.get('/', async (req: Request, res: Response) => {
                     include: {
                         product: true
                     }
-                }
+                },
+                shippingLabels: true
             },
             orderBy: { [sortBy as string]: sortOrder as any }
         });

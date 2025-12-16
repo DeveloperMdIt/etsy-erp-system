@@ -36,9 +36,9 @@ const login = async () => {
       password: password.value,
     })
 
-    // Store token and user
-    localStorage.setItem('authToken', response.data.token)
-    localStorage.setItem('user', JSON.stringify(response.data.user))
+    // Store token and user (Session only)
+    sessionStorage.setItem('authToken', response.data.token)
+    sessionStorage.setItem('user', JSON.stringify(response.data.user))
 
     // Notify App to update user state
     window.dispatchEvent(new Event('user-login'))

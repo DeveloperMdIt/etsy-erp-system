@@ -68,26 +68,24 @@ interface SettingsData {
     formatInvoice: string
     printerDeliveryNote: string
     formatDeliveryNote: string
+    
+    // Auto Print
+    autoPrintEnabled: boolean
+    defaultPrinter: string
 }
 
-const printers = ref<string[]>([])
-const showDesigner = ref(false)
-const currentDesignerProfileIndex = ref<number | null>(null)
+// ... existing refs ...
 
-const currentDesignerProfile = computed(() => {
-    if (currentDesignerProfileIndex.value !== null && form.value.labelProfiles[currentDesignerProfileIndex.value]) {
-        return form.value.labelProfiles[currentDesignerProfileIndex.value]
-    }
-    return null
-})
+// ... (interfaces above remain valid)
 
+// Fix form initialization
 const form = ref<SettingsData>({
     dhlEnabled: false,
     dhlGkpUsername: '',
     dhlGkpPassword: '',
     dhlEkp: '',
-    dhlProcedure: '01', // Default
-    dhlParticipation: '01', // Default
+    dhlProcedure: '01',
+    dhlParticipation: '01',
     dhlBillingNrPaket: '',
     dhlBillingNrKleinpaket: '',
 
@@ -121,6 +119,20 @@ const form = ref<SettingsData>({
     formatInvoice: 'A4',
     printerDeliveryNote: '',
     formatDeliveryNote: 'A4',
+
+    autoPrintEnabled: false,
+    defaultPrinter: ''
+})
+
+const printers = ref<string[]>([])
+const showDesigner = ref(false)
+const currentDesignerProfileIndex = ref<number | null>(null)
+
+const currentDesignerProfile = computed(() => {
+    if (currentDesignerProfileIndex.value !== null && form.value.labelProfiles[currentDesignerProfileIndex.value]) {
+        return form.value.labelProfiles[currentDesignerProfileIndex.value]
+    }
+    return null
 })
 
 const previews = ref<Record<string, string>>({})
@@ -173,6 +185,9 @@ const fetchSettings = async () => {
             formatInvoice: settings.formatInvoice || 'A4',
             printerDeliveryNote: settings.printerDeliveryNote || '',
             formatDeliveryNote: settings.formatDeliveryNote || 'A4',
+
+            autoPrintEnabled: settings.autoPrintEnabled || false,
+            defaultPrinter: settings.defaultPrinter || ''
         }
         
         previews.value = fetchedPreviews
@@ -336,6 +351,30 @@ onMounted(() => {
         <div class="mt-5 md:mt-0 md:col-span-2">
             <div class="space-y-6">
                 
+                <!-- Auto Print & Default -->
+                <div class="grid grid-cols-6 gap-6 border-b pb-4">
+                     <div class="col-span-6">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="autoPrint" v-model="form.autoPrintEnabled" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="autoPrint" class="font-medium text-gray-700">Automatisch Drucken</label>
+                                <p class="text-gray-500">Wenn aktiviert, werden Versandlabels direkt nach der Erstellung an den Drucker gesendet.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-6 sm:col-span-4">
+                        <label class="block text-sm font-medium text-gray-700">Standard-Drucker für Labels</label>
+                        <select v-model="form.defaultPrinter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                             <option value="">(Wählen)</option>
+                             <option v-for="p in printers" :key="p" :value="p">{{ p }}</option>
+                        </select>
+                         <p class="mt-1 text-xs text-gray-500">Fallback, falls im Profil kein Drucker definiert ist.</p>
+                    </div>
+                </div>
+
                 <!-- Invoice Printer -->
                 <div class="grid grid-cols-6 gap-6 border-b pb-4">
                     <div class="col-span-6 sm:col-span-4">

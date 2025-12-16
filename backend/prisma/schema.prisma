@@ -22,7 +22,15 @@ model User {
   etsyUserId       String? // Etsy User ID
   etsyAccessToken  String? // OAuth2 Access Token
   etsyRefreshToken String? // OAuth2 Refresh Token
+  etsyRefreshToken String? // OAuth2 Refresh Token
   tokenExpiresAt   DateTime? // Token expiration
+
+  // Subscription & Billing
+  subscriptionPlanId String?
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
+  subscriptionStatus String   @default("TRIAL") // TRIAL, ACTIVE, CANCELLED, PAST_DUE
+  trialEndsAt        DateTime?
+
 
   // Admin Control
   isBlocked        Boolean @default(false)

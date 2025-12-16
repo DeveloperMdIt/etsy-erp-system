@@ -62,9 +62,11 @@ export class DHLService {
         if (!ekp) throw new Error('DHL EKP missing in Settings.');
 
         // 3. Determine Product & Billing Number
-        const billingNrPaket = settings.dhlBillingNrPaket || (ekp + settings.dhlProcedure + settings.dhlParticipation);
-        const billingNrKlein = settings.dhlBillingNrKleinpaket || billingNrPaket; // Fallback
+        let product = '';
+        let billingNumber = '';
+        let weight = request.weight || 0;
 
+        // Fetch Order first to get weight if needed
         const order = await prisma.order.findUnique({
             where: { id: request.orderId },
             include: { customer: true, items: { include: { product: true } } }
@@ -72,24 +74,58 @@ export class DHLService {
 
         if (!order) throw new Error('Order not found');
 
-        let product = '';
-        let billingNumber = '';
+        // Check for Shipping Profile ID
+        if (request.shippingProfileId) {
+            const profile = await prisma.shippingProfile.findUnique({
+                where: { id: request.shippingProfileId }
+            });
 
-        if (request.productType === 'DHL_KLEINPAKET') {
-            product = 'V06PAK';
-            billingNumber = billingNrKlein;
-        } else if (request.productType === 'DHL_PAKET') {
-            product = 'V01PAK';
-            billingNumber = billingNrPaket;
+            if (!profile) throw new Error('Shipping Profile not found');
+
+            product = profile.productCode;
+            billingNumber = profile.billingNumber || '';
+
+            // Fallback for Billing Number from Global Settings if empty
+            if (!billingNumber) {
+                if (product === 'V01PAK') billingNumber = settings.dhlBillingNrPaket || '';
+                else if (product === 'V06PAK') billingNumber = settings.dhlBillingNrKleinpaket || '';
+                else if (product === 'V53WPAK') billingNumber = settings.dhlBillingNrKleinpaket || ''; // Warenpost usually matches Kleinpaket
+            }
+
+            // If still empty build standard
+            if (!billingNumber) {
+                billingNumber = ekp + settings.dhlProcedure + settings.dhlParticipation;
+            }
+
+        } else if (request.productType) {
+            // Legacy Logic
+            const billingNrPaket = settings.dhlBillingNrPaket || (ekp + settings.dhlProcedure + settings.dhlParticipation);
+            const billingNrKlein = settings.dhlBillingNrKleinpaket || billingNrPaket; // Fallback
+
+            if (request.productType === 'DHL_KLEINPAKET') {
+                product = 'V06PAK';
+                billingNumber = billingNrKlein;
+            } else if (request.productType === 'DHL_PAKET') {
+                product = 'V01PAK';
+                billingNumber = billingNrPaket;
+            } else {
+                // Deutsche Post isn't handled here (different Service) but just in case
+                throw new Error(`Unsupported DHL product type: ${request.productType}`);
+            }
         } else {
-            throw new Error(`Unsupported product type: ${request.productType}`);
+            throw new Error('Either Shipping Profile or Product Type must be specified.');
         }
 
         if (!billingNumber || billingNumber.length < 14) {
-            throw new Error(`Invalid Billing Number: ${billingNumber}. Check EKP/Verfahren/Teilnahme in Settings.`);
+            // Try to build default if everything else failed
+            const defaultBilling = ekp + settings.dhlProcedure + settings.dhlParticipation;
+            console.warn(`[DHL] No specific billing number found. Using default constructed: ${defaultBilling}`);
+            billingNumber = defaultBilling;
         }
 
-        const weight = request.weight || order.items.reduce((sum: number, item: any) => sum + (item.product.weight * item.quantity), 0);
+        if (weight <= 0) {
+            weight = order.items.reduce((sum: number, item: any) => sum + (item.product.weight * item.quantity), 0);
+        }
         if (weight <= 0) throw new Error('Weight must be greater than 0');
 
         // 4. Construct Payload
@@ -133,7 +169,7 @@ export class DHLService {
         };
 
         try {
-            console.log(`[DHL] Creating label for ${order.orderNumber} with Billing: ${billingNumber}`);
+            console.log(`[DHL] Creating label for ${order.orderNumber} with Product: ${product}, Billing: ${billingNumber}`);
 
             const response = await axios.post(`${this.baseUrl}/orders`, payload, {
                 headers: this.getAuthHeader(appId, gkpUser, gkpPass)
@@ -150,7 +186,7 @@ export class DHLService {
             await prisma.shippingLabel.create({
                 data: {
                     orderId: order.id,
-                    provider: request.productType as ShippingProvider,
+                    provider: (product === 'V01PAK' ? 'DHL_PAKET' : 'DHL_KLEINPAKET') as ShippingProvider, // Rough mapping
                     trackingNumber: shipment.shipmentNo,
                     labelUrl: shipment.label.url,
                     weight: weight,
@@ -164,7 +200,7 @@ export class DHLService {
                 data: {
                     status: 'SHIPPED',
                     trackingNumber: shipment.shipmentNo,
-                    shippingProvider: request.productType as ShippingProvider
+                    shippingProvider: product === 'V01PAK' ? 'DHL Paket' : 'DHL Warenpost'
                 }
             });
 

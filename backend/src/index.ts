@@ -65,6 +65,14 @@ app.use('/api/subscription-plans', subscriptionPlansRoutes); // Admin-facing pla
 app.use('/api/public', publicRoutes);
 app.use('/api/templates', templatesRouter);
 
+import subscriptionBookingRoutes from './routes/subscription-booking.routes';
+app.use('/api/subscription', subscriptionBookingRoutes); // Mount booking routes under /api/subscription (merging with existing?) 
+// Wait, index.ts already has: app.use('/api/subscription', subscriptionRoutes);
+// I should merge them or use a different path.
+// Existing subscriptionRoutes seemed to be for modules? 
+// Let's check subscription.routes.ts content first.
+
+
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err.stack);

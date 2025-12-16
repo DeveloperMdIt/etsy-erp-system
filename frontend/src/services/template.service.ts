@@ -25,7 +25,7 @@ export const TEMPLATE_VARIABLES = [
 export const TemplateService = {
     // Get headers with auth token
     getHeaders() {
-        const token = localStorage.getItem('authToken');
+        const token = sessionStorage.getItem('authToken');
         return {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`

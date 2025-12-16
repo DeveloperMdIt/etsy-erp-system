@@ -601,9 +601,7 @@ onMounted(async () => {
 
 async function loadSettings() {
   try {
-    const response = await axios.get(`${API_URL}/api/settings`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
+    const response = await axios.get(`${API_URL}/api/settings`);
     
     Object.assign(settings.value, response.data);
   } catch (error) {
@@ -613,9 +611,7 @@ async function loadSettings() {
 
 async function loadPrinters() {
   try {
-    const response = await axios.get(`${API_URL}/api/shipping/printers`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
+    const response = await axios.get(`${API_URL}/api/shipping/printers`);
     
     printers.value = response.data.printers;
   } catch (error) {
@@ -694,7 +690,6 @@ async function uploadLogo(event: Event) {
       formData,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data'
         }
       }
@@ -724,7 +719,7 @@ async function saveSettings() {
       `${API_URL}/api/settings`,
       settings.value,
       {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('authToken')}` }
       }
     );
 

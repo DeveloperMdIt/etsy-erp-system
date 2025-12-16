@@ -39,9 +39,9 @@ const saveProfile = async () => {
             ...form.value
         })
         
-        const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+        const currentUser = JSON.parse(sessionStorage.getItem('user') || '{}')
         const updatedUser = { ...currentUser, ...form.value }
-        localStorage.setItem('user', JSON.stringify(updatedUser))
+        sessionStorage.setItem('user', JSON.stringify(updatedUser))
         window.dispatchEvent(new Event('user-login'))
 
         showSuccess('Erfolg', 'Profil erfolgreich gespeichert.')

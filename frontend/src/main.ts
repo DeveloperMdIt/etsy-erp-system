@@ -7,7 +7,7 @@ import router from './router'
 
 // Axios interceptor - attach JWT token to all requests
 axios.interceptors.request.use(config => {
-    const token = localStorage.getItem('authToken')
+    const token = sessionStorage.getItem('authToken')
     if (token) {
         config.headers.Authorization = `Bearer ${token}`
     }
@@ -20,8 +20,8 @@ axios.interceptors.response.use(
     error => {
         if (error.response?.status === 401) {
             // Token expired or invalid - logout
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('user')
+            sessionStorage.removeItem('authToken')
+            sessionStorage.removeItem('user')
             if (router.currentRoute.value.path !== '/login') {
                 router.push('/login')
             }

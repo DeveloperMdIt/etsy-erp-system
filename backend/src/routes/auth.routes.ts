@@ -38,6 +38,14 @@ router.post('/register', async (req: Request, res: Response) => {
 
     // Create user and default settings transaction
     const user = await prisma.$transaction(async (tx: any) => {
+
+      // 1. Find Trial Plan
+      const trialPlan = await tx.subscriptionPlan.findFirst({
+        where: { name: { contains: 'Pro', mode: 'insensitive' } }
+      });
+      const defaultPlan = trialPlan || await tx.subscriptionPlan.findFirst();
+
+      // 2. Create User
       const newUser = await tx.user.create({
         data: {
           email,
@@ -45,11 +53,16 @@ router.post('/register', async (req: Request, res: Response) => {
           firstName: firstName || null,
           lastName: lastName || null,
           shopName: shopName || null,
-          isVerified: false, // Default false
-          verificationToken: verificationToken
+          isVerified: false,
+          verificationToken: verificationToken,
+          // Trial Logic
+          subscriptionStatus: 'TRIAL',
+          trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          subscriptionPlanId: defaultPlan?.id
         },
       });
 
+      // 3. Create Settings
       await tx.userSettings.create({
         data: {
           userId: newUser.id,
@@ -307,7 +320,11 @@ router.post('/login', async (req: Request, res: Response) => {
         shopName: user.shopName,
         role: user.role,
         tenantId: user.tenantId,
-        modules: user.userModules.map((um: any) => um.module.name)
+        tenantId: user.tenantId,
+        modules: user.userModules.map((um: any) => um.module.name),
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionPlanId: user.subscriptionPlanId,
+        trialEndsAt: user.trialEndsAt
       }
     });
 
@@ -319,6 +336,12 @@ router.post('/login', async (req: Request, res: Response) => {
       stack: error.stack
     });
   }
+});
+
+router.post('/login', async (req: Request, res: Response) => {
+  // ... (This function is already there, I just need to update the response part)
+  // Wait, I cannot use replace_file_content on multiple chunks unless I use multi_replace.
+  // I will use replace_file_content on the SELECT part of login.
 });
 
 // GET /api/auth/me
@@ -358,7 +381,8 @@ router.get('/me', async (req: Request, res: Response) => {
     const userWithModules = {
       ...user,
       modules: user.userModules.map((um: any) => um.module.name),
-      userModules: undefined // Remove the complex object
+      userModules: undefined, // Remove the complex object
+      subscriptionPlan: user.subscriptionPlan // Ensure plan is passed
     };
 
     res.json({ user: userWithModules });
