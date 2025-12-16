@@ -22,7 +22,7 @@ model User {
   etsyUserId       String? // Etsy User ID
   etsyAccessToken  String? // OAuth2 Access Token
   etsyRefreshToken String? // OAuth2 Refresh Token
-  etsyRefreshToken String? // OAuth2 Refresh Token
+
   tokenExpiresAt   DateTime? // Token expiration
 
   // Subscription & Billing
