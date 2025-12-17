@@ -76,6 +76,7 @@ export const CreateLabelSchema = z.object({
     orderId: z.string().uuid(),
     productType: z.union([z.enum(['DHL_PAKET', 'DHL_KLEINPAKET', 'DEUTSCHE_POST_MAXIBRIEF']), z.string()]).optional(),
     shippingProfileId: z.string().optional(),
+    shippingMethodId: z.string().optional(), // Alias for shippingProfileId
     weight: z.number().optional(), // in grams, overrides product weight
 });
 

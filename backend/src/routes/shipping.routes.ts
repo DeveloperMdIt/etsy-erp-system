@@ -132,7 +132,8 @@ router.post('/dhl/create-label', authenticateToken, async (req: Request, res: Re
         const tenantId = (req as AuthRequest).user?.tenantId;
         if (!tenantId || !userId) throw new Error('Tenant ID and User ID required');
 
-        const { orderId, weight, productType } = validation.data;
+        const { orderId, weight, productType, shippingMethodId, shippingProfileId } = validation.data;
+        const profileId = shippingMethodId || shippingProfileId;
 
         // Fetch Order
         const order = await prisma.order.findUnique({
@@ -144,17 +145,28 @@ router.post('/dhl/create-label', authenticateToken, async (req: Request, res: Re
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        // Determine Product Code
-        // Map frontend codes/legacy enums to DHL Product Codes
+        // Determine Product Code & Billing Number
         let productCode = 'V01PAK'; // Default
-        if (productType === 'DHL_KLEINPAKET') productCode = 'V53WPAK'; // Warenpost
-        else if (productType && productType.startsWith('V')) productCode = productType; // Direct code
+        let billingNumber: string | undefined = undefined;
+
+        if (profileId) {
+            const profile = await prisma.shippingProfile.findUnique({
+                where: { id: profileId }
+            });
+            if (profile) {
+                productCode = profile.productCode;
+                billingNumber = profile.billingNumber || undefined;
+            }
+        }
+
+        // Manual override or fallback logic
+        if (productType === 'DHL_KLEINPAKET') productCode = 'V53WPAK';
+        else if (productType && productType.startsWith('V')) productCode = productType;
 
         // Call New DHL Parcel Service
         const labelResponse = await dhlParcelService.createLabel(userId, {
             productCode,
-            weight: weight || 0, // Service handles 0 weight by calculating from items if needed? No, service expects valid weight. 
-            // Ideally we calculate it here or frontend sends it. Frontend sends it.
+            weight: weight || 0,
             recipient: {
                 name: `${order.customer.firstName} ${order.customer.lastName}`,
                 // Smart split for street/houseNumber
@@ -164,8 +176,22 @@ router.post('/dhl/create-label', authenticateToken, async (req: Request, res: Re
                 postalCode: order.customer.postalCode,
                 city: order.customer.city,
                 country: order.customer.country === 'Deutschland' ? 'DEU' : 'DEU' // TODO: Better mapping
-            }
-        });
+            },
+            // Pass the specific billing number from profile if one exists
+            // The service will default to settings.dhlBillingNrPaket if this is undefined, 
+            // BUT we want to enforce the profile's billing number if set.
+            // We need to update createLabel signature to accept billingNumber override? 
+            // OR we pass it in the request object somehow?
+            // Checking dhlParcelService.createLabel signature... it takes (userId, request). 
+            // Request object doesn't have billingNumber. I should add it.
+        }, billingNumber); // Pass billingNumber as 3rd arg (need to update service) or extend request object. 
+        // Let's extend the request object in the service call.
+
+        // Check if createLabel accepts a 3rd argument? No, waiting to see service definition.
+        // I should update the service first or update the call to match.
+        // Let's pass it inside the request object? 
+        // The interface ShippingLabelRequest does NOT currently have billingNumber.
+        // It's safer to update the Service to accept an optional billingNumber override.
 
         // Save File
         let labelPath: string | undefined;

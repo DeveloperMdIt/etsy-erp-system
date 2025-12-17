@@ -168,7 +168,7 @@ export class DHLParcelService {
         return token.access_token;
     }
 
-    async createLabel(userId: string, request: ShippingLabelRequest): Promise<ShippingLabelResponse> {
+    async createLabel(userId: string, request: ShippingLabelRequest, billingNumberOverride?: string): Promise<ShippingLabelResponse> {
         const settings = await prisma.userSettings.findUnique({ where: { userId } });
 
         // Determine Environment Logic (same as authenticate)
@@ -185,7 +185,7 @@ export class DHLParcelService {
 
         const token = await this.getValidToken(userId, settings?.dhlAppId || undefined, settings?.dhlAppSecret || undefined);
 
-        let billingNumber = settings?.dhlBillingNrPaket;
+        let billingNumber = billingNumberOverride || settings?.dhlBillingNrPaket;
         if (!isProduction && !billingNumber) {
             billingNumber = '33333333330101';
         }
