@@ -193,6 +193,25 @@ export class DHLParcelService {
         if (!billingNumber) throw new Error('Keine DHL Abrechnungsnummer hinterlegt.');
 
         try {
+            // Sanitize and prepare address data
+            const shipper = {
+                name1: (settings?.labelCompanyName || settings?.etsyShopName || 'Sender').trim(),
+                addressStreet: (settings?.labelStreet || 'Street').trim(),
+                addressHouse: '1',
+                postalCode: (settings?.labelPostalCode || '12345').trim(),
+                city: (settings?.labelCity || 'City').trim(),
+                country: settings?.labelCountry ? (settings.labelCountry === 'Deutschland' ? 'DEU' : 'DEU') : 'DEU'
+            };
+
+            const consignee = {
+                name1: request.recipient.name.trim(),
+                addressStreet: request.recipient.street.trim(),
+                addressHouse: request.recipient.houseNumber.trim(),
+                postalCode: (request.recipient.postalCode || '').trim(),
+                city: request.recipient.city.trim(),
+                country: request.recipient.country || 'DEU'
+            };
+
             const response = await axios.post(
                 `${baseUrl}/parcel/de/shipping/v2/orders`,
                 {
@@ -202,22 +221,8 @@ export class DHLParcelService {
                         billingNumber: billingNumber,
                         refNo: `ORDER-${Date.now()}`,
                         shipDate: new Date().toISOString().split('T')[0],
-                        shipper: request.sender || {
-                            name1: settings?.labelCompanyName || settings?.etsyShopName || 'Sender',
-                            addressStreet: settings?.labelStreet || 'Street',
-                            addressHouse: '1',
-                            postalCode: settings?.labelPostalCode || '12345',
-                            city: settings?.labelCity || 'City',
-                            country: settings?.labelCountry ? (settings.labelCountry === 'Deutschland' ? 'DEU' : 'DEU') : 'DEU'
-                        },
-                        consignee: {
-                            name1: request.recipient.name,
-                            addressStreet: request.recipient.street,
-                            addressHouse: request.recipient.houseNumber,
-                            postalCode: request.recipient.postalCode,
-                            city: request.recipient.city,
-                            country: request.recipient.country || 'DEU'
-                        },
+                        shipper: shipper,
+                        consignee: consignee,
                         details: {
                             weight: { uom: 'g', value: request.weight }
                         }
