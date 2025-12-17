@@ -238,26 +238,37 @@ export class DHLParcelService {
             };
 
         } catch (error: any) {
-            console.error('❌ Failed to create DHL label:', error.response?.data || error.message);
+            // DEEP LOGGING
+            console.error('❌ DHL API ERROR DETAILS:');
+            console.error('Status:', error.response?.status);
+            console.error('Headers:', JSON.stringify(error.response?.headers, null, 2));
+            console.error('Data (Body):', JSON.stringify(error.response?.data, null, 2));
+
             const dhlError = error.response?.data;
             let errorMessage = `Label-Erstellung fehlgeschlagen: ${error.message}`;
 
             if (dhlError) {
-                if (dhlError.detail) errorMessage = `${dhlError.title || 'Fehler'}: ${dhlError.detail}`;
+                // Try to construct a readable message
+                const parts: string[] = [];
+                if (dhlError.title) parts.push(dhlError.title);
+                if (dhlError.detail) parts.push(dhlError.detail);
 
-                // Safely check for items array
-                if (Array.isArray(dhlError.items) && dhlError.items.length > 0) {
-                    const itemDetails = dhlError.items
-                        .map((i: any) => i?.status?.detail || 'Unbekannter Fehler')
-                        .join(', ');
-                    errorMessage += ` (${itemDetails})`;
+                if (Array.isArray(dhlError.items)) {
+                    const itemErrors = dhlError.items
+                        .map((i: any) => i?.status?.detail || i?.status?.title || JSON.stringify(i))
+                        .join('; ');
+                    if (itemErrors) parts.push(`Items: ${itemErrors}`);
                 }
 
-                if (dhlError.title && !errorMessage.includes(dhlError.title)) {
-                    errorMessage = `${dhlError.title}: ${dhlError.detail || ''}`;
+                if (parts.length > 0) {
+                    errorMessage = `DHL: ${parts.join(' - ')}`;
+                } else {
+                    // Fallback: Dump the whole object if structure is unknown
+                    errorMessage = `DHL: ${JSON.stringify(dhlError)}`;
                 }
             }
 
+            // Throw a clean error that the frontend can display
             throw new Error(errorMessage);
         }
     }

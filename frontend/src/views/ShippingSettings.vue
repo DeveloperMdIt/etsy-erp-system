@@ -421,7 +421,13 @@ onMounted(async () => {
 async function fetchSettings() {
     try {
         const res = await axios.get(`${API_URL}/api/settings`);
-        Object.assign(settings.value, res.data);
+        // The backend returns { settings: { ... }, user: { ... } }
+        // We need to merge settings object specifically
+        if (res.data.settings) {
+            Object.assign(settings.value, res.data.settings);
+        }
+        // If we needed user data (like shopName) we would assign that too, but this view focuses on UserSettings fields
+
     } catch (e) {
         console.error("Failed to load settings", e);
     }
