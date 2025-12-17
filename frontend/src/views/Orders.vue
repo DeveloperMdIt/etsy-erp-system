@@ -58,6 +58,18 @@ const printLabel = async (labelId: string) => {
     }
 }
 
+const cancelLabel = async (labelId: string) => {
+    if (!confirm('Label wirklich bei DHL stornieren? Der Status wird auf "Offen" zurückgesetzt.')) return
+    
+    try {
+        await axios.post('/api/shipping/label/cancel', { shippingLabelId: labelId })
+        openSuccessModal('Storniert', 'Das Label wurde storniert. Bestellung ist wieder offen.')
+        await fetchOrders()
+    } catch (error: any) {
+        alert('Fehler beim Stornieren: ' + (error.response?.data?.error || error.message))
+    }
+}
+
 const orders = ref<Order[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -545,7 +557,15 @@ onMounted(fetchOrders)
                             title="Label erneut drucken"
                           >
                              <span v-if="printingLabel === order.shippingLabels[0]?.id" class="mr-1 animate-spin">⌛</span>
-                             <span v-else class="mr-1">🖨️</span> Drucken
+                              <span v-else class="mr-1">🖨️</span> Drucken
+                          </button>
+                          
+                          <button 
+                            @click.stop="cancelLabel(order.shippingLabels[0]?.id || '')"
+                            class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200 flex items-center ml-2"
+                            title="Label stornieren"
+                          >
+                             🗑️
                           </button>
                       </div>
                     </div>

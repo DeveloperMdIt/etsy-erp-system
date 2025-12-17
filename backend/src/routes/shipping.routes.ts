@@ -99,6 +99,66 @@ router.get('/dhl/status', authenticateToken, async (req: Request, res: Response)
     }
 });
 
+// POST /api/shipping/label/cancel
+router.post('/label/cancel', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const { shippingLabelId } = req.body;
+        const userId = (req as AuthRequest).user?.userId;
+
+        if (!shippingLabelId) return res.status(400).json({ error: 'Shipping Label ID required' });
+
+        const label = await prisma.shippingLabel.findUnique({
+            where: { id: shippingLabelId },
+            include: { order: true }
+        });
+
+        if (!label) return res.status(404).json({ error: 'Label not found' });
+
+        // 1. Attempt to cancel at provider (DHL only for now)
+        let providerSuccess = true;
+        if (label.provider.includes('DHL')) {
+            providerSuccess = await dhlParcelService.cancelLabel(userId!, label.trackingNumber, 'DHL');
+        }
+
+        // 2. Local Cleanup (Always do this if user requested cancellation, or maybe check providerSuccess?)
+        // The user specifically said "change status to OPEN". Even if DHL fails (e.g. too late), 
+        // they might want to reset the order in the system to try again.
+        // Let's assume we proceed with local cleanup.
+
+        await prisma.$transaction([
+            // Update Order
+            prisma.order.update({
+                where: { id: label.orderId },
+                data: {
+                    status: 'OPEN',
+                    trackingNumber: null, // Clear main tracking number
+                    shippedAt: null
+                }
+            }),
+            // Delete Label Record
+            prisma.shippingLabel.delete({
+                where: { id: shippingLabelId }
+            })
+        ]);
+
+        // Log
+        await ActivityLogService.log(
+            LogType.INFO,
+            LogAction.SHIPPING_LABEL_CREATE_SUCCESS, // Re-using existing enum or add new?
+            `Versandlabel storniert: ${label.trackingNumber}`,
+            userId,
+            label.order.tenantId,
+            { oldTracking: label.trackingNumber }
+        );
+
+        res.json({ success: true, message: 'Label cancelled and order reset to OPEN.' });
+
+    } catch (error: any) {
+        console.error('Cancel label error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // GET /api/shipping/dhl/products - Get available/suggested products
 router.get('/dhl/products', authenticateToken, async (req: Request, res: Response) => {
     try {

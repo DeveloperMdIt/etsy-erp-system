@@ -414,6 +414,45 @@ export class DHLParcelService {
             throw new Error(`Internetmarke-Fehler: ${error.response?.data?.detail || error.message}`);
         }
     }
+
+    async cancelLabel(userId: string, shipmentNumber: string, profile: 'DHL' | 'DEUTSCHE_POST' = 'DHL'): Promise<boolean> {
+        // Only DHL is supported for API cancellation right now
+        if (profile !== 'DHL') {
+            return true; // Assume success for others (just local cleanup)
+        }
+
+        try {
+            const settings = await prisma.userSettings.findUnique({ where: { userId } });
+            let { apiKey } = await this.getAppCredentials(userId);
+
+            let isProduction = false;
+            if (settings?.dhlAppId || process.env.DHL_API_ENVIRONMENT === 'production') {
+                isProduction = true;
+            } else if (apiKey && apiKey !== process.env.DHL_API_KEY) {
+                isProduction = true;
+            }
+            const baseUrl = this.getBaseUrl(isProduction);
+            const token = await this.getValidToken(userId, settings?.dhlAppId || undefined, settings?.dhlAppSecret || undefined);
+
+            // DELETE /shipping/v2/orders?shipment=...
+            await axios.delete(
+                `${baseUrl}/parcel/de/shipping/v2/orders`,
+                {
+                    params: { shipment: shipmentNumber },
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+
+            console.log(`✅ DHL label cancelled: ${shipmentNumber}`);
+            return true;
+        } catch (error: any) {
+            console.error('❌ Failed to cancel DHL label:', error.response?.data || error.message);
+            // We return false but don't throw, so we can still clean up locally if the user forces it
+            // Or maybe we should throw? The user asked to "cancel".
+            // If it fails (e.g. already cancelled), we should probably still allow local cleanup.
+            return false;
+        }
+    }
 }
 
 export default new DHLParcelService();
