@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import ManualTrackingModal from '../components/ManualTrackingModal.vue'
+import SuccessModal from '../components/SuccessModal.vue'
 
 interface OrderItem {
   id: string
@@ -62,6 +63,20 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const selectedOrder = ref<Order | null>(null)
 const showLabelModal = ref(false)
+
+// Success Modal State
+const showSuccessModal = ref(false)
+const successTitle = ref('')
+const successMessage = ref('')
+const successTracking = ref('')
+
+const openSuccessModal = (title: string, message: string, tracking?: string) => {
+    successTitle.value = title
+    successMessage.value = message
+    successTracking.value = tracking || ''
+    showSuccessModal.value = true
+}
+
 const labelOrder = ref<Order | null>(null)
 const creatingLabel = ref(false)
 const showManualTrackingModal = ref(false)
@@ -284,7 +299,8 @@ const handleCreateLabel = async () => {
 
     // Success Handling
     const tracking = response.data.shipmentNumber || response.data.trackingNumber
-    alert(`Label erstellt! Tracking: ${tracking}`)
+    // alert(`Label erstellt! Tracking: ${tracking}`)
+    openSuccessModal('Label erfolgreich erstellt!', 'Das Versandlabel wurde erstellt und die Tracking-Nummer gespeichert.', tracking)
 
     closeLabelModal()
     await fetchOrders()
@@ -812,6 +828,13 @@ onMounted(fetchOrders)
       :order="manualTrackingOrder" 
       @close="showManualTrackingModal = false" 
       @saved="onManualTrackingSaved" 
+    />
+    <SuccessModal 
+      :show="showSuccessModal"
+      :title="successTitle"
+      :message="successMessage"
+      :tracking-number="successTracking"
+      @close="showSuccessModal = false"
     />
   </div>
 </template>
