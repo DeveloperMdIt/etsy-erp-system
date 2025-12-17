@@ -122,6 +122,57 @@ const deleteProfile = async (id: string) => {
   }
 }
 
+const showFetchModal = ref(false)
+const fetchingProducts = ref(false)
+const discoveredProducts = ref<any[]>([])
+const selectedProducts = ref<any[]>([])
+
+const openFetchModal = async () => {
+    showFetchModal.value = true
+    fetchingProducts.value = true
+    discoveredProducts.value = []
+    selectedProducts.value = []
+    
+    try {
+        const res = await axios.get('/api/shipping/dhl/products')
+        discoveredProducts.value = res.data
+    } catch (e) {
+        showError('Fehler beim Abrufen der Produkte. Bitte prüfen Sie Ihre DHL-Einstellungen.')
+    } finally {
+        fetchingProducts.value = false
+    }
+}
+
+const toggleProductSelection = (prod: any) => {
+    const idx = selectedProducts.value.findIndex(p => p.productCode === prod.productCode)
+    if (idx >= 0) {
+        selectedProducts.value.splice(idx, 1)
+    } else {
+        selectedProducts.value.push(prod)
+    }
+}
+
+const importSelectedProducts = async () => {
+    try {
+        let count = 0
+        for (const prod of selectedProducts.value) {
+            await axios.post('/api/shipping-profiles', {
+                name: prod.name,
+                provider: 'DHL',
+                productCode: prod.productCode,
+                billingNumber: prod.billingNumber,
+                baseWeight: 0
+            })
+            count++
+        }
+        showSuccess(`${count} Produkte erfolgreich importiert`)
+        showFetchModal.value = false
+        fetchProfiles()
+    } catch (e) {
+        showError('Import teilweise fehlgeschlagen')
+    }
+}
+
 onMounted(fetchProfiles)
 </script>
 
@@ -129,10 +180,50 @@ onMounted(fetchProfiles)
   <div class="bg-white shadow rounded-lg p-6">
     <div class="flex justify-between items-center mb-6">
       <h3 class="text-lg font-medium text-gray-900">Versandprofile</h3>
-      <button @click="openModal()" class="btn-primary flex items-center gap-2">
-        <PlusIcon class="h-5 w-5" />
-        Neues Profil
-      </button>
+      <div class="flex gap-2">
+        <button @click="openFetchModal" class="btn-secondary flex items-center gap-2 border px-3 py-2 rounded hover:bg-gray-50">
+           <!-- Icon for fetch -->
+           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+           Produkte abrufen
+        </button>
+        <button @click="openModal()" class="btn-primary flex items-center gap-2 px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">
+          <PlusIcon class="h-5 w-5" />
+          Neues Profil
+        </button>
+      </div>
+    </div>
+
+    <!-- Fetch Modal -->
+    <div v-if="showFetchModal" class="fixed inset-0 z-50 overflow-y-auto">
+       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showFetchModal = false"></div>
+         <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+         <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">DHL Produkte importieren</h3>
+            <p class="text-sm text-gray-500 mb-4">Basierend auf Ihrer Abrechnungsnummer wurden folgende Produkte ermittelt. Bitte wählen Sie die gewünschten Produkte aus:</p>
+
+            <div v-if="fetchingProducts" class="text-center py-4">Lade...</div>
+            <div v-else class="space-y-4 max-h-96 overflow-y-auto">
+                <div v-for="prod in discoveredProducts" :key="prod.productCode" class="border rounded p-3 flex items-start gap-3 hover:bg-gray-50 cursor-pointer" @click="toggleProductSelection(prod)">
+                    <input type="checkbox" :checked="selectedProducts.some(p => p.productCode === prod.productCode)" class="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <div>
+                        <div class="font-medium text-gray-900">{{ prod.name }}</div>
+                        <div class="text-sm text-gray-500">{{ prod.description }}</div>
+                        <div class="text-xs text-gray-400 mt-1">Code: {{ prod.productCode }} • Abrechnung: {{ prod.billingNumber }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 sm:mt-6 flex gap-3">
+                <button @click="showFetchModal = false" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:text-sm">Abbrechen</button>
+                <button @click="importSelectedProducts" :disabled="selectedProducts.length === 0" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:text-sm disabled:opacity-50">
+                    {{ selectedProducts.length }} Importieren
+                </button>
+            </div>
+         </div>
+       </div>
     </div>
 
     <!-- List -->

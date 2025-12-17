@@ -99,6 +99,20 @@ router.get('/dhl/status', authenticateToken, async (req: Request, res: Response)
     }
 });
 
+// GET /api/shipping/dhl/products - Get available/suggested products
+router.get('/dhl/products', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as AuthRequest).user?.userId;
+        if (!userId) throw new Error('User ID required');
+
+        const products = await dhlParcelService.getAvailableProducts(userId);
+        res.json(products);
+    } catch (error: any) {
+        console.error('Fetch DHL products error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ============================================================================
 // DHL ROUTES (existing - old DHL service)
 // ============================================================================
@@ -527,6 +541,56 @@ router.post('/print', authenticateToken, async (req: Request, res: Response) => 
         console.error('Print error:', error);
         res.status(500).json({ error: error.message });
     }
+});
+
+/**
+ * SHIPPING PROFILES CRUD
+ */
+
+// GET /api/shipping-profiles
+router.get('/shipping-profiles', authenticateToken, async (req: Request, res: Response) => {
+    const userId = (req as AuthRequest).user?.userId;
+    const tenantId = (req as AuthRequest).user?.tenantId;
+    // We filter by tenantId (assuming profiles are tenant-wide or user-wide?) 
+    // Schema has 'userId' on ShippingProfile.
+    const profiles = await prisma.shippingProfile.findMany({
+        where: { userId }
+    });
+    res.json(profiles);
+});
+
+// POST /api/shipping-profiles
+router.post('/shipping-profiles', authenticateToken, async (req: Request, res: Response) => {
+    const userId = (req as AuthRequest).user!.userId;
+    const tenantId = (req as AuthRequest).user!.tenantId;
+    const data = req.body;
+
+    const profile = await prisma.shippingProfile.create({
+        data: {
+            ...data,
+            userId,
+            tenantId
+        }
+    });
+    res.json(profile);
+});
+
+// PUT /api/shipping-profiles/:id
+router.put('/shipping-profiles/:id', authenticateToken, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const data = req.body;
+    const profile = await prisma.shippingProfile.update({
+        where: { id },
+        data
+    });
+    res.json(profile);
+});
+
+// DELETE /api/shipping-profiles/:id
+router.delete('/shipping-profiles/:id', authenticateToken, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    await prisma.shippingProfile.delete({ where: { id } });
+    res.json({ success: true });
 });
 
 export default router;

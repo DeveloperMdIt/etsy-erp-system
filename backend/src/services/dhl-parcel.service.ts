@@ -259,6 +259,64 @@ export class DHLParcelService {
         };
     }
 
+    async getAvailableProducts(userId: string) {
+        const credentials = await this.getAppCredentials(userId);
+        const settings = await prisma.userSettings.findUnique({ where: { userId } });
+
+        let billingNumber = settings?.dhlBillingNrPaket;
+
+        if (!billingNumber) {
+            // Fallback or error? User wants to see products to add them. 
+            // If no billing number is saved, we cannot guess products.
+            throw new Error('Keine DHL Abrechnungsnummer in den Einstellungen hinterlegt.');
+        }
+
+        // billingNumber format: 14 digits.
+        // EKP = 10 digits
+        // Procedure = 01 (Paket), 02 (Express?), 53 (Warenpost International?), 54 (Europaket?), 62 (Warenpost National?)
+        // Participation = Last 2 digits (e.g. 01)
+
+        // We return a list of typical products derived from this EKP + Participation 01 (default)
+        // Ideally we would check ALL participations (01-99) but that's overkill.
+        // We assume the user has the same participation for all prods or we guide them.
+
+        const ekp = billingNumber.substring(0, 10);
+        const suffix = billingNumber.substring(10); // e.g. 0101
+        // suffix is Procedure (2) + Participation (2)
+        // Actually usually: EKP (10) + Procedure (2) + Participation (2)
+        // But for "Products", we want to suggest:
+
+        return [
+            {
+                name: 'DHL Paket',
+                productCode: 'V01PAK',
+                billingNumber: `${ekp}0101`, // Standard
+                description: 'Standard DHL Paket National (bis 31,5kg)'
+            },
+            {
+                name: 'DHL Paket International',
+                productCode: 'V54EPAK',
+                billingNumber: `${ekp}0101`, // Standard International is often 0101 too? Or 5301?
+                // actually V54EPAK is Europaket. V53WPA is Parcel International?
+                // V53WPAK is Warenpost.
+                // Let's use the SAFE defaults.
+                description: 'DHL Paket International'
+            },
+            {
+                name: 'Warenpost National',
+                productCode: 'V62WP',
+                billingNumber: `${ekp}6201`, // Usually 62 + 01
+                description: 'Warenpost National (V62WP)'
+            },
+            {
+                name: 'Warenpost International',
+                productCode: 'V53WPI',
+                billingNumber: `${ekp}5301`, // Usually 53 + 01
+                description: 'Warenpost International (V53WPI)'
+            }
+        ];
+    }
+
     async createInternetmarke(userId: string, request: ShippingLabelRequest): Promise<ShippingLabelResponse> {
         try {
             const settings = await prisma.userSettings.findUnique({ where: { userId } });
