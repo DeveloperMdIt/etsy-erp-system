@@ -260,6 +260,12 @@
                       <label class="block text-sm font-medium text-gray-700">GKP Passwort</label>
                       <input v-model="setupData.dhlGkpPassword" type="password" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                     </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Abrechnungsnummer (14-stellig)</label>
+                      <input v-model="setupData.dhlBillingNrPaket" type="text" placeholder="z.B. 33333333330101" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                      <p class="text-xs text-gray-500 mt-1">Setzt sich zusammen aus EKP (10 Stellen) + Verfahren (01) + Teilnahme (01).</p>
+                    </div>
 
                     <!-- Advanced Toggle -->
                     <div class="pt-2">
@@ -440,6 +446,7 @@ function openSetup(provider: 'dhl' | 'deutschepost') {
         setupData.value = {
             dhlGkpUsername: settings.value.dhlGkpUsername,
             dhlGkpPassword: settings.value.dhlGkpPassword,
+            dhlBillingNrPaket: settings.value.dhlBillingNrPaket, // Load existing
             dhlAppId: settings.value.dhlAppId,
             dhlAppSecret: settings.value.dhlAppSecret
         };
@@ -502,6 +509,7 @@ async function saveProvider() {
         if (currentSetup.value === 'dhl') {
             settings.value.dhlGkpUsername = setupData.value.dhlGkpUsername;
             settings.value.dhlGkpPassword = setupData.value.dhlGkpPassword;
+            settings.value.dhlBillingNrPaket = setupData.value.dhlBillingNrPaket; // Save Billing Number
             settings.value.dhlAppId = setupData.value.dhlAppId;
             settings.value.dhlAppSecret = setupData.value.dhlAppSecret;
             settings.value.dhlEnabled = true; // Auto-enable
