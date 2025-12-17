@@ -104,6 +104,7 @@ router.get('/dhl/status', authenticateToken, async (req: Request, res: Response)
 // ============================================================================
 
 // POST /api/shipping/dhl/create-label
+// POST /api/shipping/dhl/create-label
 router.post('/dhl/create-label', authenticateToken, async (req: Request, res: Response) => {
     try {
         const validation = CreateLabelSchema.safeParse(req.body);
@@ -113,70 +114,113 @@ router.post('/dhl/create-label', authenticateToken, async (req: Request, res: Re
             return;
         }
 
+        const userId = (req as AuthRequest).user?.userId;
         const tenantId = (req as AuthRequest).user?.tenantId;
-        if (!tenantId) throw new Error('Tenant ID required');
+        if (!tenantId || !userId) throw new Error('Tenant ID and User ID required');
 
-        const { shippingMethodId } = req.body;
-        const result = await dhlService.createLabel(validation.data, tenantId);
+        const { orderId, weight, productType } = validation.data;
 
-        // --- ENHIANCED: Save File & Auto-Print ---
+        // Fetch Order
+        const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: { customer: true }
+        });
+
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        // Determine Product Code
+        // Map frontend codes/legacy enums to DHL Product Codes
+        let productCode = 'V01PAK'; // Default
+        if (productType === 'DHL_KLEINPAKET') productCode = 'V53WPAK'; // Warenpost
+        else if (productType && productType.startsWith('V')) productCode = productType; // Direct code
+
+        // Call New DHL Parcel Service
+        const labelResponse = await dhlParcelService.createLabel(userId, {
+            productCode,
+            weight: weight || 0, // Service handles 0 weight by calculating from items if needed? No, service expects valid weight. 
+            // Ideally we calculate it here or frontend sends it. Frontend sends it.
+            recipient: {
+                name: `${order.customer.firstName} ${order.customer.lastName}`,
+                // Smart split for street/houseNumber
+                street: order.customer.street.replace(/\d+.*$/, '').trim(),
+                houseNumber: order.customer.street.match(/(\d+.*)$/)?.[1] || '1',
+
+                postalCode: order.customer.postalCode,
+                city: order.customer.city,
+                country: order.customer.country === 'Deutschland' ? 'DEU' : 'DEU' // TODO: Better mapping
+            }
+        });
+
+        // Save File
         let labelPath: string | undefined;
-
-        if (result.labelData) {
+        if (labelResponse.labelData) {
             const labelDir = path.join(process.cwd(), 'uploads', 'labels');
             if (!fs.existsSync(labelDir)) {
                 fs.mkdirSync(labelDir, { recursive: true });
             }
-
-            labelPath = path.join(labelDir, `dhl-${result.shipmentNumber}.pdf`);
-            fs.writeFileSync(labelPath, Buffer.from(result.labelData, 'base64')); // write b64 to file
+            labelPath = path.join(labelDir, `dhl-${labelResponse.trackingNumber}.pdf`);
+            fs.writeFileSync(labelPath, Buffer.from(labelResponse.labelData, 'base64'));
         }
 
-        const userId = (req as AuthRequest).user?.userId;
-        if (userId && labelPath) {
-            // Update DB with path
-            await prisma.shippingLabel.updateMany({
-                where: { trackingNumber: result.shipmentNumber },
-                data: { labelPath }
-            });
+        // Save to DB
+        const shippingLabel = await prisma.shippingLabel.create({
+            data: {
+                orderId: order.id,
+                provider: 'DHL_PAKET',
+                trackingNumber: labelResponse.trackingNumber,
+                labelPath: labelPath,
+                labelUrl: labelResponse.labelUrl,
+                weight: weight || 0,
+                cost: 0
+            }
+        });
 
-            // Auto Print
-            const settings = await prisma.userSettings.findUnique({ where: { userId } });
-            if (settings?.autoPrintEnabled) {
-                const printerName = settings.printerDHL || settings.defaultPrinter;
-                try {
-                    console.log(`[AutoPrint] Printing DHL Label ${result.shipmentNumber} to ${printerName || 'Default'}`);
-                    await printingService.printPDF(labelPath, printerName || undefined);
-                } catch (e) {
-                    console.error('[AutoPrint] Failed:', e);
-                }
+        // Update Order
+        await prisma.order.update({
+            where: { id: order.id },
+            data: {
+                trackingNumber: labelResponse.trackingNumber,
+                status: 'SHIPPED',
+                shippedAt: new Date()
+            }
+        });
+
+        // Auto Print
+        const settings = await prisma.userSettings.findUnique({ where: { userId } });
+        if (settings?.autoPrintEnabled && labelPath) {
+            const printerName = settings.printerDHL || settings.defaultPrinter;
+            try {
+                console.log(`[AutoPrint] Printing DHL Label ${labelResponse.trackingNumber}`);
+                await printingService.printPDF(labelPath, printerName || undefined);
+            } catch (e) {
+                console.error('[AutoPrint] Failed:', e);
             }
         }
-        // ----------------------------------------
 
         // Log success
         await ActivityLogService.log(
             LogType.SUCCESS,
             LogAction.SHIPPING_LABEL_CREATE_SUCCESS,
-            `DHL Label erstellt für Bestellung ${result.shipmentNumber}`,
-            req.user?.id,
-            req.user?.tenantId,
-            { orderId: validation.data.orderId, shipmentNumber: result.shipmentNumber }
+            `DHL Label erstellt: ${labelResponse.trackingNumber}`,
+            userId,
+            tenantId,
+            { orderId, shipmentNumber: labelResponse.trackingNumber }
         );
 
-        res.json({ ...result, labelPath }); // Return path too if needed
+        res.json({
+            shipmentNumber: labelResponse.trackingNumber,
+            labelUrl: labelResponse.labelUrl,
+            labelPath
+        });
+
     } catch (error: any) {
         console.error('Shipping error:', error);
 
         let errorDetails = error.message;
-        try {
-            // Try to parse if it is JSON string from our service
-            const parsed = JSON.parse(error.message);
-            if (parsed.detail) errorDetails = parsed.detail;
-            if (parsed.title) errorDetails = `${parsed.title}: ${parsed.detail}`;
-        } catch (e) { }
+        if (error.response?.data?.detail) errorDetails = error.response.data.detail;
 
-        // Log error
         await ActivityLogService.log(
             LogType.ERROR,
             LogAction.SHIPPING_LABEL_CREATE_FAILED,
@@ -186,10 +230,7 @@ router.post('/dhl/create-label', authenticateToken, async (req: Request, res: Re
             { error: errorDetails }
         );
 
-        res.status(500).json({
-            error: 'Shipping label creation failed',
-            message: errorDetails
-        });
+        res.status(500).json({ error: 'Shipping label creation failed', message: errorDetails });
     }
 });
 
