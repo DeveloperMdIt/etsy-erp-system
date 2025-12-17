@@ -236,6 +236,7 @@ export class DHLParcelService {
                 labelUrl: shipment.label?.url || '',
                 labelData: shipment.label?.b64 || ''
             };
+            throw new Error(errorMessage);
         } catch (error: any) {
             console.error('❌ Failed to create DHL label:', error.response?.data || error.message);
             const dhlError = error.response?.data;
@@ -243,11 +244,18 @@ export class DHLParcelService {
 
             if (dhlError) {
                 if (dhlError.detail) errorMessage = `${dhlError.title || 'Fehler'}: ${dhlError.detail}`;
-                if (dhlError.items && dhlError.items.length > 0) {
-                    // Sometimes validation errors are in items
-                    errorMessage += ` (${dhlError.items.map((i: any) => i.status.detail).join(', ')})`;
+
+                // Safely check for items array
+                if (Array.isArray(dhlError.items) && dhlError.items.length > 0) {
+                    const itemDetails = dhlError.items
+                        .map((i: any) => i?.status?.detail || 'Unbekannter Fehler')
+                        .join(', ');
+                    errorMessage += ` (${itemDetails})`;
                 }
-                if (dhlError.title) errorMessage = `${dhlError.title}: ${dhlError.detail}`;
+
+                if (dhlError.title && !errorMessage.includes(dhlError.title)) {
+                    errorMessage = `${dhlError.title}: ${dhlError.detail || ''}`;
+                }
             }
 
             throw new Error(errorMessage);
