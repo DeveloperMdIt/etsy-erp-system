@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import ManualTrackingModal from '../components/ManualTrackingModal.vue'
 import SuccessModal from '../components/SuccessModal.vue'
+import ConfirmationModal from '../components/ConfirmationModal.vue'
 
 interface OrderItem {
   id: string
@@ -58,16 +59,20 @@ const printLabel = async (labelId: string) => {
     }
 }
 
-const cancelLabel = async (labelId: string) => {
-    if (!confirm('Label wirklich bei DHL stornieren? Der Status wird auf "Offen" zurückgesetzt.')) return
-    
-    try {
-        await axios.post('/api/shipping/label/cancel', { shippingLabelId: labelId })
-        openSuccessModal('Storniert', 'Das Label wurde storniert. Bestellung ist wieder offen.')
-        await fetchOrders()
-    } catch (error: any) {
-        alert('Fehler beim Stornieren: ' + (error.response?.data?.error || error.message))
-    }
+const cancelLabel = (labelId: string) => {
+    openConfirmModal(
+        'Label stornieren?',
+        'Möchten Sie dieses Label wirklich stornieren? Der Status der Bestellung wird auf "Offen" zurückgesetzt und die Tracking-Nummer entfernt.',
+        async () => {
+            try {
+                await axios.post('/api/shipping/label/cancel', { shippingLabelId: labelId })
+                openSuccessModal('Storniert', 'Das Label wurde storniert. Bestellung ist wieder offen.')
+                await fetchOrders()
+            } catch (error: any) {
+                alert('Fehler beim Stornieren: ' + (error.response?.data?.error || error.message))
+            }
+        }
+    )
 }
 
 const orders = ref<Order[]>([])
@@ -87,6 +92,24 @@ const openSuccessModal = (title: string, message: string, tracking?: string) => 
     successMessage.value = message
     successTracking.value = tracking || ''
     showSuccessModal.value = true
+}
+
+// Confirmation Modal State
+const showConfirmModal = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmAction = ref<(() => void) | null>(null)
+
+const openConfirmModal = (title: string, message: string, onConfirm: () => void) => {
+    confirmTitle.value = title
+    confirmMessage.value = message
+    confirmAction.value = onConfirm
+    showConfirmModal.value = true
+}
+
+const handleConfirm = () => {
+    if (confirmAction.value) confirmAction.value()
+    showConfirmModal.value = false
 }
 
 const labelOrder = ref<Order | null>(null)
@@ -855,6 +878,14 @@ onMounted(fetchOrders)
       :message="successMessage"
       :tracking-number="successTracking"
       @close="showSuccessModal = false"
+    />
+    <ConfirmationModal
+      :show="showConfirmModal"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      confirm-text="Stornieren"
+      @close="showConfirmModal = false"
+      @confirm="handleConfirm"
     />
   </div>
 </template>
