@@ -320,6 +320,7 @@ onMounted(() => {
                         <label class="block text-sm font-medium text-gray-700">Standard-Drucker für Labels</label>
                         <select v-model="form.defaultPrinter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
                              <option value="">(Wählen)</option>
+                             <option v-if="printers.length === 0" disabled>Keine Drucker auf Server gefunden (VPS?)</option>
                              <option v-for="p in printers" :key="p" :value="p">{{ p }}</option>
                         </select>
                          <p class="mt-1 text-xs text-gray-500">Fallback, falls im Profil kein Drucker definiert ist.</p>

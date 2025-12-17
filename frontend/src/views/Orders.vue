@@ -291,7 +291,22 @@ const handleCreateLabel = async () => {
   } catch (err: any) {
     // ... (error handling same as before)
     console.error('Label creation error:', err)
-    labelError.value = err.response?.data?.error || err.message || 'Ein unbekannter Fehler ist aufgetreten.'
+    
+    // Improved Error Extraction (matching backend service logic)
+    const errorResponse = err.response?.data
+    let displayError = err.message || 'Ein unbekannter Fehler ist aufgetreten.'
+
+    if (errorResponse) {
+        if (typeof errorResponse === 'string') {
+             displayError = errorResponse
+        } else if (errorResponse.message) {
+             displayError = errorResponse.message
+        } else if (errorResponse.error) {
+             displayError = errorResponse.error
+        }
+    }
+    
+    labelError.value = displayError
     
     const details = {
       message: err.message,
