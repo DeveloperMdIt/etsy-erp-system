@@ -398,6 +398,11 @@ onMounted(() => {
 
 
 
+            </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Counters Section (Unchanged) -->
     <div id="numbers" class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
       <div class="md:grid md:grid-cols-3 md:gap-6">
