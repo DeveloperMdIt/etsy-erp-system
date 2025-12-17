@@ -549,7 +549,7 @@ onMounted(fetchOrders)
                       <div class="text-xs">{{ order.trackingNumber }}</div>
                       
                       <!-- Print Button if Label Exists -->
-                      <div v-if="order.shippingLabels && order.shippingLabels.length > 0" class="mt-1">
+                      <div v-if="order.shippingLabels && order.shippingLabels.length > 0" class="mt-1 flex items-center gap-2">
                           <button 
                             @click.stop="printLabel(order.shippingLabels[0]?.id || '')" 
                             :disabled="printingLabel === order.shippingLabels[0]?.id"
@@ -562,7 +562,7 @@ onMounted(fetchOrders)
                           
                           <button 
                             @click.stop="cancelLabel(order.shippingLabels[0]?.id || '')"
-                            class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200 flex items-center ml-2"
+                            class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200 flex items-center"
                             title="Label stornieren"
                           >
                              🗑️
