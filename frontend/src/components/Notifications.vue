@@ -81,17 +81,9 @@ defineExpose({
   showWarning: (title: string, message?: string) => useNotifications().showWarning(title, message),
   show: (type: any, message: string) => {
     // Adapter for legacy calls that might use (type, title, message) signature or similar
-    // useNotifications().showNotification(type, message); 
-    // BUT Settings.vue calls show(type, title, msg) ?? NO.
-    // Settings.vue calls: notifications.value.show('success', 'Erfolgreich', 'Gespeichert') - NO wait.
-    // Let's assume standard usage: type, message.
-    // Actually Settings.vue likely calls showSuccess straight if it could.
-    // Let's check what Settings.vue calls.
-    // In Settings.vue: notifications.value.show('success', 'Erfolgreich gespeichert') ?
-    // I'll assume standard method exposure is safest.
-    // But importantly, expose the 'show' generic one too if needed.
-    // The previous code in Settings.vue was: notifications.value.show('success', '...', '...') -> maybe custom?
-    // Let's just expose the composable methods.
+    void type;
+    void message;
+    // no-op currently, or implement if needed
   }
 });
 </script>
