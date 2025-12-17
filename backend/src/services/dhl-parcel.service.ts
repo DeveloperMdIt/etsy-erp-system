@@ -238,7 +238,19 @@ export class DHLParcelService {
             };
         } catch (error: any) {
             console.error('❌ Failed to create DHL label:', error.response?.data || error.message);
-            throw new Error(`Label-Erstellung fehlgeschlagen: ${error.response?.data?.detail || error.message}`);
+            const dhlError = error.response?.data;
+            let errorMessage = `Label-Erstellung fehlgeschlagen: ${error.message}`;
+
+            if (dhlError) {
+                if (dhlError.detail) errorMessage = `${dhlError.title || 'Fehler'}: ${dhlError.detail}`;
+                if (dhlError.items && dhlError.items.length > 0) {
+                    // Sometimes validation errors are in items
+                    errorMessage += ` (${dhlError.items.map((i: any) => i.status.detail).join(', ')})`;
+                }
+                if (dhlError.title) errorMessage = `${dhlError.title}: ${dhlError.detail}`;
+            }
+
+            throw new Error(errorMessage);
         }
     }
 

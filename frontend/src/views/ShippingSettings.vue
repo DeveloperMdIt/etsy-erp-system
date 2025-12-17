@@ -431,8 +431,12 @@ async function loadPrinters() {
     try {
         const res = await axios.get(`${API_URL}/api/shipping/printers`);
         printers.value = res.data.printers || [];
+        if (printers.value.length === 0) {
+            printers.value = [{name: 'Keine Drucker gefunden (Server)'}];
+        }
     } catch (e) {
         console.error("Failed to load printers", e);
+        printers.value = [{name: 'Fehler beim Laden der Drucker'}];
     }
 }
 

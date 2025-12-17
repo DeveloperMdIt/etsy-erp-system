@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 
 import axios from 'axios'
 import { useNotifications } from '../composables/useNotifications'
-import LabelDesigner from '../components/LabelDesigner.vue'
 import ShippingMethodsTable from '../components/ShippingMethodsTable.vue'
 
 const { showSuccess, showError } = useNotifications()
@@ -11,13 +10,6 @@ const { showSuccess, showError } = useNotifications()
 const loading = ref(true)
 const saving = ref(false)
 
-interface LabelProfile {
-    id?: string
-    name: string
-    printerName: string
-    format: string // A6, A4, 4x6
-    layoutJson?: string
-}
 
 interface SettingsData {
     // DHL
@@ -34,11 +26,6 @@ interface SettingsData {
     firstName: string
     lastName: string
     shopName: string
-
-    // Label Profiles
-    labelProfiles: LabelProfile[]
-
-    // Global Label Settings
     labelLogoPath?: string
     labelCompanyName?: string
     labelStreet?: string
@@ -92,7 +79,6 @@ const form = ref<SettingsData>({
     firstName: '',
     lastName: '',
     shopName: '',
-    labelProfiles: [],
     
     labelCompanyName: '',
     labelStreet: '',
@@ -125,15 +111,6 @@ const form = ref<SettingsData>({
 })
 
 const printers = ref<string[]>([])
-const showDesigner = ref(false)
-const currentDesignerProfileIndex = ref<number | null>(null)
-
-const currentDesignerProfile = computed(() => {
-    if (currentDesignerProfileIndex.value !== null && form.value.labelProfiles[currentDesignerProfileIndex.value]) {
-        return form.value.labelProfiles[currentDesignerProfileIndex.value]
-    }
-    return null
-})
 
 const previews = ref<Record<string, string>>({})
 
@@ -156,7 +133,6 @@ const fetchSettings = async () => {
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             shopName: user.shopName || '',
-            labelProfiles: user.labelProfiles || [],
 
             // Restore global label settings
             labelLogoPath: settings.labelLogoPath || '',
@@ -205,7 +181,6 @@ const saveSettings = async () => {
         
         // Remove empty profiles
         const cleanForm = { ...form.value }
-        cleanForm.labelProfiles = cleanForm.labelProfiles.filter(p => p.name && p.printerName)
 
         await axios.put('/api/settings', cleanForm)
         // Refresh to get updated previews
@@ -221,38 +196,14 @@ const saveSettings = async () => {
 
 const fetchPrinters = async () => {
     try {
-        const response = await axios.get('/api/settings/printers')
-        printers.value = response.data
+        const response = await axios.get('/api/shipping/printers')
+        printers.value = response.data.printers || []
     } catch (error) {
         console.error('Error fetching printers:', error)
     }
 }
 
-const addLabelProfile = () => {
-    form.value.labelProfiles.push({
-        name: '',
-        printerName: '',
-        format: 'A6'
-    })
-}
 
-const removeLabelProfile = (index: number) => {
-    form.value.labelProfiles.splice(index, 1)
-}
-
-const openDesigner = (index: number) => {
-    currentDesignerProfileIndex.value = index
-    showDesigner.value = true
-}
-
-const saveLayout = (json: string) => {
-    const idx = currentDesignerProfileIndex.value
-    if (idx !== null && form.value.labelProfiles[idx]) {
-        form.value.labelProfiles[idx].layoutJson = json
-        showDesigner.value = false
-        showSuccess('Layout gespeichert (vergessen Sie nicht, die Einstellungen zu speichern)')
-    }
-}
 
 onMounted(() => {
     fetchSettings()
@@ -443,72 +394,9 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <!-- Label Profiles (Dynamic) -->
-                <div class="pb-4">
-                    <div class="flex justify-between items-center mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Versandlabel Profile</label>
-                        <button @click="addLabelProfile" type="button" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            + Profil hinzufügen
-                        </button>
-                    </div>
-                    
-                    <div v-if="form.labelProfiles.length === 0" class="text-sm text-gray-500 italic mb-4">
-                        Keine Profile definiert. Klicken Sie auf "+", um (z.B. DHL, Deutsche Post) hinzuzufügen.
-                    </div>
 
-                    <div v-for="(profile, index) in form.labelProfiles" :key="index" class="grid grid-cols-12 gap-4 items-end mb-4 bg-gray-50 p-3 rounded-md relative">
-                        <!-- Profile Name -->
-                         <div class="col-span-12 sm:col-span-3">
-                            <label class="block text-xs font-medium text-gray-500">Name (z.B. DHL)</label>
-                            <input v-model="profile.name" type="text" placeholder="Bezeichnung" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
-                        </div>
 
-                        <!-- Printer -->
-                         <div class="col-span-12 sm:col-span-5">
-                            <label class="block text-xs font-medium text-gray-500">Drucker</label>
-                            <select v-model="profile.printerName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
-                                <option value="">(Wählen)</option>
-                                <option v-for="p in printers" :key="p" :value="p">{{ p }}</option>
-                            </select>
-                        </div>
 
-                         <!-- Format -->
-                         <div class="col-span-12 sm:col-span-3">
-                            <label class="block text-xs font-medium text-gray-500">Format</label>
-                             <select v-model="profile.format" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
-                                <option value="A6">A6 (105x148mm)</option>
-                                <option value="4x6">4x6 Zoll (100x150mm)</option>
-                                <option value="A5">A5</option>
-                                <option value="A4">A4</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Actions -->
-                        <div class="col-span-12 sm:col-span-1 flex justify-end items-end space-x-2">
-                            <button @click="openDesigner(index)" type="button" class="text-indigo-600 hover:text-indigo-900 p-2" title="Design bearbeiten">
-                                🎨
-                            </button>
-                            <button @click="removeLabelProfile(index)" type="button" class="text-red-600 hover:text-red-800 p-2" title="Entfernen">
-                                🗑️
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Label Designer Modal -->
-    <LabelDesigner 
-        v-if="showDesigner && currentDesignerProfile"
-        :modelValue="currentDesignerProfile.layoutJson"
-        :format="currentDesignerProfile.format"
-        :logo-url="form.labelLogoPath ? `/api/settings/logo-preview?path=${encodeURIComponent(form.labelLogoPath)}` : null"
-        @close="showDesigner = false"
-        @save="saveLayout"
-    />
 
     <!-- Counters Section (Unchanged) -->
     <div id="numbers" class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
