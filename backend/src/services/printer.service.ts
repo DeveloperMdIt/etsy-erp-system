@@ -8,23 +8,30 @@ const execAsync = util.promisify(exec);
 export class PrinterService {
 
     /**
-     * Get list of available printers on the system using PowerShell
+     * Get list of available printers on the system
      */
     static async getPrinters(): Promise<string[]> {
+        const platform = process.platform;
+
         try {
-            // Try 'powershell' first (Windows PowerShell), then 'pwsh' (Core)
-            const command = 'powershell -NoProfile -Command "Get-Printer | Select-Object -ExpandProperty Name"';
+            if (platform === 'win32') {
+                // Try 'powershell' first (Windows PowerShell), then 'pwsh' (Core)
+                const command = 'powershell -NoProfile -Command "Get-Printer | Select-Object -ExpandProperty Name"';
 
-            const { stdout } = await execAsync(command).catch(async (err) => {
-                // Fallback to pwsh if powershell fails
-                return await execAsync('pwsh -NoProfile -Command "Get-Printer | Select-Object -ExpandProperty Name"');
-            });
-
-            if (!stdout) return [];
-
-            return stdout.trim().split(/\r?\n/).map(p => p.trim()).filter(p => p);
+                const { stdout } = await execAsync(command).catch(async (err) => {
+                    // Fallback to pwsh if powershell fails
+                    return await execAsync('pwsh -NoProfile -Command "Get-Printer | Select-Object -ExpandProperty Name"');
+                });
+                if (!stdout) return [];
+                return stdout.trim().split(/\r?\n/).map(p => p.trim()).filter(p => p);
+            } else {
+                // Linux / macOS (CUPS)
+                const { stdout } = await execAsync('lpstat -p | cut -d " " -f 2');
+                if (!stdout) return [];
+                return stdout.trim().split(/\r?\n/).map(p => p.trim()).filter(p => p);
+            }
         } catch (error) {
-            console.error('Failed to list printers via PowerShell:', error);
+            console.error('Failed to list printers:', error);
             return [];
         }
     }

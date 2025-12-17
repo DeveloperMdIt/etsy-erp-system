@@ -236,7 +236,7 @@ export class DHLParcelService {
                 labelUrl: shipment.label?.url || '',
                 labelData: shipment.label?.b64 || ''
             };
-            throw new Error(errorMessage);
+
         } catch (error: any) {
             console.error('❌ Failed to create DHL label:', error.response?.data || error.message);
             const dhlError = error.response?.data;
