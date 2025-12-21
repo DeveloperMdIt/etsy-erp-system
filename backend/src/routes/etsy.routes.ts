@@ -68,12 +68,53 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
                 scopes.push('address_r');
                 probeLog.push('Address fetch success -> address_r OK');
             } catch (addrErr: any) {
-                probeLog.push(`Address fetch failed: ${addrErr.response?.status || addrErr.message} -> address_r MISSING`);
+                // 404 means "Resource not found" (User has no addresses), NOT "Forbidden".
+                // So 404 implies we DO have access to look! 
+                if (addrErr.response?.status === 404) {
+                    scopes.push('address_r');
+                    probeLog.push('Address fetch returned 404 (No addresses saved) -> Access assumed OK -> address_r OK');
+                } else {
+                    probeLog.push(`Address fetch failed: ${addrErr.response?.status || addrErr.message} -> address_r MISSING`);
+                }
             }
 
-            // 3. Assume others if basic worked (approximated for UI)
-            if (scopes.includes('profile_r')) {
-                scopes.push('listings_r', 'transactions_r', 'shops_r');
+            // 3. REAL-WORLD TEST: Check a Receipt for address data
+            if (user.etsyShopId) {
+                try {
+                    const recUrl = `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts?limit=1`;
+                    const recResp = await axios.get(recUrl, {
+                        headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyAccessToken}` }
+                    });
+
+                    if (recResp.data.count > 0) {
+                        scopes.push('transactions_r');
+                        const r = recResp.data.results[0];
+                        const hasAddress = !!(r.first_line || r.city || r.zip || r.formatted_address);
+                        probeLog.push(`Receipt Test: Found Receipt ${r.receipt_id}. Has Address Data: ${hasAddress ? 'YES' : 'NO'}`);
+
+                        if (hasAddress) {
+                            // If we see address in receipt, we DEFINITELY have address_r
+                            if (!scopes.includes('address_r')) scopes.push('address_r');
+                        } else {
+                            probeLog.push('WARNING: Receipt found but address data is NULL. Scope might be active but limited?');
+                        }
+                    } else {
+                        probeLog.push('Receipt Test: No receipts found in shop.');
+                        // Assume OK if we could at least query
+                        scopes.push('transactions_r');
+                    }
+                } catch (recErr: any) {
+                    probeLog.push(`Receipt Test Failed: ${recErr.message}`);
+                }
+            } else {
+                probeLog.push('Skipping Receipt Test: No Shop ID linked.');
+            }
+
+            // 4. Assume others if basic worked
+            if (scopes.includes('profile_r') || scopes.includes('address_r')) {
+                if (!scopes.includes('listings_r')) scopes.push('listings_r');
+                if (!scopes.includes('transactions_r')) scopes.push('transactions_r');
+                if (!scopes.includes('shops_r')) scopes.push('shops_r');
             }
 
         } catch (apiErr: any) {
