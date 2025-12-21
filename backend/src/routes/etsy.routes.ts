@@ -141,20 +141,20 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
             }
         }
 
-        res.json({
-            isConnected: true,
+        isConnected: true,
             shopName: user.shopName,
-            scopes: scopes,
-            debugInfo: {
+                scopes: scopes,
+                    debugInfo: {
+            version: 'DIAGNOSTIC-V3',
                 hasScopes: scopes.length > 0,
-                probeLog: probeLog,
-                error: !scopes.includes('address_r') ? 'Address Scope Missing' : null
-            }
-        });
+                    probeLog: probeLog,
+                        error: !scopes.includes('address_r') ? 'Address Scope Missing' : null
+        }
+    });
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: 'Internal Error' });
-    }
+    console.error(e);
+    res.status(500).json({ error: 'Internal Error' });
+}
 });
 
 // 2. Init OAuth

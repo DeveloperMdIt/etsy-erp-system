@@ -149,10 +149,14 @@ export class EtsyImportService {
                 await ActivityLogService.log(
                     LogType.WARNING,
                     LogAction.IMPORT_ORDERS,
-                    `Debug Address Data for ${receipt.name}`,
+                    `Debug Address Data (V3) for ${receipt.name}`,
                     userId,
                     tenantId,
-                    { receiptDump: receipt }
+                    {
+                        receiptDump: receipt,
+                        note: 'If address is null here, Single-Fetch also failed.',
+                        version: 'DIAGNOSTIC-V3'
+                    }
                 );
             } catch (e) { console.error('Failed to log debug info', e); }
         }
