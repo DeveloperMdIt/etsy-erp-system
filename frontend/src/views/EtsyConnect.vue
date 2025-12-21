@@ -10,9 +10,33 @@
     <div class="mt-8 bg-white overflow-hidden shadow sm:rounded-lg">
       <div class="px-4 py-5 sm:p-6">
         <h3 class="text-lg leading-6 font-medium text-gray-900">Status</h3>
-        <div class="mt-2 max-w-xl text-sm text-gray-500">
+        <div class="mt-2 text-sm text-gray-500">
           <p v-if="isConnected">Verbunden mit Shop: <strong>{{ shopName }}</strong></p>
           <p v-else>Nicht verbunden.</p>
+
+          <div v-if="isConnected && scopes.length > 0" class="mt-4">
+             <p class="mb-2 font-medium text-gray-700">Aktive Berechtigungen (Scopes):</p>
+             <div class="flex flex-wrap gap-2">
+                <span 
+                  v-for="scope in allExpectedScopes" 
+                  :key="scope"
+                  :class="[
+                    scopes.includes(scope) 
+                      ? 'bg-green-100 text-green-800 border-green-200' 
+                      : 'bg-red-50 text-red-800 border-red-200',
+                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border'
+                  ]"
+                >
+                  <span v-if="scopes.includes(scope)" class="mr-1">✓</span>
+                  <span v-else class="mr-1">✕</span>
+                  {{ scope }}
+                </span>
+             </div>
+             <p v-if="!scopes.includes('address_r') || !scopes.includes('email_r')" class="mt-3 text-red-600 bg-red-50 p-2 rounded text-xs">
+                ⚠️ <strong>Achtung:</strong> Wichtige Berechtigungen (address_r, email_r) fehlen! 
+                Bitte Verbindung trennen, App auf Etsy.com widerrufen ("Revoke") und neu verbinden.
+             </p>
+          </div>
         </div>
         <div class="mt-5">
           <button v-if="!isConnected" @click="connectEtsy" type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
@@ -200,11 +224,23 @@ onMounted(async () => {
   }
 });
 
+const scopes = ref<string[]>([]);
+
+const allExpectedScopes = [
+  'listings_r', 'listings_w',
+  'transactions_r', 'transactions_w',
+  'shops_r', 'shops_w',
+  'address_r', 'email_r',
+  'billing_r', 'profile_r',
+  'favorites_r'
+];
+
 const checkStatus = async () => {
     try {
         const res = await axios.get('/api/etsy/status');
         isConnected.value = res.data.isConnected;
         shopName.value = res.data.shopName;
+        scopes.value = res.data.scopes || [];
     } catch (e) {
         console.error('Status check failed', e);
     }
