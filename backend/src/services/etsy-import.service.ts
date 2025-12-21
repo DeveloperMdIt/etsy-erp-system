@@ -119,9 +119,32 @@ export class EtsyImportService {
 
         // Address Extraction
         // DEBUG: Force log for the first few receipts to debug address issues
-        if (Math.random() < 0.1 || receipt.name === 'Micha') {
-            console.log(`[Etsy Import] Debug Receipt for ${receipt.name}:`);
-            console.log(JSON.stringify(receipt, null, 2));
+        // DEBUG: Force log for the first few receipts to debug address issues
+        if (Math.random() < 0.5 || receipt.name === 'Micha' || true) { // FORCE LOG
+            try {
+                // Log to Database so user can see it in UI
+                // We use a fire-and-forget approach or await it? 
+                // Better await to ensure it's written.
+                // We need to import LogType/LogAction/ActivityLogService if not available, but they are imported at top.
+            } catch (e) { } // prevent crash
+
+            // Actually, let's just use the ActivityLogService. 
+            // We need to make sure we don't spam. "|| true" will spam 100 logs if 100 orders.
+            // Let's rely on random < 0.2 AND a specific name.
+        }
+
+        // BETTER: Just log the one receipt the user is looking for or random
+        if (receipt.name === 'Micha' || Math.random() < 0.05) {
+            try {
+                await ActivityLogService.log(
+                    LogType.WARNING,
+                    LogAction.IMPORT_ORDERS,
+                    `Debug Address Data for ${receipt.name}`,
+                    userId,
+                    tenantId,
+                    { receiptDump: receipt }
+                );
+            } catch (e) { console.error('Failed to log debug info', e); }
         }
 
         // SPLIT NAME LOGIC
@@ -172,20 +195,33 @@ export class EtsyImportService {
                 }
             });
         } else {
-            // Update address if we found better data and existing is placeholder
-            const isUnknown = customer.street === 'Unknown' || customer.street === 'Unknown Street';
+            // Check if we have valid address data from Etsy
             const weHaveData = street && street !== 'Unknown';
-            if (isUnknown && weHaveData) {
-                await prisma.customer.update({
-                    where: { id: customer.id },
-                    data: {
-                        firstName: customerAddress.firstName,
-                        street: customerAddress.street,
-                        city: customerAddress.city,
-                        postalCode: customerAddress.postalCode,
-                        country: customerAddress.country
-                    }
-                });
+
+            if (weHaveData) {
+                // Check if DATA CHANGED (simple comparison)
+                const addressChanged =
+                    customer.street !== customerAddress.street ||
+                    customer.postalCode !== customerAddress.postalCode ||
+                    customer.city !== customerAddress.city ||
+                    customer.country !== customerAddress.country ||
+                    customer.firstName !== customerAddress.firstName ||
+                    customer.lastName !== customerAddress.lastName;
+
+                if (addressChanged) {
+                    console.log(`[Import] Updating Address for Customer ${customer.email}`);
+                    await prisma.customer.update({
+                        where: { id: customer.id },
+                        data: {
+                            firstName: customerAddress.firstName,
+                            lastName: customerAddress.lastName,
+                            street: customerAddress.street,
+                            city: customerAddress.city,
+                            postalCode: customerAddress.postalCode,
+                            country: customerAddress.country
+                        }
+                    });
+                }
             }
         }
 
