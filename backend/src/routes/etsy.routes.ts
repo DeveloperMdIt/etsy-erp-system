@@ -35,72 +35,67 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
         }
 
         // Verify Token & Get Scopes by making a small API call
+        const { key: etsyClientId } = await getEtsyKeys();
+        let scopes: string[] = [];
         let availableHeaders: string[] = [];
 
         try {
-            // ... inside try block ...
-            // (This replace is tricky because response scope is inside try)
+            // Use User Endpoint which definitely requires Auth
+            const targetUrl = `https://api.etsy.com/v3/application/users/${user.etsyUserId}`;
+
+            console.log(`[Status Check] Querying Etsy: ${targetUrl}`);
+
+            const response = await axios.get(targetUrl, {
+                headers: {
+                    'x-api-key': etsyClientId,
+                    'Authorization': `Bearer ${user.etsyAccessToken}`
+                }
+            });
+
+            // Extract scopes from header
+            const scopeHeader = response.headers['x-oauth-scopes'];
+            availableHeaders = Object.keys(response.headers);
+
+            console.log(`[Status Check] Etsy Headers received. x-oauth-scopes: "${scopeHeader}"`);
+
+            if (scopeHeader && typeof scopeHeader === 'string') {
+                scopes = scopeHeader.split(' ');
+            } else {
+                console.warn('[Status Check] No x-oauth-scopes header found in Etsy response!');
+            }
+
+        } catch (apiErr: any) {
+            console.error('Scope check failed:', apiErr.message);
+            if (apiErr.response) {
+                console.error('Error Status:', apiErr.response.status);
+                console.error('Error Headers:', JSON.stringify(apiErr.response.headers));
+                // Capture headers even on error (e.g. 403 Forbidden might still have scopes)
+                if (apiErr.response.headers) {
+                    availableHeaders = Object.keys(apiErr.response.headers);
+                }
+            }
+            // If 401, token invalid
+            if (apiErr.response?.status === 401) {
+                return res.json({ isConnected: false, error: 'Token expired' });
+            }
         }
 
-        // REWRITE: Move var declaration up
-
-            // Use Shop Endpoint (more reliable if we have shopId)
-            // If shopId is present, use it directly. Otherwise use user's shops.
-            const targetUrl = user.etsyShopId
-            ? `https://api.etsy.com/v3/application/shops/${user.etsyShopId}`
-            : `https://api.etsy.com/v3/application/users/${user.etsyUserId}/shops`;
-
-        console.log(`[Status Check] Querying Etsy: ${targetUrl}`);
-
-        const response = await axios.get(targetUrl, {
-            headers: {
-                'x-api-key': etsyClientId,
-                'Authorization': `Bearer ${user.etsyAccessToken}`
+        res.json({
+            isConnected: true,
+            shopName: user.shopName,
+            scopes: scopes,
+            debugInfo: {
+                hasScopes: scopes.length > 0,
+                targetUrl: `users/${user.etsyUserId}`,
+                error: scopes.length === 0 ? 'No Scopes Found' : null,
+                scopesLength: scopes.length,
+                availableHeaders: availableHeaders
             }
         });
-
-        // Extract scopes from header
-        const scopeHeader = response.headers['x-oauth-scopes'];
-        console.log(`[Status Check] Etsy Headers received. x-oauth-scopes: "${scopeHeader}"`);
-
-        if (scopeHeader && typeof scopeHeader === 'string') {
-            scopes = scopeHeader.split(' ');
-        } else {
-            console.warn('[Status Check] No x-oauth-scopes header found in Etsy response!');
-            // Start debug: log all headers keys
-            console.log('Available Headers:', Object.keys(response.headers));
-        }
-
-    } catch (apiErr: any) {
-        console.error('Scope check failed:', apiErr.message);
-        if (apiErr.response) {
-            console.error('Error Status:', apiErr.response.status);
-            console.error('Error Headers:', JSON.stringify(apiErr.response.headers));
-        }
-        // If 401, token invalid
-        if (apiErr.response?.status === 401) {
-            return res.json({ isConnected: false, error: 'Token expired' });
-        }
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal Error' });
     }
-
-    res.json({
-        isConnected: true,
-        shopName: user.shopName,
-        scopes: scopes,
-        debugInfo: {
-            hasScopes: scopes.length > 0,
-            targetUrl: `users/${user.etsyUserId}`,
-            error: scopes.length === 0 ? 'No Scopes Found' : null,
-            scopesLength: scopes.length,
-            // Expose all header keys to UI to see if we missed it
-            // We use a safe access in case response is not defined in catch block (handled by 'scopes' variable logic usually)
-            availableHeaders: scopes.length === 0 ? [] : [] // filled below
-        }
-    });
-} catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Internal Error' });
-}
 });
 
 // 2. Init OAuth
