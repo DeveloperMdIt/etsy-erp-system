@@ -768,6 +768,25 @@ export class EtsyImportService {
         }
 
         if (existingOrder) {
+            // MERGE STRATEGY: Re-link to better customer if needed
+            if (existingOrder.customerId !== customer.id) {
+                console.log(`[CSV Import] Re-linking Order ${etsyOrderId} from Customer ${existingOrder.customerId} to ${customer.id}`);
+                await prisma.order.update({
+                    where: { id: existingOrder.id },
+                    data: { customerId: customer.id }
+                });
+            }
+
+            // MERGE STRATEGY: Remove "Missing Address" warning if we now have data
+            if (existingOrder.notes && existingOrder.notes.includes('⚠️ Warnung: Keine Adressdaten')) {
+                console.log(`[CSV Import] Removing Warning Note for Order ${etsyOrderId}`);
+                const cleanedNotes = existingOrder.notes.replace('⚠️ Warnung: Keine Adressdaten von Etsy erhalten (Datenschutz). Bitte im Etsy-Backend prüfen oder CSV importieren.', '').trim();
+                await prisma.order.update({
+                    where: { id: existingOrder.id },
+                    data: { notes: cleanedNotes }
+                });
+            }
+
             if (existingOrder.items.length === 0) {
                 await prisma.order.delete({ where: { id: existingOrder.id } });
             } else {
