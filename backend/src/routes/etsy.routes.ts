@@ -112,9 +112,10 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
 
             // 4. Assume others if basic worked
             if (scopes.includes('profile_r') || scopes.includes('address_r')) {
-                if (!scopes.includes('listings_r')) scopes.push('listings_r');
-                if (!scopes.includes('transactions_r')) scopes.push('transactions_r');
-                if (!scopes.includes('shops_r')) scopes.push('shops_r');
+                const inferredScopes = ['listings_r', 'transactions_r', 'shops_r', 'billing_r', 'favorites_r'];
+                inferredScopes.forEach(s => {
+                    if (!scopes.includes(s)) scopes.push(s);
+                });
             }
 
         } catch (apiErr: any) {
