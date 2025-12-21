@@ -53,6 +53,19 @@
                         <li>Verbinden Sie die App hier erneut.</li>
                     </ol>
                 </div>
+                
+                <!-- Technical Details -->
+                <div class="mt-3 border-t border-red-200 pt-2">
+                    <button @click="showDebug = !showDebug" class="text-xs text-red-600 underline">
+                        {{ showDebug ? 'Details ausblenden' : 'Technische Details anzeigen' }}
+                    </button>
+                    <div v-if="showDebug" class="mt-2">
+                        <p class="text-xs font-semibold">Server Probe Log:</p>
+                        <pre class="bg-white p-2 rounded border border-red-100 text-xs overflow-x-auto mt-1 text-gray-600">{{ debugInfo?.probeLog || 'Keine Logs verfügbar' }}</pre>
+                        <p class="text-xs font-semibold mt-2">Fehler Code:</p>
+                        <pre class="bg-white p-2 rounded border border-red-100 text-xs overflow-x-auto mt-1 text-gray-600">{{ debugInfo?.error || 'None' }}</pre>
+                    </div>
+                </div>
              </div>
           </div>
           <div v-if="isConnected && scopes.length === 0" class="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
@@ -251,6 +264,7 @@ onMounted(async () => {
 
 const scopes = ref<string[]>([]);
 const debugInfo = ref<any>(null);
+const showDebug = ref(false);
 
 const allExpectedScopes = [
   'listings_r', 'listings_w',
