@@ -552,8 +552,19 @@ onMounted(fetchOrders)
                     <div v-if="order.etsyOrderNumber" class="text-gray-500 text-xs">Etsy: {{ order.etsyOrderNumber }}</div>
                   </td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    <div>{{ order.customer.firstName }} {{ order.customer.lastName }}</div>
-                    <div class="text-xs text-gray-400">{{ order.customer.city }}</div>
+                    <div class="text-gray-900 font-medium flex items-center gap-1">
+                        {{ order.customer?.firstName }} {{ order.customer?.lastName }}
+                        
+                        <!-- Warning Icon for Missing Data -->
+                        <div v-if="order.customer?.street?.includes('Unknown') || order.notes?.includes('Warnung: Keine Adressdaten')" class="group relative flex items-center">
+                            <span class="text-amber-500 cursor-help text-lg">⚠️</span>
+                            <!-- Tooltip -->
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 bg-gray-900 text-white text-xs rounded p-2 z-50">
+                                Adresse fehlt (Etsy Datenschutz).<br>Bitte manuell prüfen oder CSV importieren.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-gray-500 text-xs">{{ order.customer?.email }}</div>
                   </td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ formatDate(order.createdAt) }}</td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-medium">{{ formatPrice(order.totalPrice) }}</td>
