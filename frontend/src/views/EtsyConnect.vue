@@ -37,6 +37,15 @@
                 Bitte Verbindung trennen, App auf Etsy.com widerrufen ("Revoke") und neu verbinden.
              </p>
           </div>
+          
+          <!-- Debug Fallback if no scopes found -->
+          <div v-if="isConnected && scopes.length === 0" class="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
+             <h4 class="text-sm font-bold text-yellow-800 mb-1">Diagnose-Informationen</h4>
+             <p class="text-xs text-yellow-700">Es konnten keine Berechtigungen (Scopes) ermittelt werden.</p>
+             <p class="text-xs text-yellow-700 mt-1">Backend Debug Info:</p>
+             <pre class="text-xs mt-1 p-2 bg-white rounded border border-gray-200 overflow-x-auto">{{ debugInfo }}</pre>
+          </div>
+
         </div>
         <div class="mt-5">
           <button v-if="!isConnected" @click="connectEtsy" type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
@@ -225,6 +234,7 @@ onMounted(async () => {
 });
 
 const scopes = ref<string[]>([]);
+const debugInfo = ref<any>(null);
 
 const allExpectedScopes = [
   'listings_r', 'listings_w',
@@ -241,6 +251,7 @@ const checkStatus = async () => {
         isConnected.value = res.data.isConnected;
         shopName.value = res.data.shopName;
         scopes.value = res.data.scopes || [];
+        debugInfo.value = res.data.debugInfo || null;
     } catch (e) {
         console.error('Status check failed', e);
     }
