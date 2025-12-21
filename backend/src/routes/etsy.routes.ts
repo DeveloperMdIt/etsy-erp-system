@@ -24,20 +24,46 @@ async function getEtsyKeys() {
     };
 }
 
-// 1. Status Check
+// 1. Status Check & Scope Verification
 router.get('/status', authenticateToken as any, async (req: any, res: Response) => {
     try {
-        const userId = req.user.id; // Correct property
+        const userId = req.user.id;
+        const user = await prisma.user.findUnique({ where: { id: userId } });
 
-        const user = await prisma.user.findUnique({
-            where: { id: userId }
-        });
+        if (!user || !user.etsyAccessToken) {
+            return res.json({ isConnected: false });
+        }
 
-        if (!user) return res.sendStatus(401);
+        // Verify Token & Get Scopes by making a small API call
+        const { key: etsyClientId } = await getEtsyKeys();
+        let scopes = [];
+
+        try {
+            // Using a lightweight endpoint to check headers
+            const response = await axios.get(`https://api.etsy.com/v3/application/users/${user.etsyUserId}/shops`, {
+                headers: {
+                    'x-api-key': etsyClientId,
+                    'Authorization': `Bearer ${user.etsyAccessToken}`
+                }
+            });
+
+            // Extract scopes from header
+            const scopeHeader = response.headers['x-oauth-scopes'];
+            if (scopeHeader) {
+                scopes = scopeHeader.split(' ');
+            }
+        } catch (apiErr: any) {
+            console.error('Scope check failed:', apiErr.message);
+            // If 401, token invalid
+            if (apiErr.response?.status === 401) {
+                return res.json({ isConnected: false, error: 'Token expired' });
+            }
+        }
 
         res.json({
-            isConnected: !!user.etsyAccessToken,
-            shopName: user.shopName
+            isConnected: true,
+            shopName: user.shopName,
+            scopes: scopes
         });
     } catch (e) {
         console.error(e);
@@ -139,6 +165,10 @@ router.get('/callback', async (req: Request, res: Response) => {
                 shopId = shop.shop_id.toString();
                 shopName = shop.shop_name;
                 console.log(`✅ Shop Found via User ID: ${shopName} (${shopId})`);
+
+                // CRITICAL DEBUG: Log Granted Scopes from Header
+                const grantedScopes = shopResp.headers['x-oauth-scopes'] || 'UNKNOWN';
+                console.log('🔐 Granted OAuth Scopes:', grantedScopes);
             }
         } catch (e: any) { console.log('   /shops failed:', e.message); }
 
