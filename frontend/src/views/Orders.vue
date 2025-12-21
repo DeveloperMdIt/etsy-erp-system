@@ -40,6 +40,7 @@ interface Order {
   items: OrderItem[]
   shippingLabels: { id: string; trackingNumber: string; provider: string }[]
   createdAt: string
+  notes?: string
 }
 
 // ... existing refs ...
