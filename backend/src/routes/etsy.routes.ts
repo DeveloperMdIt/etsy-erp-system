@@ -36,11 +36,18 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
 
         // Verify Token & Get Scopes by making a small API call
         const { key: etsyClientId } = await getEtsyKeys();
-        let scopes = [];
+        let scopes: string[] = [];
 
         try {
-            // Using a lightweight endpoint to check headers
-            const response = await axios.get(`https://api.etsy.com/v3/application/users/${user.etsyUserId}/shops`, {
+            // Use Shop Endpoint (more reliable if we have shopId)
+            // If shopId is present, use it directly. Otherwise use user's shops.
+            const targetUrl = user.etsyShopId
+                ? `https://api.etsy.com/v3/application/shops/${user.etsyShopId}`
+                : `https://api.etsy.com/v3/application/users/${user.etsyUserId}/shops`;
+
+            console.log(`[Status Check] Querying Etsy: ${targetUrl}`);
+
+            const response = await axios.get(targetUrl, {
                 headers: {
                     'x-api-key': etsyClientId,
                     'Authorization': `Bearer ${user.etsyAccessToken}`
@@ -49,11 +56,22 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
 
             // Extract scopes from header
             const scopeHeader = response.headers['x-oauth-scopes'];
-            if (scopeHeader) {
+            console.log(`[Status Check] Etsy Headers received. x-oauth-scopes: "${scopeHeader}"`);
+
+            if (scopeHeader && typeof scopeHeader === 'string') {
                 scopes = scopeHeader.split(' ');
+            } else {
+                console.warn('[Status Check] No x-oauth-scopes header found in Etsy response!');
+                // Start debug: log all headers keys
+                console.log('Available Headers:', Object.keys(response.headers));
             }
+
         } catch (apiErr: any) {
             console.error('Scope check failed:', apiErr.message);
+            if (apiErr.response) {
+                console.error('Error Status:', apiErr.response.status);
+                console.error('Error Headers:', JSON.stringify(apiErr.response.headers));
+            }
             // If 401, token invalid
             if (apiErr.response?.status === 401) {
                 return res.json({ isConnected: false, error: 'Token expired' });
