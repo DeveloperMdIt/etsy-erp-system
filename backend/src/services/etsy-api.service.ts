@@ -34,7 +34,7 @@ export class EtsyApiService {
 
     private static async _fetchOrdersInternal(user: any) {
         const response = await rateLimitedGet(
-            `https://openapi.etsy.com/v3/application/shops/${user.etsyShopId}/receipts?limit=100`,
+            `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts?limit=100`,
             {
                 headers: {
                     'x-api-key': ETSY_KEY,

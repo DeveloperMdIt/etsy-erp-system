@@ -34,14 +34,18 @@
              </div>
              
              <!-- Dynamic Warning for Critical Scopes -->
-             <div v-if="!scopes.includes('address_r') || !scopes.includes('email_r')" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+             <div v-if="!scopes.includes('address_r') || !scopes.includes('email_r') || !scopes.includes('billing_r')" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
                 <h4 class="text-sm font-bold text-red-800 flex items-center">
                     <span class="mr-2">⚠️</span> Fehlende Berechtigungen
                 </h4>
                 <p class="mt-1 text-sm text-red-700">
                     Folgende wichtige Berechtigungen fehlen noch:
                     <strong class="font-mono ml-1">
-                        {{ [!scopes.includes('address_r') ? 'address_r' : '', !scopes.includes('email_r') ? 'email_r' : ''].filter(Boolean).join(', ') }}
+                        {{ [
+                            !scopes.includes('address_r') ? 'address_r' : '',
+                            !scopes.includes('email_r') ? 'email_r' : '',
+                            !scopes.includes('billing_r') ? 'billing_r' : ''
+                        ].filter(Boolean).join(', ') }}
                     </strong>
                 </p>
                 <div class="mt-2 text-xs text-red-800 bg-red-100 p-2 rounded">
