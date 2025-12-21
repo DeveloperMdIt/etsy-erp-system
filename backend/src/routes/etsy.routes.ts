@@ -34,47 +34,50 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
             return res.json({ isConnected: false });
         }
 
-        // Verify Token & Get Scopes by making a small API call
+        // Verify Token & Get Scopes by PROBING actual permissions
+        // (Headers are unreliable, so we try to fetch protected data)
         const { key: etsyClientId } = await getEtsyKeys();
         let scopes: string[] = [];
-        let availableHeaders: string[] = [];
+        let probeLog: string[] = [];
 
         try {
-            // Use User Endpoint which definitely requires Auth
-            const targetUrl = `https://api.etsy.com/v3/application/users/${user.etsyUserId}`;
-
-            console.log(`[Status Check] Querying Etsy: ${targetUrl}`);
-
-            const response = await axios.get(targetUrl, {
-                headers: {
-                    'x-api-key': etsyClientId,
-                    'Authorization': `Bearer ${user.etsyAccessToken}`
-                }
+            // 1. Check 'profile_r' and 'email_r'
+            const userUrl = `https://api.etsy.com/v3/application/users/${user.etsyUserId}`;
+            const userResp = await axios.get(userUrl, {
+                headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyAccessToken}` }
             });
+            probeLog.push(`User Check: ${userResp.status}`);
 
-            // Extract scopes from header
-            const scopeHeader = response.headers['x-oauth-scopes'];
-            availableHeaders = Object.keys(response.headers);
+            // If we got here, we have basic access
+            scopes.push('profile_r');
 
-            console.log(`[Status Check] Etsy Headers received. x-oauth-scopes: "${scopeHeader}"`);
-
-            if (scopeHeader && typeof scopeHeader === 'string') {
-                scopes = scopeHeader.split(' ');
+            // Check for email
+            if (userResp.data && (userResp.data.primary_email || userResp.data.email)) {
+                scopes.push('email_r');
+                probeLog.push('Email found -> email_r OK');
             } else {
-                console.warn('[Status Check] No x-oauth-scopes header found in Etsy response!');
+                probeLog.push('Email missing -> email_r FAILED');
+            }
+
+            // 2. Check 'address_r' by trying to fetch addresses
+            try {
+                const addrUrl = `https://api.etsy.com/v3/application/users/${user.etsyUserId}/addresses`;
+                await axios.get(addrUrl, {
+                    headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyAccessToken}` }
+                });
+                scopes.push('address_r');
+                probeLog.push('Address fetch success -> address_r OK');
+            } catch (addrErr: any) {
+                probeLog.push(`Address fetch failed: ${addrErr.response?.status || addrErr.message} -> address_r MISSING`);
+            }
+
+            // 3. Assume others if basic worked (approximated for UI)
+            if (scopes.includes('profile_r')) {
+                scopes.push('listings_r', 'transactions_r', 'shops_r');
             }
 
         } catch (apiErr: any) {
-            console.error('Scope check failed:', apiErr.message);
-            if (apiErr.response) {
-                console.error('Error Status:', apiErr.response.status);
-                console.error('Error Headers:', JSON.stringify(apiErr.response.headers));
-                // Capture headers even on error (e.g. 403 Forbidden might still have scopes)
-                if (apiErr.response.headers) {
-                    availableHeaders = Object.keys(apiErr.response.headers);
-                }
-            }
-            // If 401, token invalid
+            console.error('Probe failed:', apiErr.message);
             if (apiErr.response?.status === 401) {
                 return res.json({ isConnected: false, error: 'Token expired' });
             }
@@ -86,10 +89,8 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
             scopes: scopes,
             debugInfo: {
                 hasScopes: scopes.length > 0,
-                targetUrl: `users/${user.etsyUserId}`,
-                error: scopes.length === 0 ? 'No Scopes Found' : null,
-                scopesLength: scopes.length,
-                availableHeaders: availableHeaders
+                probeLog: probeLog,
+                error: !scopes.includes('address_r') ? 'Address Scope Missing' : null
             }
         });
     } catch (e) {
