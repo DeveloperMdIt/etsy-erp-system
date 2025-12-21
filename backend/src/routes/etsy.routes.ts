@@ -81,7 +81,13 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
         res.json({
             isConnected: true,
             shopName: user.shopName,
-            scopes: scopes
+            scopes: scopes,
+            debugInfo: {
+                hasScopes: scopes.length > 0,
+                targetUrl: user.etsyShopId ? `shops/${user.etsyShopId}` : `users/${user.etsyUserId}/shops`,
+                error: scopes.length === 0 ? 'No Scopes Found' : null,
+                scopesLength: scopes.length
+            }
         });
     } catch (e) {
         console.error(e);
