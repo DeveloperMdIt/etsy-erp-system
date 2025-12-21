@@ -32,13 +32,29 @@
                   {{ scope }}
                 </span>
              </div>
-             <p v-if="!scopes.includes('address_r') || !scopes.includes('email_r')" class="mt-3 text-red-600 bg-red-50 p-2 rounded text-xs">
-                ⚠️ <strong>Achtung:</strong> Wichtige Berechtigungen (address_r, email_r) fehlen! 
-                Bitte Verbindung trennen, App auf Etsy.com widerrufen ("Revoke") und neu verbinden.
-             </p>
+             
+             <!-- Dynamic Warning for Critical Scopes -->
+             <div v-if="!scopes.includes('address_r') || !scopes.includes('email_r')" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <h4 class="text-sm font-bold text-red-800 flex items-center">
+                    <span class="mr-2">⚠️</span> Fehlende Berechtigungen
+                </h4>
+                <p class="mt-1 text-sm text-red-700">
+                    Folgende wichtige Berechtigungen fehlen noch:
+                    <strong class="font-mono ml-1">
+                        {{ [!scopes.includes('address_r') ? 'address_r' : '', !scopes.includes('email_r') ? 'email_r' : ''].filter(Boolean).join(', ') }}
+                    </strong>
+                </p>
+                <div class="mt-2 text-xs text-red-800 bg-red-100 p-2 rounded">
+                    <strong>Lösung:</strong>
+                    <ol class="list-decimal ml-4 mt-1 space-y-1">
+                        <li>Klicken Sie unten auf <b>"Trennen"</b>.</li>
+                        <li>Gehen Sie auf <a href="https://www.etsy.com/your/account/apps" target="_blank" class="underline text-blue-700">Etsy.com -> Konto -> Apps</a>.</li>
+                        <li>Suchen Sie diese App und klicken Sie auf <b>"Zugriff entfernen" (Revoke/X)</b>. <br/>(Das ist ZWINGEND notwendig, damit Etsy die neuen Rechte abfragt!)</li>
+                        <li>Verbinden Sie die App hier erneut.</li>
+                    </ol>
+                </div>
+             </div>
           </div>
-          
-          <!-- Debug Fallback if no scopes found -->
           <div v-if="isConnected && scopes.length === 0" class="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
              <h4 class="text-sm font-bold text-yellow-800 mb-1">Diagnose-Informationen</h4>
              <p class="text-xs text-yellow-700">Es konnten keine Berechtigungen (Scopes) ermittelt werden.</p>
