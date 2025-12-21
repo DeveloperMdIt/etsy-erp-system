@@ -238,6 +238,13 @@ export class EtsyImportService {
                 needsUpdate = true;
             }
 
+            // CRITICAL FIX: Relink to new customer if we found a better match (e.g. real email vs placeholder)
+            if (order.customerId !== customer.id) {
+                console.log(`[Import] Relinking Order ${externalOrderId} to new Customer (Old: ${order.customerId} -> New: ${customer.id})`);
+                updateData.customerId = customer.id;
+                needsUpdate = true;
+            }
+
             if (needsUpdate) {
                 await prisma.order.update({
                     where: { id: order.id },
