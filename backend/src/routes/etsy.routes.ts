@@ -88,9 +88,25 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
 
                     if (recResp.data.count > 0) {
                         scopes.push('transactions_r');
-                        const r = recResp.data.results[0];
-                        const hasAddress = !!(r.first_line || r.city || r.zip || r.formatted_address);
-                        probeLog.push(`Receipt Test: Found Receipt ${r.receipt_id}. Has Address Data: ${hasAddress ? 'YES' : 'NO'}`);
+                        let r = recResp.data.results[0];
+                        let hasAddress = !!(r.first_line || r.city || r.zip || r.formatted_address);
+
+                        if (!hasAddress) {
+                            probeLog.push(`Receipt Test: List View missing address. Trying Single Fetch for ${r.receipt_id}...`);
+                            try {
+                                const singleUrl = `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts/${r.receipt_id}`;
+                                const singleResp = await axios.get(singleUrl, {
+                                    headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyAccessToken}` }
+                                });
+                                r = singleResp.data;
+                                hasAddress = !!(r.first_line || r.city || r.zip || r.formatted_address);
+                                probeLog.push(`Receipt Test (Single): Found. Has Address: ${hasAddress ? 'YES' : 'NO'}`);
+                            } catch (singleErr: any) {
+                                probeLog.push(`Receipt Test (Single) Failed: ${singleErr.message}`);
+                            }
+                        } else {
+                            probeLog.push(`Receipt Test: Found Receipt ${r.receipt_id}. Has Address Data: YES (List View)`);
+                        }
 
                         if (hasAddress) {
                             // If we see address in receipt, we DEFINITELY have address_r

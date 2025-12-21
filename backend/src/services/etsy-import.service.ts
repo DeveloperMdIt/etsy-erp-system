@@ -117,7 +117,17 @@ export class EtsyImportService {
             email = `${receipt.buyer_user_id}@etsy.placeholder.com`;
         }
 
-        // Address Extraction
+        // Address Extraction Check - FALLBACK FOR MISSING DATA (API v3 List Issue)
+        if (!receipt.first_line && !receipt.zip && !receipt.city) {
+            console.log(`[Import] Receipt ${receipt.receipt_id} has missing address data. Attempting single-fetch...`);
+            const { EtsyApiService } = await import('./etsy-api.service');
+            const fullReceipt = await EtsyApiService.fetchReceipt(userId, receipt.receipt_id);
+            if (fullReceipt) {
+                console.log(`[Import] Refetched Receipt ${receipt.receipt_id}. Has Address: ${!!fullReceipt.first_line}`);
+                receipt = { ...receipt, ...fullReceipt };
+            }
+        }
+
         // DEBUG: Force log for the first few receipts to debug address issues
         // DEBUG: Force log for the first few receipts to debug address issues
         if (Math.random() < 0.5 || receipt.name === 'Micha' || true) { // FORCE LOG

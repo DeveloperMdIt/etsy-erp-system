@@ -49,6 +49,32 @@ export class EtsyApiService {
     }
 
     /**
+     * Fetch Single Receipt Details (Full PII often requires direct fetch)
+     */
+    static async fetchReceipt(userId: string, receiptId: number | string) {
+        let user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || !user.etsyAccessToken || !user.etsyShopId) {
+            throw new Error('User not connected');
+        }
+
+        try {
+            const response = await rateLimitedGet(
+                `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts/${receiptId}`,
+                {
+                    headers: {
+                        'x-api-key': ETSY_KEY,
+                        'Authorization': `Bearer ${user.etsyAccessToken}`
+                    }
+                }
+            );
+            return response.data;
+        } catch (error: any) {
+            console.error(`Error fetching receipt ${receiptId}`, error.response?.data || error.message);
+            return null;
+        }
+    }
+
+    /**
      * Fetch Single Listing Details (Images, Description, etc.)
      */
     static async fetchListingDetails(userId: string, listingId: string) {
