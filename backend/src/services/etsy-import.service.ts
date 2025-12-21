@@ -118,17 +118,10 @@ export class EtsyImportService {
         }
 
         // Address Extraction
-        // DEBUG: Log full object for the first order to see structure
-        if (!process.env.SILENT_LOGS && receipt === receipt[0]) {
-            // Logic to log only once is tricky inside loop without index, so we'll just log if it's a specific name or just log keys
-            console.log(`[Address Debug] Full Receipt Keys: ${Object.keys(receipt).join(', ')}`);
-            console.log(`[Address Debug] Formatted Address: '${receipt.formatted_address}'`);
-            // console.log(`[Address Debug] Full Dump:`, JSON.stringify(receipt, null, 2)); // Use sparingly
-        }
-
-        // Log keys and formatted address specifically for the first few to be safe
-        if (!process.env.SILENT_LOGS && (receipt.name === 'Schwerdtfeger Astrid' || Math.random() < 0.05)) {
-            console.log(`[Address Debug] JSON DUMP for ${receipt.name}:`, JSON.stringify(receipt));
+        // DEBUG: Force log for the first few receipts to debug address issues
+        if (Math.random() < 0.1 || receipt.name === 'Micha') {
+            console.log(`[Etsy Import] Debug Receipt for ${receipt.name}:`);
+            console.log(JSON.stringify(receipt, null, 2));
         }
 
         // SPLIT NAME LOGIC
