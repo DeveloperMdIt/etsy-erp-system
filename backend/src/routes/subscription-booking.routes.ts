@@ -29,7 +29,7 @@ router.post('/book-plan', authenticateToken, async (req: Request, res: Response)
         await prisma.user.update({
             where: { id: userId },
             data: {
-                subscriptionPlanId: planId,
+                subscriptionPlanId: planId as string,
                 subscriptionStatus: 'ACTIVE', // Assume active if booked
                 // If we want to keep trial running if they upgrade early? Usually update immediately.
                 // trialEndsAt: null // Remove trial if they commit to a plan?

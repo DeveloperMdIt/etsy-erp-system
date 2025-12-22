@@ -95,7 +95,7 @@ router.post('/book-plan', authenticateToken, async (req: Request, res: Response)
         await prisma.user.update({
             where: { id: userId },
             data: {
-                subscriptionPlanId: planId,
+                subscriptionPlanId: planId as string,
                 subscriptionStatus: 'ACTIVE',
             }
         });

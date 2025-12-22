@@ -137,9 +137,37 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
         } catch (apiErr: any) {
             console.error('Probe failed:', apiErr.message);
             if (apiErr.response?.status === 401) {
-                return res.json({ isConnected: false, error: 'Token expired' });
+                // TOKEN EXPIRED - ATTEMPT REFRESH
+                if (user.etsyRefreshToken) {
+                    console.log('🔄 Probe: Token expired. Refreshing...');
+                    try {
+                        const { EtsyApiService } = await import('../services/etsy-api.service');
+                        await EtsyApiService.refreshAccessToken(userId, user.etsyRefreshToken);
+                        // Recursive retry or just allow "false" for now but next time it works?
+                        // Better: Signal that it renewed so frontend can reload? 
+                        // For now, let's just return isConnected: true but with a warning, OR simple recursion.
+                        // Recursion is tricky in this structure.
+                        // Let's Just return "isConnected: true" (optimistic) because we refreshed it!
+                        console.log('✅ Probe: Token successfully refreshed.');
+                        // We can't easily re-run the whole probe logic without refactoring.
+                        // But we know we are connected now.
+                        return res.json({
+                            isConnected: true,
+                            shopName: user.shopName,
+                            scopes: scopes, // Might be empty but that's ok to re-probe next time
+                            debugInfo: { version: 'DIAGNOSTIC-V3-REFRESHED' }
+                        });
+                    } catch (refreshErr) {
+                        return res.json({ isConnected: false, error: 'Token refresh failed' });
+                    }
+                } else {
+                    return res.json({ isConnected: false, error: 'Token expired' });
+                }
             }
         }
+
+        res.setHeader('Cache-Control', 'no-store, max-age=0'); // DISABLE CACHING
+
 
         res.json({
             isConnected: true,
