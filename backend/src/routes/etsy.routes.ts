@@ -436,9 +436,11 @@ router.post('/sync-orders', authenticateToken as any, async (req: any, res: Resp
         ImportStatusService.start(tenantId, 0, 'Initialisiere Synchronisation...');
 
         // Run in background so we can return response immediately and let frontend poll
-        CronService.runEtsySync({ id: userId, tenantId }).catch(err => {
-            console.error("Background Sync Failed:", err);
-            ImportStatusService.error(tenantId, err.message);
+        setImmediate(() => {
+            CronService.runEtsySync({ id: userId, tenantId }).catch(err => {
+                console.error("Background Sync Failed:", err);
+                ImportStatusService.error(tenantId, err.message);
+            });
         });
 
         res.json({ message: 'Bestellungs-Synchronisation wurde gestartet', type: 'orders' });
