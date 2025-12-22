@@ -33,12 +33,17 @@ export class EtsyApiService {
     }
 
     private static async _fetchOrdersInternal(user: any) {
+        let token = (user.etsyAccessToken || '').trim();
+        if (token.toLowerCase().startsWith('bearer ')) {
+            token = token.slice(7).trim();
+        }
+
         const response = await rateLimitedGet(
             `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts?limit=100`,
             {
                 headers: {
                     'x-api-key': ETSY_KEY,
-                    'Authorization': `Bearer ${user.etsyUserId}.${user.etsyAccessToken}`
+                    'Authorization': `Bearer ${token}`
                 }
             }
         );
