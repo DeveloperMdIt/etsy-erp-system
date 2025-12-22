@@ -141,6 +141,8 @@ model UserSettings {
   // Etsy settings
   etsyShopName    String?
   etsySyncEnabled Boolean @default(true) // Enable/Disable Etsy tracking sync
+  lastEtsySync    DateTime? // Timestamp of last successful order sync
+
 
   // DHL settings
   dhlApiUsername String?

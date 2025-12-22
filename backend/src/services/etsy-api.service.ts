@@ -132,11 +132,40 @@ export class EtsyApiService {
             const errorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
             throw new Error(`Failed to fetch products: ${errorDetails}`);
         }
+    static async fetchOrders(userId: string, minLastUpdated?: Date) {
+        let user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || !user.etsyAccessToken || !user.etsyShopId) {
+            throw new Error('User not connected to Etsy');
+        }
+
+        try {
+            return await this._fetchOrdersInternal(user, minLastUpdated);
+        } catch (error: any) {
+            if (error.response?.status === 401 && user.etsyRefreshToken) {
+                console.log('🔄 [EtsyAPI] Token expired (401). Attempting refresh...');
+                try {
+                    const newToken = await this.refreshAccessToken(userId, user.etsyRefreshToken);
+                    user.etsyAccessToken = newToken;
+                    return await this._fetchOrdersInternal(user, minLastUpdated);
+                } catch (refreshErr) {
+                    throw new Error('Etsy Token Expired and Refresh Failed.');
+                }
+            }
+            throw new Error(`Failed to fetch orders: ${error.message}`);
+        }
     }
 
-    private static async _fetchProductsInternal(user: any) {
+    private static async _fetchOrdersInternal(user: any, minLastUpdated?: Date) {
+        let url = `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts?limit=100`;
+
+        if (minLastUpdated) {
+            const timestamp = Math.floor(minLastUpdated.getTime() / 1000);
+            url += `&min_last_updated=${timestamp}`;
+            console.log(`[EtsyAPI] Fetching orders updated since ${minLastUpdated.toISOString()} (${timestamp})`);
+        }
+
         const response = await rateLimitedGet(
-            `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/listings/active?limit=100`,
+            url,
             {
                 headers: {
                     'x-api-key': ETSY_KEY,

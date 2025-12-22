@@ -142,11 +142,18 @@ const startSync = async () => {
            isSyncing.value = false
            await fetchOrders()
            // Optional: Auto-hide status after 3s
-           setTimeout(() => syncStatus.value = null, 5000)
+           setTimeout(() => syncStatus.value = null, 3000)
         } else if (res.data.state === 'ERROR') {
            clearInterval(pollInterval)
            isSyncing.value = false
            alert('Fehler bei Synchronisierung: ' + res.data.message)
+           syncStatus.value = null
+        } else if (res.data.state === 'IDLE' && isSyncing.value) {
+           // Check if we missed the completion
+           // For now, keep polling for a bit or assume done?
+           // If we get 3 IDLEs in a row, stop.
+           // Simplified: If IDLE, we can stop if we think it's done. But risky.
+           // Let's rely on COMPLETED for now, but backend *must* set COMPLETED.
         }
       } catch (e) { 
         console.error('Poll error', e) 
@@ -414,6 +421,11 @@ const getTrackingUrl = (provider: string | undefined, tracking: string) => {
 }
 
 onMounted(fetchOrders)
+
+import { onUnmounted } from 'vue'
+onUnmounted(() => {
+    if (pollInterval) clearInterval(pollInterval)
+})
 </script>
 
 <template>

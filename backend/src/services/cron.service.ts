@@ -85,8 +85,23 @@ export class CronService {
                     // Update Status: Fetching from Etsy
                     ImportStatusService.update(user.tenantId, { message: 'Rufe Daten von Etsy ab...' });
 
-                    const orders = await EtsyApiService.fetchOrders(user.id);
+                    // Get Last Sync Time for Incremental Update
+                    const userSettings = await prisma.userSettings.findUnique({ where: { userId: user.id } });
+                    const lastSync = userSettings?.lastEtsySync;
+
+                    if (lastSync) {
+                        console.log(`[Cron] Incremental Sync: Fetching changes since ${lastSync.toISOString()}`);
+                    }
+
+                    const orders = await EtsyApiService.fetchOrders(user.id, lastSync);
                     console.log(`[Cron] User ${user.id}: Fetched ${orders.length} orders.`);
+
+                    // Update Last Sync Time (Upsert to ensure it exists)
+                    await prisma.userSettings.upsert({
+                        where: { userId: user.id },
+                        create: { userId: user.id, lastEtsySync: new Date() },
+                        update: { lastEtsySync: new Date() }
+                    });
 
                     // LOG: Fetched
                     await ActivityLogService.log(LogType.INFO, LogAction.CRON_SYNC, `${orders.length} Bestellungen gefunden. Importiere in Datenbank...`, user.id, user.tenantId);
