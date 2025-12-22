@@ -218,6 +218,11 @@ router.get('/connect', authenticateToken as any, async (req: any, res: Response)
         `&code_challenge=${codeChallenge}` +
         `&code_challenge_method=S256`;
 
+    console.log('🔍 [OAuth Debug] Generated Auth URL:', authUrl);
+    console.log('🔍 [OAuth Debug] State:', state);
+    console.log('🔍 [OAuth Debug] Challenge:', codeChallenge);
+    console.log('🔍 [OAuth Debug] Redirect URI:', REDIRECT_URI);
+
     res.json({ url: authUrl });
 });
 
@@ -237,7 +242,10 @@ router.get('/callback', async (req: Request, res: Response) => {
     }
 
     try {
-        console.log('🔵 OAuth Callback - Code received:', code);
+        console.log('🔵 OAuth Callback - Code received:', code ? 'YES (Length: ' + code.length + ')' : 'NO');
+        console.log('🔍 [OAuth Debug] Callback State:', state);
+        console.log('🔍 [OAuth Debug] Stored State:', storedState);
+        console.log('🔍 [OAuth Debug] Verifier:', codeVerifier ? 'YES' : 'NO');
 
         // Exchange code for token
         const { key: etsyClientId } = await getEtsyKeys();

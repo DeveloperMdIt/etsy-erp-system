@@ -291,7 +291,7 @@ const allExpectedScopes = [
 
 const checkStatus = async () => {
     try {
-        const res = await axios.get('/api/etsy/status');
+const res = await axios.get(`/api/etsy/status?t=${Date.now()}`);
         isConnected.value = res.data.isConnected;
         shopName.value = res.data.shopName;
         scopes.value = res.data.scopes || [];
