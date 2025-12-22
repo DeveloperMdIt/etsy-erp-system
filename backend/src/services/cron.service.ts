@@ -3,6 +3,7 @@ import cron from 'node-cron';
 import prisma from '../utils/prisma';
 import { EtsyImportService } from './etsy-import.service';
 import { ActivityLogService, LogType, LogAction } from './activity-log.service';
+import ImportStatusService from './import-status.service';
 
 const etsyImportService = new EtsyImportService();
 
@@ -81,6 +82,9 @@ export class CronService {
 
                 try {
                     // 1. Sync Orders
+                    // Update Status: Fetching from Etsy
+                    ImportStatusService.update(user.tenantId, { message: 'Rufe Daten von Etsy ab...' });
+
                     const orders = await EtsyApiService.fetchOrders(user.id);
                     console.log(`[Cron] User ${user.id}: Fetched ${orders.length} orders.`);
 
@@ -92,6 +96,7 @@ export class CronService {
                     } else {
                         console.log(`[Cron] User ${user.id}: No new orders.`);
                         await ActivityLogService.log(LogType.INFO, LogAction.SYNC_ORDERS_SUCCESS, 'Keine neuen Bestellungen gefunden.', user.id, user.tenantId);
+                        ImportStatusService.complete(user.tenantId, 'Fertig. Keine neuen Bestellungen.');
                     }
 
                     // 3. Push Local Updates (Tracking, Status) to Etsy
