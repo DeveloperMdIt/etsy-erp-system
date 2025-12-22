@@ -44,7 +44,7 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
             // 1. Check 'profile_r' and 'email_r'
             const userUrl = `https://api.etsy.com/v3/application/users/${user.etsyUserId}`;
             const userResp = await axios.get(userUrl, {
-                headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyAccessToken}` }
+                headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyUserId}.${user.etsyAccessToken}` }
             });
             probeLog.push(`User Check: ${userResp.status}`);
 
@@ -63,7 +63,7 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
             try {
                 const addrUrl = `https://api.etsy.com/v3/application/users/${user.etsyUserId}/addresses`;
                 await axios.get(addrUrl, {
-                    headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyAccessToken}` }
+                    headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyUserId}.${user.etsyAccessToken}` }
                 });
                 scopes.push('address_r');
                 probeLog.push('Address fetch success -> address_r OK');
@@ -83,7 +83,7 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
                 try {
                     const recUrl = `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts?limit=1`;
                     const recResp = await axios.get(recUrl, {
-                        headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyAccessToken}` }
+                        headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyUserId}.${user.etsyAccessToken}` }
                     });
 
                     if (recResp.data.count > 0) {
@@ -96,7 +96,7 @@ router.get('/status', authenticateToken as any, async (req: any, res: Response) 
                             try {
                                 const singleUrl = `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts/${r.receipt_id}`;
                                 const singleResp = await axios.get(singleUrl, {
-                                    headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyAccessToken}` }
+                                    headers: { 'x-api-key': etsyClientId, 'Authorization': `Bearer ${user.etsyUserId}.${user.etsyAccessToken}` }
                                 });
                                 r = singleResp.data;
                                 hasAddress = !!(r.first_line || r.city || r.zip || r.formatted_address);
