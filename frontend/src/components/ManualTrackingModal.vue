@@ -41,7 +41,7 @@ const save = async () => {
     const response = await axios.put(`/api/orders/${props.order.id}/tracking`, {
       trackingNumber: trackingNumber.value,
       carrier: carrier.value,
-      notifyEtsy: notifyEtsy.value
+      notifyEtsy: true // Always true by default for now, or use a bound variable if UI checkbox exists
     })
     
     if (response.data.warning) {

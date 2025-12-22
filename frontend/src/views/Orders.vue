@@ -240,6 +240,12 @@ const fetchOrders = async () => {
 
     const response = await axios.get('/api/orders', { params })
     orders.value = response.data
+
+    // Refresh selectedOrder if open, to show new tracking/status immediately
+    if (selectedOrder.value) {
+        const updated = orders.value.find(o => o.id === selectedOrder.value?.id)
+        if (updated) selectedOrder.value = updated
+    }
   } catch (err: any) {
     console.error('Error fetching orders:', err)
     error.value = 'Fehler beim Laden der Bestellungen: ' + (err.response?.data?.error || err.message)

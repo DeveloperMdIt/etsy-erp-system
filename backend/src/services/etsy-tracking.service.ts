@@ -37,14 +37,9 @@ export class EtsyTrackingService {
             }
 
             // Sync tracking to Etsy
-            // Note: Etsy V3 API uses standard Bearer token (format: UserID.TokenString)
+            // Note: Etsy V3 API uses standard Bearer token
             const token = user.etsyAccessToken?.trim();
             const authHeader = `Bearer ${token}`;
-
-            // Check if token looks suspiciously like just an ID (no dot) which would be wrong for V3
-            if (!token?.includes('.')) {
-                console.warn('[Etsy Sync] Warning: Access Token might be malformed (missing dot).');
-            }
 
             console.log(`[Etsy Sync] Using Token: ${token?.substring(0, 15)}...`);
 
