@@ -167,28 +167,20 @@ export class EtsyImportService {
         const firstName = nameParts.length > 1 ? nameParts.slice(0, -1).join(' ') : rawName;
         const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
 
-        // If simple 2-part name, split cleanly. If complex, keep first part as First, rest as Last?
-        // Actually, standard is often: First Last. So:
-        // "Nicole Friedel" -> First: "Nicole", Last: "Friedel"
-        // "Dr. Max Mustermann" -> First: "Dr. Max", Last: "Mustermann"
-        // Let's rely on space splitting.
-
+        // Formatted Address Fallback
         let street = receipt.first_line;
         let city = receipt.city;
         let zip = receipt.zip;
-        let country = receipt.country_iso;
-
-        // Formatted Address Fallback
         if (!street && receipt.formatted_address) {
             const lines = receipt.formatted_address.split('\n');
             street = lines[0];
             if (lines.length > 1) city = lines[1];
         }
 
-        // Falls Single-Fetch auch keine Daten brachte (PII Redaction / Completed Order Issue)
-        let finalFirstLine = receipt.first_line;
-        let finalCity = receipt.city;
-        let finalZip = receipt.zip;
+        // Final Address Logic
+        let finalFirstLine = street;
+        let finalCity = city;
+        let finalZip = zip;
         let reviewNote = '';
 
         if (!finalFirstLine && !finalCity) {
@@ -199,34 +191,48 @@ export class EtsyImportService {
             console.log(`[Import] Applying Address Workaround for ${receipt.receipt_id}`);
         }
 
-        // 3. Create/Update Customer
-        // (Use receipt.buyer_email if available, else construct a dummy?)
-        // Etsy v3 often hides buyer_email too.
-        const customerEmail = receipt.buyer_email || `missing-email-${receipt.receipt_id}@placeholder.invalid`;
-
-        const customerData = {
-            tenantId,
-            email: customerEmail,
-            firstName: receipt.name?.split(' ')[0] || 'Unknown',
-            lastName: receipt.name?.split(' ').slice(1).join(' ') || 'Customer',
-            street: finalFirstLine,
-            postalCode: finalZip,
-            city: finalCity,
-            country: receipt.country_iso || 'DE',
-        };
-
-        let customer = await prisma.customer.findUnique({
-            where: { tenantId_email: { tenantId, email: customerData.email } }
+        // CHECK FOR EXISTING ORDER FIRST (To preserve Customer Link)
+        const externalOrderId = receipt.receipt_id.toString();
+        let order = await prisma.order.findFirst({
+            where: { tenantId, externalOrderId },
+            include: { items: true }
         });
 
-        if (!customer) {
-            customer = await prisma.customer.create({ data: { ...customerData, customerNumber: `BS-${receipt.seller_user_id}-${Date.now()}` } }); // Simple numbering
-        } else {
-            // Optional: Update address if it changed? For now, keep existing to not overwrite good data with bad.
-            // But if we have "Unknown", we definitely don't want to overwrite unless the old one was also unknown.
+        let customer: any = null;
+
+        if (order && order.customerId) {
+            // Existing Order: Keep the existing customer!
+            customer = await prisma.customer.findUnique({ where: { id: order.customerId } });
+            console.log(`[Import] Order ${externalOrderId} exists. Keeping linked Customer ${customer?.id} (Preserving Data).`);
         }
 
-        // 4. Create Order
+        if (!customer) {
+            // New Order OR Order has no customer: Find or Create by Email
+            const customerEmail = receipt.buyer_email || `missing-email-${receipt.receipt_id}@placeholder.invalid`;
+
+            const customerData = {
+                tenantId,
+                email: customerEmail,
+                firstName: receipt.name?.split(' ')[0] || 'Unknown',
+                lastName: receipt.name?.split(' ').slice(1).join(' ') || 'Customer',
+                street: finalFirstLine,
+                postalCode: finalZip,
+                city: finalCity,
+                country: receipt.country_iso || 'DE',
+            };
+
+            customer = await prisma.customer.findUnique({
+                where: { tenantId_email: { tenantId, email: customerData.email } }
+            });
+
+            if (!customer) {
+                customer = await prisma.customer.create({
+                    data: { ...customerData, customerNumber: `BS-${receipt.seller_user_id}-${Date.now()}` }
+                });
+            }
+        }
+
+        // 4. Create/Update Order Data structure (rest of the code follows...)
         const orderData = {
             tenantId,
             orderNumber: `${receipt.receipt_id}`,
@@ -236,18 +242,10 @@ export class EtsyImportService {
             status: receipt.shipped_timestamp ? OrderStatus.SHIPPED : OrderStatus.OPEN,
             totalPrice: receipt.grandtotal.amount / receipt.grandtotal.divisor,
             shippingCost: receipt.total_shipping_cost.amount / receipt.total_shipping_cost.divisor,
-            isSyncedToEtsy: true, // It came from Etsy
+            isSyncedToEtsy: true,
             createdAt: new Date(receipt.created_timestamp * 1000),
             notes: (receipt.message_from_buyer ? `Buyer: ${receipt.message_from_buyer}\n` : '') + reviewNote
         };
-
-        // 2. Check/Create Order
-        // Use externalOrderId which is stringified receipt_id
-        const externalOrderId = receipt.receipt_id.toString();
-        let order = await prisma.order.findFirst({
-            where: { tenantId, externalOrderId },
-            include: { items: true }
-        });
 
         // Transactions
         const transactions = receipt.transactions || [];

@@ -160,7 +160,7 @@
               <button v-if="syncStatus !== 'loading'" type="button" @click="closeSyncModal" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                 Schließen
               </button>
-              <button v-else type="button" @click="closeSyncModal" class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+              <button v-else type="button" @click="closeSyncModal" class="flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
                 Abbrechen
               </button>
             </div>
@@ -416,7 +416,7 @@ const triggerSync = async (type: 'orders' | 'products') => {
              }
         }, 1000);
 
-        // Timeout after 120s
+        // Timeout after 300s (5 minutes)
         setTimeout(() => {
             if (isSyncing.value) {
                 clearInterval(pollInterval);
@@ -424,9 +424,9 @@ const triggerSync = async (type: 'orders' | 'products') => {
                 // Don't show success if we timed out
                 syncStatus.value = 'error'; 
                 syncModalTitle.value = 'Zeitüberschreitung';
-                syncModalMessage.value = 'Die Synchronisation antwortet nicht mehr. Bitte prüfen Sie das Ereignis-Protokoll.';
+                syncModalMessage.value = 'Die Synchronisation dauert länger als erwartet (5 Min). Der Prozess läuft im Hintergrund weiter. Bitte prüfen Sie später das Protokoll.';
             }
-        }, 120000);
+        }, 300000);
 
     } catch (e: any) {
         console.error('Sync trigger failed', e);
