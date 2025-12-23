@@ -35,7 +35,7 @@ export class CronService {
         });
     }
 
-    static async runEtsySync(manualTriggerUser?: { id: string, tenantId: string }) {
+    static async runEtsySync(manualTriggerUser?: { id: string, tenantId: string }, isFullSync: boolean = false) {
         if (isImportRunning) {
             console.log('[Cron] Sync skipped - already running.');
             if (manualTriggerUser) {
@@ -45,8 +45,8 @@ export class CronService {
         }
 
         isImportRunning = true;
-        const triggerType = manualTriggerUser ? LogAction.MANUAL_SYNC : LogAction.CRON_SYNC;
-        console.log(`[Cron] Starting ${triggerType}...`);
+        const triggerType = manualTriggerUser ? (isFullSync ? 'MANUAL_FULL_SYNC' : LogAction.MANUAL_SYNC) : LogAction.CRON_SYNC;
+        console.log(`[Cron] Starting ${triggerType}... FullSync=${isFullSync}`);
 
         try {
             // Find users who have Etsy connected
@@ -85,9 +85,13 @@ export class CronService {
                     // Update Status: Fetching from Etsy
                     ImportStatusService.update(user.tenantId, { message: 'Rufe Daten von Etsy ab...' });
 
-                    // Get Last Sync Time for Incremental Update
-                    const userSettings = await prisma.userSettings.findUnique({ where: { userId: user.id } });
-                    const lastSync = userSettings?.lastEtsySync;
+                    // Get Last Sync Time (unless Full Sync)
+                    let lastSync: Date | undefined;
+
+                    if (!isFullSync) {
+                        const userSettings = await prisma.userSettings.findUnique({ where: { userId: user.id } });
+                        lastSync = userSettings?.lastEtsySync || undefined;
+                    }
 
                     if (lastSync) {
                         console.log(`[Cron] Incremental Sync: Fetching changes since ${lastSync.toISOString()}`);

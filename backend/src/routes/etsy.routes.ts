@@ -428,6 +428,9 @@ router.post('/sync-orders', authenticateToken as any, async (req: any, res: Resp
         const userId = req.user.id;
         const tenantId = req.user.tenantId;
 
+        const { fullSync } = req.body;
+        console.log(`[Etsy Route] Sync requested. Full Sync: ${fullSync}`);
+
         const { CronService } = await import('../services/cron.service');
         const { default: ImportStatusService } = await import('../services/import-status.service');
 
@@ -437,7 +440,7 @@ router.post('/sync-orders', authenticateToken as any, async (req: any, res: Resp
 
         // Run in background so we can return response immediately and let frontend poll
         setImmediate(() => {
-            CronService.runEtsySync({ id: userId, tenantId }).catch(err => {
+            CronService.runEtsySync({ id: userId, tenantId }, fullSync).catch(err => {
                 console.error("Background Sync Failed:", err);
                 ImportStatusService.error(tenantId, err.message);
             });

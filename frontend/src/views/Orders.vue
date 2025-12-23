@@ -123,18 +123,18 @@ const isSyncing = ref(false)
 const syncStatus = ref<any>(null)
 let pollInterval: any = null
 
-const startSync = async () => {
+const startSync = async (fullSync: boolean = false) => {
   if (isSyncing.value) return
   isSyncing.value = true
   syncStatus.value = { message: 'Starte Synchronisierung...', progress: 0, state: 'PROCESSING' }
   
   try {
-    await axios.post('/api/etsy/sync-orders')
+    await axios.post('/api/etsy/sync-orders', { fullSync })
     
-    // Start polling
+    // Start polling with cache buster
     pollInterval = setInterval(async () => {
       try {
-        const res = await axios.get('/api/import/status')
+        const res = await axios.get(`/api/import/status?t=${Date.now()}`)
         syncStatus.value = res.data
         
         if (res.data.state === 'COMPLETED') {
@@ -148,12 +148,6 @@ const startSync = async () => {
            isSyncing.value = false
            alert('Fehler bei Synchronisierung: ' + res.data.message)
            syncStatus.value = null
-        } else if (res.data.state === 'IDLE' && isSyncing.value) {
-           // Check if we missed the completion
-           // For now, keep polling for a bit or assume done?
-           // If we get 3 IDLEs in a row, stop.
-           // Simplified: If IDLE, we can stop if we think it's done. But risky.
-           // Let's rely on COMPLETED for now, but backend *must* set COMPLETED.
         }
       } catch (e) { 
         console.error('Poll error', e) 
