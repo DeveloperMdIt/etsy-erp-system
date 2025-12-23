@@ -6,52 +6,9 @@ const ETSY_KEY = process.env.ETSY_API_KEY || 'zm740uejm9qblnvioql0vayz';
 
 export class EtsyApiService {
 
-    static async fetchOrders(userId: string) {
-        let user = await prisma.user.findUnique({ where: { id: userId } });
-        if (!user || !user.etsyAccessToken || !user.etsyShopId) {
-            throw new Error('User not connected to Etsy');
-        }
 
-        try {
-            return await this._fetchOrdersInternal(user);
-        } catch (error: any) {
-            if (error.response?.status === 401 && user.etsyRefreshToken) {
-                console.log('🔄 [EtsyAPI] Token expired (401). Attempting refresh...');
-                try {
-                    const newToken = await this.refreshAccessToken(userId, user.etsyRefreshToken);
-                    user.etsyAccessToken = newToken; // Update local var for retry
-                    return await this._fetchOrdersInternal(user);
-                } catch (refreshErr) {
-                    console.error('❌ [EtsyAPI] Refresh failed:', refreshErr);
-                    throw new Error('Etsy Token Expired and Refresh Failed. Please reconnect.');
-                }
-            }
-            const errorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
-            console.error('Etsy API Fetch Orders Error:', errorDetails);
-            throw new Error(`Failed to fetch orders: ${errorDetails}`);
-        }
-    }
+    // Method removed (duplicate). See fetchOrders below with minLastUpdated support.
 
-    private static async _fetchOrdersInternal(user: any) {
-        let token = (user.etsyAccessToken || '').trim();
-        if (token.toLowerCase().startsWith('bearer ')) {
-            token = token.slice(7).trim();
-        }
-
-        const response = await rateLimitedGet(
-            `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts?limit=100`,
-            {
-                headers: {
-                    'x-api-key': ETSY_KEY,
-                    'Authorization': `Bearer ${token}`
-                }
-            }
-        );
-        if (response.data) {
-            console.log('🔍 FULL HEADER DUMP:', JSON.stringify(response.headers, null, 2));
-        }
-        return response.data.results;
-    }
 
     /**
      * Fetch Single Receipt Details (Full PII often requires direct fetch)
