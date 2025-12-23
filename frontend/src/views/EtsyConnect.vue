@@ -372,7 +372,7 @@ const triggerSync = async (type: 'orders' | 'products') => {
              pollCount++;
 
              try {
-                 const statusRes = await axios.get('/api/import/status');
+                 const statusRes = await axios.get(`/api/import/status?t=${Date.now()}`);
                  const status = statusRes.data;
                  
                  // Update UI with current status
