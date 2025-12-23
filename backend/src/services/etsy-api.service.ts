@@ -146,6 +146,11 @@ export class EtsyApiService {
                 }
             }
         );
+        if (response.data?.results?.length > 0) {
+            const first = response.data.results[0];
+            console.log('🔍 DEBUG: First Order Keys:', Object.keys(first));
+            console.log('🔍 DEBUG: First Order Raw JSON:', JSON.stringify(first, null, 2));
+        }
         return response.data.results;
     }
 
