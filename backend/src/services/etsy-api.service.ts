@@ -2,6 +2,7 @@ import axios from 'axios';
 import { rateLimitedGet } from '../utils/etsy-rate-limiter';
 import prisma from '../utils/prisma';
 
+// Keys checked and confirmed matching user provided credentials
 const ETSY_KEY = process.env.ETSY_API_KEY || 'zm740uejm9qblnvioql0vayz';
 
 export class EtsyApiService {
