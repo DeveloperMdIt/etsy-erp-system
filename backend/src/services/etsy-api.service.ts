@@ -26,7 +26,7 @@ export class EtsyApiService {
                 {
                     headers: {
                         'x-api-key': ETSY_KEY,
-                        'Authorization': `Bearer ${user.etsyUserId}.${user.etsyAccessToken}`
+                        'Authorization': `Bearer ${user.etsyAccessToken}`
                     }
                 }
             );
@@ -53,7 +53,7 @@ export class EtsyApiService {
                 {
                     headers: {
                         'x-api-key': ETSY_KEY,
-                        'Authorization': `Bearer ${user.etsyUserId}.${user.etsyAccessToken}`
+                        'Authorization': `Bearer ${user.etsyAccessToken}`
                     }
                 }
             );
@@ -98,7 +98,7 @@ export class EtsyApiService {
             {
                 headers: {
                     'x-api-key': ETSY_KEY,
-                    'Authorization': `Bearer ${user.etsyUserId}.${user.etsyAccessToken}`
+                    'Authorization': `Bearer ${user.etsyAccessToken}`
                 }
             }
         );
@@ -142,7 +142,7 @@ export class EtsyApiService {
             {
                 headers: {
                     'x-api-key': ETSY_KEY,
-                    'Authorization': `Bearer ${user.etsyUserId}.${user.etsyAccessToken}`
+                    'Authorization': `Bearer ${user.etsyAccessToken}`
                 }
             }
         );
