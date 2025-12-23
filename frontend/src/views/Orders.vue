@@ -431,28 +431,36 @@ onUnmounted(() => {
           <p class="mt-2 text-sm text-gray-700">Übersicht aller Bestellungen aus Etsy.</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-3">
-          <button 
-            @click="startSync" 
-            :disabled="isSyncing"
-            type="button" 
-            class="btn-primary inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span class="mr-2">
-              <svg v-if="isSyncing" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <svg v-else class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/> <!-- Replacement generic icon if Etsy SVG unavailable, using simple info or sync icon -->
-                <path d="M16.24 7.76C15.07 6.59 13.54 6 12 6v6l-4.24-4.24c2.34-2.34 6.14-2.34 8.49 0C18.59 10.11 18.59 13.89 16.24 16.24L14.83 14.83c1.56-1.56 1.56-4.09 0-5.66L12 12V6c1.54 0 3.07.59 4.24 1.76z"/>
-              </svg>
-            </span>
-             <!-- Using a generic sync icon path above for safety, or actually let's use a nice cloud download or refresh variant -->
-             <svg v-if="!isSyncing" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-             </svg>
-            {{ isSyncing ? 'Synchronisiere...' : 'Mit Etsy synchronisieren' }}
-          </button>
+          <div class="flex space-x-2">
+              <button 
+                @click="startSync(true)" 
+                :disabled="isSyncing"
+                type="button" 
+                class="inline-flex items-center px-4 py-2 border border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Lädt alle Bestellungen neu herunter (langsamer)"
+              >
+                <span v-if="!isSyncing">Alle neu laden</span>
+                <span v-else>Warte...</span>
+              </button>
+
+              <button 
+                @click="startSync(false)" 
+                type="button" 
+                class="btn-primary inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="isSyncing"
+              >
+                <span class="mr-2">
+                  <svg v-if="isSyncing" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  </svg>
+                </span>
+                {{ isSyncing ? 'Synchronisiere...' : 'Sync (Schnell)' }}
+              </button>
+          </div>
           <button @click="fetchOrders" type="button" class="btn-secondary inline-flex items-center">
             <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
