@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { rateLimitedGet } from '../utils/etsy-rate-limiter';
 import prisma from '../utils/prisma';
+import { ActivityLogService, LogType, LogAction } from './activity-log.service';
 
 // Keys checked and confirmed matching user provided credentials
 const ETSY_KEY = process.env.ETSY_API_KEY || 'zm740uejm9qblnvioql0vayz';
@@ -149,7 +150,15 @@ export class EtsyApiService {
         if (response.data?.results?.length > 0) {
             const first = response.data.results[0];
             console.log('🔍 DEBUG: First Order Keys:', Object.keys(first));
-            console.log('🔍 DEBUG: First Order Raw JSON:', JSON.stringify(first, null, 2));
+            // Log to DB for user visibility in "Protokolle"
+            await ActivityLogService.log(
+                LogType.INFO,
+                LogAction.CRON_SYNC,
+                'DEBUG RAW JSON: First Order Data from Etsy',
+                user.id,
+                user.tenantId,
+                { fullJson: first }
+            );
         }
         return response.data.results;
     }
