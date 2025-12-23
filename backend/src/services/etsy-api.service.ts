@@ -132,6 +132,21 @@ export class EtsyApiService {
             const errorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
             throw new Error(`Failed to fetch products: ${errorDetails}`);
         }
+    }
+
+    private static async _fetchProductsInternal(user: any) {
+        const response = await rateLimitedGet(
+            `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/listings/active?limit=100`,
+            {
+                headers: {
+                    'x-api-key': ETSY_KEY,
+                    'Authorization': `Bearer ${user.etsyUserId}.${user.etsyAccessToken}`
+                }
+            }
+        );
+        return response.data.results;
+    }
+
     static async fetchOrders(userId: string, minLastUpdated?: Date) {
         let user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user || !user.etsyAccessToken || !user.etsyShopId) {
