@@ -6,7 +6,32 @@ import crypto from 'crypto';
 import axios from 'axios';
 import { rateLimitedGet } from '../utils/etsy-rate-limiter';
 
-const router = Router();
+import multer from 'multer';
+import { EtsyCsvService } from '../services/etsy-csv.service';
+
+const upload = multer({ dest: 'uploads/' });
+
+// ... existing routes ...
+
+// CSV Import Route
+router.post(
+    '/import-csv',
+    authenticateToken,
+    upload.single('file'),
+    async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ error: 'Keine Datei hochgeladen.' });
+            }
+
+            const result = await EtsyCsvService.processCsvUpload(req.file.path);
+            res.json(result);
+        } catch (error) {
+            console.error('CSV Import Error:', error);
+            res.status(500).json({ error: 'Import fehlgeschlagen.' });
+        }
+    }
+);
 
 // Keys from user provided image/env
 const REDIRECT_URI = process.env.VITE_APP_URL ? `${process.env.VITE_APP_URL}/api/etsy/callback` : 'https://inventivy.de/api/etsy/callback'; // Use env or prod default

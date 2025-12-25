@@ -4,6 +4,10 @@ import axios from 'axios'
 import ManualTrackingModal from '../components/ManualTrackingModal.vue'
 import SuccessModal from '../components/SuccessModal.vue'
 import ConfirmationModal from '../components/ConfirmationModal.vue'
+import EtsyCsvImportModal from '../components/EtsyCsvImportModal.vue'
+import { ArrowUpTrayIcon } from '@heroicons/vue/24/outline'
+import { ArrowPathIcon } from '@heroicons/vue/24/solid'
+
 
 interface OrderItem {
   id: string
@@ -117,6 +121,7 @@ const labelOrder = ref<Order | null>(null)
 const creatingLabel = ref(false)
 const showManualTrackingModal = ref(false)
 const manualTrackingOrder = ref<Order | null>(null)
+const showCsvModal = ref(false)
 
 // Sync State
 const isSyncing = ref(false)
@@ -431,37 +436,35 @@ onUnmounted(() => {
           <p class="mt-2 text-sm text-gray-700">Übersicht aller Bestellungen aus Etsy.</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-3">
+          
           <div class="flex space-x-2">
-              <button 
-                @click="startSync(true)" 
-                :disabled="isSyncing"
-                type="button" 
-                class="inline-flex items-center px-4 py-2 border border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Lädt alle Bestellungen neu herunter (langsamer)"
-              >
-                <span v-if="!isSyncing">Alle neu laden</span>
-                <span v-else>Warte...</span>
-              </button>
-
-              <button 
-                @click="startSync(false)" 
-                type="button" 
-                class="btn-primary inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                :disabled="isSyncing"
-              >
-                <span class="mr-2">
-                  <svg v-if="isSyncing" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                  </svg>
-                </span>
-                {{ isSyncing ? 'Synchronisiere...' : 'Sync (Schnell)' }}
-              </button>
+            <button
+              @click="showCsvModal = true"
+              type="button"
+              class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+            >
+              <ArrowUpTrayIcon class="-ml-1 mr-2 h-5 w-5 text-gray-500" aria-hidden="true" />
+              Adress-Import (CSV)
+            </button>
+            <button
+              @click="startSync(false)"
+              :disabled="isSyncing"
+              type="button"
+              class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+            >
+              <ArrowPathIcon class="-ml-1 mr-2 h-5 w-5" :class="{ 'animate-spin': isSyncing }" aria-hidden="true" />
+              {{ isSyncing ? 'Sync läuft...' : 'Sync (Schnell)' }}
+            </button>
+            <button
+              @click="startSync(true)"
+              :disabled="isSyncing"
+              type="button"
+              class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Alle neu laden
+            </button>
           </div>
-          <button @click="fetchOrders" type="button" class="btn-secondary inline-flex items-center">
+          <button @click="fetchOrders" type="button" class="btn-secondary inline-flex items-center hidden sm:inline-flex">
             <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
@@ -919,5 +922,7 @@ onUnmounted(() => {
       @close="showConfirmModal = false"
       @confirm="handleConfirm"
     />
+    <!-- CSV Import Modal -->
+    <EtsyCsvImportModal :open="showCsvModal" @close="showCsvModal = false" @success="fetchOrders" />
   </div>
 </template>
