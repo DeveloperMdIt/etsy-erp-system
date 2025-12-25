@@ -97,6 +97,9 @@
           <button v-else @click="showDisconnectModal = true" type="button" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
             Trennen
           </button>
+          <p class="mt-4 text-xs text-gray-400">
+            The term 'Etsy' is a trademark of Etsy, Inc. This application uses the Etsy API but is not endorsed or certified by Etsy, Inc.
+          </p>
         </div>
       </div>
     </div>
