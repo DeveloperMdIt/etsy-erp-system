@@ -435,13 +435,12 @@ onUnmounted(() => {
           <h1 class="text-xl font-semibold text-gray-900">Bestellungen</h1>
           <p class="mt-2 text-sm text-gray-700">Übersicht aller Bestellungen aus Etsy.</p>
         </div>
-        <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-3">
-          
-          <div class="flex space-x-2">
+        <div class="mt-4 sm:mt-0 sm:ml-auto sm:flex-none">
+          <div class="flex flex-col sm:flex-row gap-2">
             <button
               @click="showCsvModal = true"
               type="button"
-              class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+              class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 w-full sm:w-auto"
             >
               <ArrowUpTrayIcon class="-ml-1 mr-2 h-5 w-5 text-gray-500" aria-hidden="true" />
               Adress-Import (CSV)
@@ -450,7 +449,7 @@ onUnmounted(() => {
               @click="startSync(false)"
               :disabled="isSyncing"
               type="button"
-              class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+              class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 w-full sm:w-auto"
             >
               <ArrowPathIcon class="-ml-1 mr-2 h-5 w-5" :class="{ 'animate-spin': isSyncing }" aria-hidden="true" />
               {{ isSyncing ? 'Sync läuft...' : 'Sync (Schnell)' }}
@@ -459,17 +458,17 @@ onUnmounted(() => {
               @click="startSync(true)"
               :disabled="isSyncing"
               type="button"
-              class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+              class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 w-full sm:w-auto"
             >
               Alle neu laden
             </button>
+             <button @click="fetchOrders" type="button" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 w-full sm:w-auto">
+                <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Aktualisieren
+            </button>
           </div>
-          <button @click="fetchOrders" type="button" class="btn-secondary inline-flex items-center hidden sm:inline-flex">
-            <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Aktualisieren
-          </button>
         </div>
       </div>
       
