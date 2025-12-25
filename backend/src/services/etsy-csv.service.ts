@@ -1,5 +1,3 @@
-
-import fs from 'fs';
 import fs from 'fs';
 import { parse } from 'csv-parse';
 import prisma from '../utils/prisma';
@@ -45,7 +43,8 @@ export class EtsyCsvService {
                 if (!etsyOrderId) continue;
 
                 // Check if order exists in our DB
-                const existingOrder = await prisma.order.findUnique({
+                // Use findFirst instead of findUnique because etsyReceiptId might not be marked @unique in schema yet
+                const existingOrder = await prisma.order.findFirst({
                     where: { etsyReceiptId: etsyOrderId },
                     include: { customer: true },
                 });
@@ -62,19 +61,31 @@ export class EtsyCsvService {
                     // Logic: Only patch if address is missing or clearly incomplete
                     // Note: We might want to allow forcing update, but user wants "patch missing".
                     // Let's check if we have a valid address.
-                    const hasValidAddress = customer.address && customer.city && customer.zip;
+                    const hasValidAddress = customer.street && customer.city && customer.postalCode;
 
                     if (!hasValidAddress) {
+                        // Split name if needed (Customer model likely has firstName/lastName)
+                        let newFirstName = customer.firstName;
+                        let newLastName = customer.lastName;
+
+                        if (row['Ship Name']) {
+                            const parts = row['Ship Name'].split(' ');
+                            if (parts.length > 0) newFirstName = parts[0];
+                            if (parts.length > 1) newLastName = parts.slice(1).join(' ');
+                            else newLastName = '';
+                        }
+
                         // PATCH IT!
                         await prisma.customer.update({
                             where: { id: customer.id },
                             data: {
-                                name: row['Ship Name'] || customer.name || 'Unknown', // Fallback to existing or file
-                                address: row['Ship Address1'],
-                                address2: row['Ship Address2'],
+                                firstName: newFirstName,
+                                lastName: newLastName,
+                                street: row['Ship Address1'],
+                                addressAddition: row['Ship Address2'],
                                 city: row['Ship City'],
-                                state: row['Ship State'],
-                                zip: row['Ship Zipcode'],
+                                // state: row['Ship State'], // Might not exist on Customer model? safe to omit if unsure
+                                postalCode: row['Ship Zipcode'],
                                 country: row['Ship Country'],
                             }
                         });
