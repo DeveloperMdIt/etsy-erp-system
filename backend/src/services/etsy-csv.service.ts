@@ -1,8 +1,9 @@
 
 import fs from 'fs';
+import fs from 'fs';
 import { parse } from 'csv-parse';
-import { prisma } from '../prisma';
-import { ActivityLogService } from './activity-log.service';
+import prisma from '../utils/prisma';
+import { ActivityLogService, LogType, LogAction } from './activity-log.service';
 
 interface EtsyCsvRow {
     'Order ID': string;
@@ -82,7 +83,7 @@ export class EtsyCsvService {
                 }
             }
 
-            await ActivityLogService.log('INFO', `CSV Import completed. Patched ${patchedCount} orders.`);
+            await ActivityLogService.log(LogType.INFO, LogAction.ETSY_SYNC as any, `CSV Import completed. Patched ${patchedCount} orders.`);
 
             return {
                 success: true,
@@ -92,7 +93,7 @@ export class EtsyCsvService {
 
         } catch (error) {
             console.error('[EtsyCSV] Error processing CSV:', error);
-            await ActivityLogService.log('ERROR', 'CSV Import failed', { error: String(error) });
+            await ActivityLogService.log(LogType.ERROR, LogAction.ETSY_SYNC as any, 'CSV Import failed', undefined, undefined, { error: String(error) });
             throw new Error('Fehler beim Verarbeiten der CSV-Datei.');
         } finally {
             // Cleanup: Delete the temp file

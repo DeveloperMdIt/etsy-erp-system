@@ -9,7 +9,9 @@ import { rateLimitedGet } from '../utils/etsy-rate-limiter';
 import multer from 'multer';
 import { EtsyCsvService } from '../services/etsy-csv.service';
 
+const router = Router();
 const upload = multer({ dest: 'uploads/' });
+
 
 // ... existing routes ...
 
