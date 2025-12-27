@@ -207,4 +207,46 @@ export class EtsyApiService {
         console.log('✅ [EtsyAPI] Token Refreshed & Saved.');
         return access_token;
     }
+
+    /**
+     * Update Order Shipping Status (Add Tracking)
+     * This marks the order as shipped on Etsy.
+     */
+    static async updateOrderTracking(userId: string, receiptId: string | number, trackingCode: string, carrier: string) {
+        let user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || !user.etsyAccessToken || !user.etsyShopId) {
+            throw new Error('User not connected to Etsy');
+        }
+
+        try {
+            // V3: Create a tracking record to mark as shipped
+            const url = `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts/${receiptId}/tracking`;
+
+            console.log(`[EtsyAPI] Updating tracking for Receipt ${receiptId} (Code: ${trackingCode}, Carrier: ${carrier})`);
+
+            await axios.post(
+                url,
+                {
+                    tracking_code: trackingCode,
+                    carrier_name: carrier
+                },
+                {
+                    headers: {
+                        'x-api-key': ETSY_KEY,
+                        'Authorization': `Bearer ${user.etsyAccessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            return { success: true };
+
+        } catch (error: any) {
+            if (error.response?.status === 401 && user.etsyRefreshToken) {
+                // Retry logic could go here, for now throw
+            }
+            console.error(`Error updating tracking for ${receiptId}`, error.response?.data || error.message);
+            throw new Error(`Failed to update Etsy tracking: ${JSON.stringify(error.response?.data || error.message)}`);
+        }
+    }
 }
