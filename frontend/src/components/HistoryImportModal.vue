@@ -102,7 +102,7 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { ClockIcon } from '@heroicons/vue/24/outline';
 import axios from 'axios';
 
-const props = defineProps<{
+defineProps<{
   open: boolean;
 }>();
 
