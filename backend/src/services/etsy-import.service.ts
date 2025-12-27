@@ -12,20 +12,63 @@ const prisma = new PrismaClient();
 
 export class EtsyImportService {
 
-    async importOrdersFromApi(orders: any[], tenantId: string, userId: string): Promise<ImportResult> {
+    async importOrdersFromApi(ordersOrOptions: any[] | { fromDate?: Date; toDate?: Date }, tenantId: string, userId: string): Promise<ImportResult> {
         let ordersCreated = 0;
         let ordersUpdated = 0;
         const errors: string[] = [];
+        const { EtsyApiService } = await import('./etsy-api.service'); // Dynamic import to avoid cycles
 
         try {
-            ImportStatusService.start(tenantId, orders.length, 'Processing API Orders...');
-            console.log(`[Import] Processing ${orders.length} orders from API...`);
+            let allOrders: any[] = [];
+
+            // Check if we got a list of orders (Legacy/Cron call) OR options (New Manual Import)
+            if (Array.isArray(ordersOrOptions)) {
+                allOrders = ordersOrOptions;
+            } else {
+                // Fetch Mode
+                const { fromDate, toDate } = ordersOrOptions;
+                let offset = 0;
+                const limit = 100;
+                let hasMore = true;
+
+                ImportStatusService.start(tenantId, 0, 'Fetching orders from Etsy...');
+                console.log(`[Import] Starting History Import. From: ${fromDate}, To: ${toDate}`);
+
+                while (hasMore) {
+                    const response = await EtsyApiService.fetchOrders(userId, {
+                        minCreated: fromDate,
+                        maxCreated: toDate,
+                        limit,
+                        offset
+                    });
+
+                    const pageOrders = response.results || [];
+                    allOrders = allOrders.concat(pageOrders);
+
+                    console.log(`[Import] Fetched page. Got ${pageOrders.length} orders. Total so far: ${allOrders.length}`);
+                    ImportStatusService.increment(tenantId, `Fetched ${allOrders.length} orders...`);
+
+                    if (pageOrders.length < limit) {
+                        hasMore = false; // End of list
+                    } else {
+                        offset += limit;
+                        // Safety break to prevent infinite loops in dev
+                        if (offset > 5000) {
+                            console.warn('Hit safety limit of 5000 orders.');
+                            hasMore = false;
+                        }
+                    }
+                }
+            }
+
+            ImportStatusService.start(tenantId, allOrders.length, 'Processing orders...');
+            console.log(`[Import] Processing ${allOrders.length} orders...`);
 
             // Sort orders (Oldest First) to ensure correct Order Number chronology
-            orders.sort((a, b) => (a.created_timestamp || 0) - (b.created_timestamp || 0));
+            allOrders.sort((a, b) => (a.created_timestamp || 0) - (b.created_timestamp || 0));
 
             // Process each receipt
-            for (const receipt of orders) {
+            for (const receipt of allOrders) {
                 try {
                     await this.processApiOrder(tenantId, userId, receipt);
                     ordersCreated++;

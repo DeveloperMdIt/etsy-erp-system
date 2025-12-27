@@ -5,7 +5,8 @@ import ManualTrackingModal from '../components/ManualTrackingModal.vue'
 import SuccessModal from '../components/SuccessModal.vue'
 import ConfirmationModal from '../components/ConfirmationModal.vue'
 import EtsyCsvImportModal from '../components/EtsyCsvImportModal.vue'
-import { ArrowUpTrayIcon } from '@heroicons/vue/24/outline'
+import HistoryImportModal from '../components/HistoryImportModal.vue'
+import { ArrowUpTrayIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import { ArrowPathIcon } from '@heroicons/vue/24/solid'
 
 
@@ -122,6 +123,7 @@ const creatingLabel = ref(false)
 const showManualTrackingModal = ref(false)
 const manualTrackingOrder = ref<Order | null>(null)
 const showCsvModal = ref(false)
+const showHistoryModal = ref(false)
 
 // Sync State
 const isSyncing = ref(false)
@@ -449,6 +451,14 @@ onUnmounted(() => {
             >
               <ArrowUpTrayIcon class="-ml-1 mr-2 h-5 w-5 text-gray-500" aria-hidden="true" />
               Adress-Import (CSV)
+            </button>
+            <button
+              @click="showHistoryModal = true"
+              type="button"
+              class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 w-full sm:w-auto"
+            >
+              <ClockIcon class="-ml-1 mr-2 h-5 w-5 text-gray-500" aria-hidden="true" />
+              Historie Import
             </button>
             <button
               @click="startSync(false)"
@@ -928,5 +938,12 @@ onUnmounted(() => {
     />
     <!-- CSV Import Modal -->
     <EtsyCsvImportModal :open="showCsvModal" @close="showCsvModal = false" @success="handleImportSuccess" />
+
+    <!-- History Import Modal -->
+    <HistoryImportModal 
+      :open="showHistoryModal" 
+      @close="showHistoryModal = false" 
+      @success="handleImportSuccess"
+    />
   </div>
 </template>

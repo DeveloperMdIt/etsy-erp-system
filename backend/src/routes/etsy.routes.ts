@@ -455,17 +455,40 @@ router.post('/sync-orders', authenticateToken as any, async (req: any, res: Resp
         const userId = req.user.id;
         const tenantId = req.user.tenantId;
 
-        const { fullSync } = req.body;
-        console.log(`[Etsy Route] Sync requested. Full Sync: ${fullSync}`);
+        const { fullSync, fromDate, toDate } = req.body;
+        console.log(`[Etsy Route] Sync requested. Full Sync: ${fullSync}, From: ${fromDate}, To: ${toDate}`);
 
         const { CronService } = await import('../services/cron.service');
         const { default: ImportStatusService } = await import('../services/import-status.service');
+        const { EtsyImportService } = await import('../services/etsy-import.service');
 
         // Reset status before starting
         ImportStatusService.reset(tenantId);
         ImportStatusService.start(tenantId, 0, 'Initialisiere Synchronisation...');
 
-        // Run in background so we can return response immediately and let frontend poll
+        // EXPERIMENTAL: Historical Import Mode
+        if (fromDate) {
+            console.log('[Etsy Route] Triggering Historical Import...');
+            setImmediate(async () => {
+                try {
+                    const importService = new EtsyImportService();
+                    await importService.importOrdersFromApi(
+                        {
+                            fromDate: new Date(fromDate),
+                            toDate: toDate ? new Date(toDate) : undefined
+                        },
+                        tenantId,
+                        userId
+                    );
+                } catch (err: any) {
+                    console.error("Historical Import Failed:", err);
+                    ImportStatusService.error(tenantId, err.message);
+                }
+            });
+            return res.json({ message: 'Historischer Import gestartet. Bitte warten Sie auf den Status.', type: 'orders', mode: 'history' });
+        }
+
+        // Standard Sync
         setImmediate(() => {
             CronService.runEtsySync({ id: userId, tenantId }, fullSync).catch(err => {
                 console.error("Background Sync Failed:", err);

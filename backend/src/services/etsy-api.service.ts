@@ -106,21 +106,27 @@ export class EtsyApiService {
         return response.data.results;
     }
 
-    static async fetchOrders(userId: string, minLastUpdated?: Date) {
+    static async fetchOrders(userId: string, options: {
+        minLastUpdated?: Date;
+        minCreated?: Date;
+        maxCreated?: Date;
+        limit?: number;
+        offset?: number;
+    } = {}) {
         let user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user || !user.etsyAccessToken || !user.etsyShopId) {
             throw new Error('User not connected to Etsy');
         }
 
         try {
-            return await this._fetchOrdersInternal(user, minLastUpdated);
+            return await this._fetchOrdersInternal(user, options);
         } catch (error: any) {
             if (error.response?.status === 401 && user.etsyRefreshToken) {
                 console.log('🔄 [EtsyAPI] Token expired (401). Attempting refresh...');
                 try {
                     const newToken = await this.refreshAccessToken(userId, user.etsyRefreshToken);
                     user.etsyAccessToken = newToken;
-                    return await this._fetchOrdersInternal(user, minLastUpdated);
+                    return await this._fetchOrdersInternal(user, options);
                 } catch (refreshErr) {
                     throw new Error('Etsy Token Expired and Refresh Failed.');
                 }
@@ -129,14 +135,34 @@ export class EtsyApiService {
         }
     }
 
-    private static async _fetchOrdersInternal(user: any, minLastUpdated?: Date) {
-        let url = `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts?limit=100`;
+    private static async _fetchOrdersInternal(user: any, options: {
+        minLastUpdated?: Date;
+        minCreated?: Date;
+        maxCreated?: Date;
+        limit?: number;
+        offset?: number;
+    }) {
+        const limit = options.limit || 100;
+        const offset = options.offset || 0;
 
-        if (minLastUpdated) {
-            const timestamp = Math.floor(minLastUpdated.getTime() / 1000);
+        let url = `https://api.etsy.com/v3/application/shops/${user.etsyShopId}/receipts?limit=${limit}&offset=${offset}`;
+
+        if (options.minLastUpdated) {
+            const timestamp = Math.floor(options.minLastUpdated.getTime() / 1000);
             url += `&min_last_updated=${timestamp}`;
-            console.log(`[EtsyAPI] Fetching orders updated since ${minLastUpdated.toISOString()} (${timestamp})`);
         }
+
+        if (options.minCreated) {
+            const timestamp = Math.floor(options.minCreated.getTime() / 1000);
+            url += `&min_created=${timestamp}`;
+        }
+
+        if (options.maxCreated) {
+            const timestamp = Math.floor(options.maxCreated.getTime() / 1000);
+            url += `&max_created=${timestamp}`;
+        }
+
+        console.log(`[EtsyAPI] Fetching orders with offset=${offset}, limit=${limit}`);
 
         const response = await rateLimitedGet(
             url,
@@ -147,20 +173,16 @@ export class EtsyApiService {
                 }
             }
         );
-        if (response.data?.results?.length > 0) {
-            const first = response.data.results[0];
-            console.log('🔍 DEBUG: First Order Keys:', Object.keys(first));
-            // Log to DB for user visibility in "Protokolle"
-            await ActivityLogService.log(
-                LogType.INFO,
-                LogAction.CRON_SYNC,
-                'DEBUG RAW JSON: First Order Data from Etsy',
-                user.id,
-                user.tenantId,
-                { fullJson: first }
-            );
+
+        // Debug first order only on first page
+        if (offset === 0 && response.data?.results?.length > 0) {
+            // ... keys logging if needed ...
         }
-        return response.data.results;
+
+        return {
+            results: response.data.results,
+            count: response.data.count, // Etsy V3 often returns 'count' at top level
+        };
     }
 
     static async refreshAccessToken(userId: string, refreshToken: string): Promise<string> {
