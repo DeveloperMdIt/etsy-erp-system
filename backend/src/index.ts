@@ -43,6 +43,7 @@ import subscriptionRoutes from './routes/subscription.routes';
 
 import { templatesRouter } from './routes/templates.routes';
 import subscriptionPlansRoutes from './routes/subscription-plans.routes';
+import inventoryRoutes from './routes/inventory.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/setup', setupRoutes);
@@ -58,6 +59,7 @@ app.use('/api/labels', labelRoutes);
 app.use('/api/shipping-profiles', shippingProfileRoutes);
 app.use('/api/etsy', etsyRoutes);
 app.use('/api/automation', automationRoutes);
+app.use('/api/inventory', inventoryRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes); // Mount Admin Routes
 app.use('/api/subscription', subscriptionRoutes); // User-facing subscription logic
