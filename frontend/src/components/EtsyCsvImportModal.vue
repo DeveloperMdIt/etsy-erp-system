@@ -25,8 +25,9 @@
                       <p class="font-medium text-gray-700">Schritt 1: Exportieren</p>
                       <ul class="mt-1 list-disc pl-4 text-gray-600 space-y-1">
                         <li>Öffnen Sie die <a href="https://www.etsy.com/your/shops/me/download" target="_blank" class="text-indigo-600 hover:underline">Etsy Download-Seite</a>.</li>
-                        <li>Wählen Sie unter "CSV-Typ" die Option <strong>"Bestellungen"</strong>.</li>
-                        <li>Laden Sie die Datei herunter (Dateiname meist <em>EtsySoldOrders.csv</em> oder ähnlich).</li>
+                        <li>Wählen Sie unter "CSV-Typ" die Option <strong>"Bestellungen"</strong> und klicken Sie auf Download.</li>
+                        <li><strong>Wichtig:</strong> Etsy schickt Ihnen den Download-Link <strong>per E-Mail</strong>.</li>
+                        <li>Laden Sie die Datei aus der E-Mail herunter und ziehen Sie sie hier rein.</li>
                       </ul>
                     </div>
 
