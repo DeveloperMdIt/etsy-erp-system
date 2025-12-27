@@ -96,6 +96,19 @@ export class EtsyCsvService {
                             }
                         });
                         patchedCount++;
+
+                        // Clean up "Warning" note from Order if present
+                        if (existingOrder.notes && existingOrder.notes.includes('Warnung: Keine Adressdaten')) {
+                            const newNotes = existingOrder.notes.replace('Warnung: Keine Adressdaten', '').trim();
+
+                            // Also remove trailing/leading dashes or newlines if left over
+                            const cleanedNotes = newNotes.replace(/^-\s*|\s*-$|^\n|\n$/g, '').trim();
+
+                            await prisma.order.update({
+                                where: { id: existingOrder.id },
+                                data: { notes: cleanedNotes }
+                            });
+                        }
                     }
                 }
             }
