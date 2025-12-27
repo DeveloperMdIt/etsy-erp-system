@@ -313,6 +313,9 @@ model Product {
   shippingProfileId String?
   shippingProfile   ShippingProfile? @relation(fields: [shippingProfileId], references: [id])
 
+  // Warehouse (Phase 2)
+  inventoryItems    InventoryItem[]
+
   @@unique([userId, sku])
   @@index([userId])
   @@index([tenantId])
@@ -594,4 +597,46 @@ model SubscriptionPlan {
   users              User[]
 
   @@map("subscription_plans")
+}
+
+// --- WAREHOUSE / INVENTORY (Phase 2) ---
+
+model StorageLocation {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String   // e.g. "A-01-01" (Barcode value)
+  type        String   @default("SHELF") // SHELF, BIN, PALLET, OVERFLOW
+  description String?
+  isActive    Boolean  @default(true)
+  
+  // Relations
+  inventoryItems InventoryItem[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("storage_locations")
+}
+
+model InventoryItem {
+  id               String   @id @default(uuid())
+  tenantId         String
+  
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  storageLocationId String
+  storageLocation   StorageLocation @relation(fields: [storageLocationId], references: [id], onDelete: Cascade)
+  
+  quantity         Int      @default(0)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([productId, storageLocationId]) // One product entry per location
+  @@index([productId])
+  @@index([storageLocationId])
+  @@map("inventory_items")
 }
