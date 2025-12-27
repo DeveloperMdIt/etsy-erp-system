@@ -38,7 +38,7 @@
                         @dragover.prevent="isDragging = true"
                         @dragleave.prevent="isDragging = false"
                         @drop.prevent="handleDrop"
-                        @click="$refs.fileInput.click()"
+                        @click="triggerFileInput"
                         :class="{'border-indigo-500 bg-indigo-50': isDragging}"
                       >
                         <div class="space-y-1 text-center">
@@ -94,7 +94,7 @@ import { CloudArrowUpIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
 import { CheckCircleIcon } from '@heroicons/vue/24/solid';
 import axios from 'axios';
 
-const props = defineProps<{
+defineProps<{
   open: boolean;
 }>();
 
@@ -112,17 +112,23 @@ function closeModal() {
   emit('close');
 }
 
+function triggerFileInput() {
+  fileInput.value?.click();
+}
+
 function handleFileSelect(event: Event) {
   const target = event.target as HTMLInputElement;
-  if (target.files && target.files.length > 0) {
-    validateAndSetFile(target.files[0]);
+  const selectedFile = target.files?.[0];
+  if (selectedFile) {
+    validateAndSetFile(selectedFile);
   }
 }
 
 function handleDrop(event: DragEvent) {
   isDragging.value = false;
-  if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
-    validateAndSetFile(event.dataTransfer.files[0]);
+  const selectedFile = event.dataTransfer?.files?.[0];
+  if (selectedFile) {
+    validateAndSetFile(selectedFile);
   }
 }
 
