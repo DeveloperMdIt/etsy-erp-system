@@ -281,6 +281,11 @@ const onManualTrackingSaved = () => {
     fetchOrders()
 }
 
+const handleImportSuccess = (message: string) => {
+    fetchOrders()
+    openSuccessModal('Import erfolgreich', message)
+}
+
 const openLabelModal = async (order: Order) => {
   labelOrder.value = order
   showLabelModal.value = true
@@ -922,6 +927,6 @@ onUnmounted(() => {
       @confirm="handleConfirm"
     />
     <!-- CSV Import Modal -->
-    <EtsyCsvImportModal :open="showCsvModal" @close="showCsvModal = false" @success="fetchOrders" />
+    <EtsyCsvImportModal :open="showCsvModal" @close="showCsvModal = false" @success="handleImportSuccess" />
   </div>
 </template>

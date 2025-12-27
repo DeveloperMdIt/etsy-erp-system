@@ -160,8 +160,8 @@ async function uploadFile() {
     });
 
     if (response.data.success) {
-      alert(response.data.message); // Simple alert for now, or emit success message
-      emit('success');
+      // alert(response.data.message); // Removed in favor of emit
+      emit('success', response.data.message);
       closeModal();
     } else {
       error.value = response.data.error || 'Ein unbekannter Fehler ist aufgetreten.';
