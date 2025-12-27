@@ -43,9 +43,9 @@ export class EtsyCsvService {
                 if (!etsyOrderId) continue;
 
                 // Check if order exists in our DB
-                // Use findFirst instead of findUnique because etsyReceiptId might not be marked @unique in schema yet
+                // Use findFirst and externalOrderId (Etsy Receipt ID)
                 const existingOrder = await prisma.order.findFirst({
-                    where: { etsyReceiptId: etsyOrderId },
+                    where: { externalOrderId: etsyOrderId },
                     include: { customer: true },
                 });
 
@@ -54,8 +54,9 @@ export class EtsyCsvService {
                     continue;
                 }
 
-                // Check if customer exists and if address is already "good"
-                const customer = existingOrder.customer;
+                // Check if customer exists
+                // Cast to any to avoid TS relation issues in intermediate build
+                const customer = (existingOrder as any).customer;
 
                 if (customer) {
                     // Logic: Only patch if address is missing or clearly incomplete
