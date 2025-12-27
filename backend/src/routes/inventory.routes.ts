@@ -74,4 +74,28 @@ router.get('/locations', authenticateToken, async (req: any, res: Response) => {
     }
 });
 
+// 6. Create Location (Explicit)
+router.post('/locations/create', authenticateToken, async (req: any, res: Response) => {
+    try {
+        const { name, type, description } = req.body;
+        const tenantId = req.user.tenantId;
+
+        const location = await prisma.storageLocation.create({
+            data: {
+                tenantId,
+                name,
+                type: type || 'SHELF',
+                description
+            }
+        });
+        res.json(location);
+    } catch (error: any) {
+        // Unique constraint violation P2002
+        if (error.code === 'P2002') {
+            return res.status(409).json({ error: 'Ein Lagerplatz mit diesem Namen existiert bereits.' });
+        }
+        res.status(400).json({ error: error.message });
+    }
+});
+
 export default router;

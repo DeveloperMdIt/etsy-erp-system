@@ -43,6 +43,7 @@ const routes = [
     { path: '/orders', component: Orders, meta: { title: 'Bestellungen' } },
     { path: '/products', component: Products, meta: { title: 'Produkte' } },
     { path: '/customers', component: Customers, meta: { title: 'Kunden' } },
+    { path: '/warehouse', component: () => import('../views/Warehouse.vue'), meta: { title: 'Lager' } },
     {
         path: '/settings',
         component: () => import('../views/SettingsOverview.vue'),
