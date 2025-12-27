@@ -5,9 +5,11 @@ import { ActivityLogService, LogType, LogAction } from './activity-log.service';
 
 interface EtsyCsvRow {
     'Order ID': string;
-    'Ship Name': string;
-    'Ship Address1': string;
-    'Ship Address2': string;
+    'Full Name': string;
+    'First Name': string;
+    'Last Name': string;
+    'Street 1': string;
+    'Street 2': string;
     'Ship City': string;
     'Ship State': string;
     'Ship Zipcode': string;
@@ -27,6 +29,8 @@ export class EtsyCsvService {
                     columns: true,
                     skip_empty_lines: true,
                     trim: true,
+                    bom: true, // Handle Excel BOM
+                    relax_quotes: true,
                 })
             );
 
@@ -38,12 +42,11 @@ export class EtsyCsvService {
 
             // 2. Process each row
             for (const row of rows) {
-                const etsyOrderId = row['Order ID']; // Used as receipt_id
+                const etsyOrderId = row['Order ID'];
 
                 if (!etsyOrderId) continue;
 
                 // Check if order exists in our DB
-                // Use findFirst and externalOrderId (Etsy Receipt ID)
                 const existingOrder = await prisma.order.findFirst({
                     where: { externalOrderId: etsyOrderId },
                     include: { customer: true },
@@ -55,25 +58,27 @@ export class EtsyCsvService {
                 }
 
                 // Check if customer exists
-                // Cast to any to avoid TS relation issues in intermediate build
                 const customer = (existingOrder as any).customer;
 
                 if (customer) {
-                    // Logic: Only patch if address is missing or clearly incomplete
-                    // Note: We might want to allow forcing update, but user wants "patch missing".
-                    // Let's check if we have a valid address.
-                    const hasValidAddress = customer.street && customer.city && customer.postalCode;
+                    // Force update if address is missing OR if we want to overwrite 'Unknown' placeholders
+                    // Checking for minimal validity: Street + City + Zip
+                    const hasValidAddress = customer.street && customer.street !== 'Unknown' &&
+                        customer.city && customer.city !== 'Unknown' &&
+                        customer.postalCode && customer.postalCode !== 'Unknown';
 
-                    if (!hasValidAddress) {
-                        // Split name if needed (Customer model likely has firstName/lastName)
-                        let newFirstName = customer.firstName;
-                        let newLastName = customer.lastName;
+                    if (!hasValidAddress || true) { // We might want to allow overwriting always with CSV data if it exists
+                        // Better logic: If CSV has address, use it.
+                        if (!row['Street 1']) continue; // No address in CSV either
 
-                        if (row['Ship Name']) {
-                            const parts = row['Ship Name'].split(' ');
+                        let newFirstName = row['First Name'] || customer.firstName;
+                        let newLastName = row['Last Name'] || customer.lastName;
+
+                        // Fallback to Full Name split if First/Last empty in CSV
+                        if (!newFirstName && !newLastName && row['Full Name']) {
+                            const parts = row['Full Name'].split(' ');
                             if (parts.length > 0) newFirstName = parts[0];
                             if (parts.length > 1) newLastName = parts.slice(1).join(' ');
-                            else newLastName = '';
                         }
 
                         // PATCH IT!
@@ -82,10 +87,10 @@ export class EtsyCsvService {
                             data: {
                                 firstName: newFirstName,
                                 lastName: newLastName,
-                                street: row['Ship Address1'],
-                                addressAddition: row['Ship Address2'],
+                                street: row['Street 1'],
+                                addressAddition: row['Street 2'],
                                 city: row['Ship City'],
-                                // state: row['Ship State'], // Might not exist on Customer model? safe to omit if unsure
+                                // state: row['Ship State'], 
                                 postalCode: row['Ship Zipcode'],
                                 country: row['Ship Country'],
                             }
